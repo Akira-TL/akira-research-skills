@@ -27,7 +27,13 @@ Interpretation 结束后没有传播需求时继续科研循环，不机械进�
 
 Communication artifact 是派生输出，不形成新的科研事实源。正式进入传播前，应让**当前传播类型真正依赖的 canonical scientific state**稳定并形成明确的 **pre-communication canonical freeze commit**；传播产物必须声明自己基于哪个冻结版本。原始研究论文通常依赖 Analysis / Interpretation / Hypothesis Evaluation；普通综述依赖已经核验的 Literature / synthesis；Proposal 则依赖当前 Research Question、Literature evidence、Hypothesis / Design、preliminary evidence 与现实约束。写作过程中发现一个重要事实或科学决策只存在于草稿里时，先退出 Communication，回到应有 canonical source 持久化、重新形成稳定 source commit，再继续写。
 
-## 3. Claim traceability
+## 3. Communication 工作区边界
+
+传播产品的物理布局统一按 [`workspace/WORKSPACE-LAYOUT.md`](workspace/WORKSPACE-LAYOUT.md) 执行。`communication/<product-slug>/` 是人类传播视图，`.research/communication/<product-slug>/` 保存内部传播支持 artifact，生成/验证代码进入 `scripts/communication/` 或项目既有代码区。`<product-slug>` 只表示当前 Communication Product 的稳定技术标识，不绑定任何特定研究方向或文稿类型。
+
+人类传播视图主要保留受众需要直接阅读、审阅或提交的文件；citation/methods/integrity audit、traceability、validation report、内部材料盘点等进入内部支持区。两类 artifact 都可以登记 `communication_artifacts` 并进入 Git 完整性门禁；物理分区不改变 scientific evidence 层级。普通草稿历史由 Git 保存，不默认维护 `archive/` 或靠连续版本文件复制代替版本控制。
+
+## 4. Claim traceability
 
 所有实质科研 Claim 都必须能回答“依据是什么”：
 
@@ -38,7 +44,7 @@ Communication artifact 是派生输出，不形成新的科研事实源。正式
 
 引用作者 Discussion 中的推测不能代替数据证据。综述句若综合多篇论文，要确保每篇 citation 实际支持该句对应部分，而不是只“主题相关”。
 
-## 4. 结果写作边界
+## 5. 结果写作边界
 
 对原始研究论文及其他包含本项目 Results 的传播产物，Results 优先报告：
 
@@ -52,7 +58,7 @@ Communication artifact 是派生输出，不形成新的科研事实源。正式
 
 不要用“显著改善”“明显促进”掩盖效应量（effect magnitude）或替代指标（proxy）性质。没有预定义分级阈值或可核验领域标准时，也不要把连续效应、相关系数或异质性自行分级为“强”“弱”“明显”“较强”等；直接报告估计值与不确定性。非显著结果不写成“没有差异”，除非精度足以支撑对应的缺失效应边界（absence boundary）。
 
-## 5. Discussion / Conclusions gate
+## 6. Discussion / Conclusions gate
 
 传播产物存在 Discussion / Conclusion 或承担等价解释功能的章节时，可以提出解释，但必须区分：
 
@@ -67,7 +73,7 @@ Conclusions 使用 [`interpretation`](../../interpretation/SKILL.md) 得出的�
 
 若主要推断依赖尚未核验的独立实验单位、随机分配、抽样结构或其他识别条件，**标题和摘要同样必须保留这一条件性**。不能在正文中写“在名义独立记录假设下”，却在标题中无条件宣称“总体均值已经不同”或“处理有效”；应改用数据集层级描述，或明确写出必要条件/适用范围。
 
-## 6. Methods 与 reproducibility
+## 7. Methods 与 reproducibility
 
 原始研究论文或其他具有正式研究方法过程的传播产物，其 Methods 必须与实际 Design、Data 和 Analysis / evidence-synthesis process 对齐，而不是事后理想化：
 
@@ -80,7 +86,7 @@ Conclusions 使用 [`interpretation`](../../interpretation/SKILL.md) 得出的�
 
 若实际执行与 frozen design 不同，写清 amendment；不要把 post hoc 分析描述成预先计划。
 
-## 7. Figures / tables
+## 8. Figures / tables
 
 每个重要 figure / table 应能回到生成它的 analysis artifact 和 input freeze。正式 publication figure 进一步遵守 [`FIGURE-WORKFLOW.md`](FIGURE-WORKFLOW.md)：先确定 Figure-level scientific question、最窄 Claim 和 panel 的证据作用，再进行 layout / styling；多面板图默认围绕一个主要科学判断组织，panel 应增加不同的推断信息而不是仅重复 metric。
 
@@ -94,13 +100,13 @@ Conclusions 使用 [`interpretation`](../../interpretation/SKILL.md) 得出的�
 - conclusion-changing negative result / failure boundary 不得因为排版或叙事原因被隐藏；
 - 最终实际输出尺寸逐 panel 检查标签、uncertainty、单位、颜色编码、图注和 source-data traceability。
 
-## 8. Literature citation discipline
+## 9. Literature citation discipline
 
 正式 citation audit 按 [`audit/CITATION-AUDIT.md`](audit/CITATION-AUDIT.md) 分开核验三件事：**reference identity、Claim–source support、citation style**。DOI 能解析、title/author metadata 正确或 citation format 合规，只能证明其中一层，不能互相替代。
 
 优先引用实际提供该事实/证据的原始论文。需要引用 review 时，明确它承担综述背景而不是原始 evidence。引用前至少核对 title / DOI / identity 与实际内容；数据库 sidecar、Agent synthesis、搜索 snippet 或“标题看起来相关”都不是可发表 Claim support。长句包含多个独立事实时先拆成可核验 Claim 单元，再确认各 citation 的语法作用范围与支持范围。
 
-## 9. Audience adaptation
+## 10. Audience adaptation
 
 面向不同 audience 可以改变术语密度、篇幅和结构，但不能改变：
 
@@ -113,7 +119,7 @@ Conclusions 使用 [`interpretation`](../../interpretation/SKILL.md) 得出的�
 
 面向大众时可以简化方法语言，但不能把“在特定小鼠模型中”压缩成“对人有效”。
 
-## 10. Communication provenance
+## 11. Communication provenance
 
 从 schema v16 起，一次可独立交付的传播产物使用 `research-db record-communication` 登记最小 provenance：
 
@@ -134,7 +140,7 @@ Communication Product 是工程审计对象，不是新的学术概念或科研�
 
 `TRACEABILITY.md` 一类文件可以作为 derived audit view，但它只能指回 canonical evidence，不能自我引用成为科学依据；逐条 Claim 的逻辑支持关系仍由主模型科研审查。
 
-## 11. 完成条件
+## 12. 完成条件
 
 Communication artifact 完成前先确认已经按 [`WRITING-ROUTER.md`](WRITING-ROUTER.md) 选择正确 workflow。原始研究论文同时完成 [`RESEARCH-ARTICLE-WORKFLOW.md`](RESEARCH-ARTICLE-WORKFLOW.md)；普通叙述性综述同时完成 [`REVIEW-WORKFLOW.md`](REVIEW-WORKFLOW.md)；研究计划书 / 开题 / grant proposal 同时完成 [`PROPOSAL-WORKFLOW.md`](PROPOSAL-WORKFLOW.md)；系统综述、范围综述或荟萃分析只有在对应正式科研方法流程已经完成并形成稳定 source commit 后，才能在 Communication 宣告成稿。长篇科研稿在进入 reviewer-style review 前完成一次 [`audit/INTEGRITY-AUDIT.md`](audit/INTEGRITY-AUDIT.md) 初稿审计；经过实质 revision 后，在最终交付前再完成最终审计。Reviewer response / revision package 同时完成 [`REVISION-WORKFLOW.md`](REVISION-WORKFLOW.md) 的意见—动作—证据闭环。
 

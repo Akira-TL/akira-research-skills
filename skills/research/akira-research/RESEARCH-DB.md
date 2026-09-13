@@ -12,6 +12,8 @@
 
 `literature/` 保留给人类阅读视图，不再承担论文原始 artifact 归档。每篇已完成阅读的论文保留精简的人类 sidecar；sidecar 是给用户阅读的 synthesis，不复制数据库的完整 extraction，也不作为详细知识的 canonical source。
 
+Communication 采用同样的人类视图/内部支持分离：`communication/<product-slug>/` 保存作者、合作者、审稿或提交时直接使用的传播产品，`.research/communication/<product-slug>/` 保存材料盘点、审计、追溯与验证等内部支持 artifact；可重放生成/验证代码位于 `scripts/communication/` 或项目既有代码区。两类传播 artifact 均可进入 `communication_artifacts` 和 Git 完整性门禁，物理位置不改变其证据层级。
+
 PDF 的长期 artifact storage / Git 策略仍是独立设计问题；本契约只要求数据库能够通过 Paper identity + path + provenance 回到对应文件。
 
 ## 2. 数据库边界
@@ -227,7 +229,7 @@ schema v19 同时加入 `research_nodes`、`research_edges` 与单例 `research_
 
 从 schema v15 起，完整的 pre-data → Analysis → Interpretation 黑盒进一步稳定暴露出 `hypothesis_evaluations`：一次 Evaluation 连接一个 Hypothesis Set、一个 completed Analysis 和该 Analysis 已登记的具体解释/结果 artifact，并记录本轮总体判别为 `unresolved | partially_resolved | resolved | not_interpretable`、decision、summary 与时间。Evaluation 是追加式科研事件，同一 Hypothesis Set 可以被后续不同 Analysis 继续产生新的 Evaluation；同一 Analysis 对同一 Hypothesis Set 的评价不可覆盖。这样保存证据更新历史，而不把“最新科学状态”错误塞进 Hypothesis Set 的 freeze 生命周期字段。
 
-从 schema v16 起，科研传播黑盒进一步稳定暴露出 `communication_products` 与 `communication_artifacts`。Communication Product 只保存传播目标、受众、状态以及传播开始前的 `source_commit`；artifact 保存题目/摘要、方法、结果、讨论、图、图注、大众摘要、追溯文件和生成脚本等路径，并用 `timing_role=source_support|derived_output` 约束其相对 source commit 的时序。传播文件进入 Git 完整性门禁，但它们仍是 canonical scientific evidence 的派生输出，不会因为进入数据库而成为第四类科研事实源。
+从 schema v16 起，科研传播黑盒进一步稳定暴露出 `communication_products` 与 `communication_artifacts`。Communication Product 只保存传播目标、受众、状态以及传播开始前的 `source_commit`；artifact 保存题目/摘要、方法、结果、讨论、图、图注、大众摘要、追溯文件和生成脚本等路径，并用 `timing_role=source_support|derived_output` 约束其相对 source commit 的时序。一个 Product 的 artifact 可以分布在 `communication/<product-slug>/`、`.research/communication/<product-slug>/` 与正常代码区，但必须继续由同一 product provenance 关联。传播文件进入 Git 完整性门禁，但它们仍是 canonical scientific evidence 的派生输出，不会因为进入数据库而成为第四类科研事实源。
 
 完成的 Communication Product 会检查 `source_commit` 是否真实存在并属于当前历史、派生产物是否晚于 source commit，以及 source commit 后 Hypothesis / Design / Data / Analysis 等已登记科学 artifact 是否又发生变化。若科学源发生变化，传播稿必须基于新的稳定 evidence commit 重新审阅。该门禁可以审计版本关系，却不能自动判断一句标题或 Discussion Claim 是否在语义上过强；这种科研语义仍由主模型审查。
 

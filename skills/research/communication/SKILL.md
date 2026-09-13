@@ -19,6 +19,8 @@ Document Type 确定后，再按 [`references/context/DISCIPLINE-VENUE.md`](refe
 
 只从当前 `RESEARCH.md`、`research.sqlite`、Design / Study / Data / Analysis artifacts、原始论文及已完成 Interpretation 取事实。写作中发现新的科学解释或关键事实缺口时返回 `interpretation` 或其他对应 Skill，先更新 canonical state，再继续传播。
 
+传播产品开始产生多个文件时，先按 [`references/workspace/WORKSPACE-LAYOUT.md`](references/workspace/WORKSPACE-LAYOUT.md) 建立人类传播视图、内部传播支持区与可重放代码边界；不要等到稿件、Figure、Supplement、audit 和 validator 全部生成后再依赖 README 解释混杂目录。
+
 完整 Claim traceability、Results / Discussion / Methods、figure / table、citation 与 communication provenance 规则见 [`references/CONTRACT.md`](references/CONTRACT.md)。
 
 - 原始研究论文及同类 research thesis / report → [`references/RESEARCH-ARTICLE-WORKFLOW.md`](references/RESEARCH-ARTICLE-WORKFLOW.md)：完整盘点写作材料后，采用“主要结论 → Results → Discussion → 反推 Introduction → Methods → Abstract / Title → Supplement / Appendix”的默认写作顺序，并在完整 prose 前用小标题与 Figure / Table 搭出 Results 骨架；
