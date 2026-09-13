@@ -187,6 +187,14 @@ class ResearchDbCliTests(unittest.TestCase):
             ["--project", str(self.root), "record-communication"]
         )
         self.assertIsNone(communication_args.bundle)
+        relocation_args = build_parser().parse_args(
+            ["--project", str(self.root), "relocate-communication-artifact"]
+        )
+        self.assertIsNone(relocation_args.bundle)
+        self.assertEqual(
+            bundle_path(self.root, "relocate-communication-artifact", None),
+            self.root / ".research" / "bundles" / "communication-artifact-relocation.json",
+        )
         self.assertEqual(
             build_parser().parse_args(["--project", str(self.root), "communications"]).command,
             "communications",

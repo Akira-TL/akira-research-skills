@@ -76,6 +76,6 @@ communication/
 
 同一 Communication Product 的人类交付物和内部支持 artifact 可以分布在上述不同区域，但必须由同一个 `communication_products.slug` 关联，并按实际职责登记 `communication_artifacts`。
 
-新传播产品从开始产生多个 artifact 时就按本布局放置，不先在一个目录平铺几十个文件后再依赖 README 解释。已有项目需要重组路径时，不直接手工改 SQLite；路径迁移必须通过受控的 Research DB provenance 迁移流程完成。
+新传播产品从开始产生多个 artifact 时就按本布局放置，不先在一个目录平铺几十个文件后再依赖 README 解释。已有项目需要重组路径时，先在文件系统/Git 中完成真实移动，再使用 `research-db relocate-communication-artifact` 同步 provenance；不要直接手工改 SQLite。该操作只更新既有 artifact 的路径，不改变 role、`timing_role`、`source_commit` 或 Communication Product 定义。已完成产品的 `source_support` 路径继续由 pre-communication source commit 证明，因此当前 fail closed，不允许用 relocation 改写。
 
 完成判据：用户能从 `communication/<product-slug>/` 直接识别主要阅读/交付内容；内部支持文件位于 `.research/communication/<product-slug>/`；可重放代码位于 `scripts/communication/` 或项目既有代码区；所有需要 provenance 的 artifact 与实际路径一致。

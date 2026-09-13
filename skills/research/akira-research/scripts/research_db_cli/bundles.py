@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from research_db_support.storage import ResearchDbError
+from .communication import COMMUNICATION_BUNDLE_DEFAULTS
 from .project import PROJECT_BUNDLE_DEFAULTS
 
 
@@ -28,7 +29,7 @@ BUNDLE_DEFAULTS = {
     "record-hypothesis-set": "hypothesis-set.json",
     "record-design": "design.json",
     "record-hypothesis-evaluation": "hypothesis-evaluation.json",
-    "record-communication": "communication.json",
+    **COMMUNICATION_BUNDLE_DEFAULTS,
 }
 
 

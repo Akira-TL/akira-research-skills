@@ -1,6 +1,6 @@
 # Research SQLite Contract
 
-本文件定义 `akira-research` 的项目级科研知识数据库契约。当前已实现 schema migration、`init`、`migrate`、`ingest-paper`、`add-paper-artifacts`、`ingest-reading`、`ingest-critical`、`status`、`validate`、FTS 检索与 `evidence` 查询。
+本文件定义 `akira-research` 的项目级科研知识数据库契约。当前已实现 schema migration、`init`、`migrate`、`ingest-paper`、`add-paper-artifacts`、`ingest-reading`、`ingest-critical`、`record-communication`、`relocate-communication-artifact`、`status`、`validate`、FTS 检索与 `evidence` 查询。
 
 ## 1. Source of truth
 
@@ -232,6 +232,8 @@ schema v19 同时加入 `research_nodes`、`research_edges` 与单例 `research_
 从 schema v16 起，科研传播黑盒进一步稳定暴露出 `communication_products` 与 `communication_artifacts`。Communication Product 只保存传播目标、受众、状态以及传播开始前的 `source_commit`；artifact 保存题目/摘要、方法、结果、讨论、图、图注、大众摘要、追溯文件和生成脚本等路径，并用 `timing_role=source_support|derived_output` 约束其相对 source commit 的时序。一个 Product 的 artifact 可以分布在 `communication/<product-slug>/`、`.research/communication/<product-slug>/` 与正常代码区，但必须继续由同一 product provenance 关联。传播文件进入 Git 完整性门禁，但它们仍是 canonical scientific evidence 的派生输出，不会因为进入数据库而成为第四类科研事实源。
 
 完成的 Communication Product 会检查 `source_commit` 是否真实存在并属于当前历史、派生产物是否晚于 source commit，以及 source commit 后 Hypothesis / Design / Data / Analysis 等已登记科学 artifact 是否又发生变化。若科学源发生变化，传播稿必须基于新的稳定 evidence commit 重新审阅。该门禁可以审计版本关系，却不能自动判断一句标题或 Discussion Claim 是否在语义上过强；这种科研语义仍由主模型审查。
+
+已有传播 artifact 需要因工作区整理改变路径时，先完成真实文件系统/Git 移动，再使用 `research-db relocate-communication-artifact` 更新既有 `communication_artifacts.path` 并写入 `change_log`。该操作不创建新 artifact，也不允许借迁移改变 role、`timing_role`、`source_commit` 或 Product 定义；目标路径必须已经存在，旧路径必须已经消失。对 completed Product 的 `source_support` 当前 fail closed，因为其路径是 pre-communication source commit 时序证明的一部分；若该类 artifact 需要重新组织，应设计能够保留历史身份的正式 migration，而不是静默改路径。
 
 数据库**不**复制每个 H1/H2、Prediction、Discriminator Matrix、Decision Boundary、传播稿逐句 Claim、组别表、单个 hypothesis 的 `live/favored/weakened/...` 状态或完整设计正文；这些仍由 canonical Markdown artifact 或派生传播文件承载。当前也不建立 Project Claim / Communication Claim 表。只有未来真实项目反复证明某个科研语义对象存在稳定的跨项目查询/关系需求时，才继续迁移，不能为了工作流阶段对称而机械建表。
 

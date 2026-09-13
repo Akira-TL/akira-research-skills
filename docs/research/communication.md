@@ -4,7 +4,7 @@
 
 传播产物必须基于一个明确的 pre-communication source commit，并从 canonical Research / Design / Study / Data / Analysis / Interpretation 与已核验 Literature evidence 取事实。Title、Abstract、Discussion、Conclusion 和 Figure legend 都不能为了叙事冲击力升级 evidence boundary。传播文件是派生输出，不成为新的科研事实源。
 
-传播工作区把“给人直接阅读/提交的产品”和“支撑产品生成与审计的内部资产”分开：`communication/<product-slug>/` 保存当前 Communication Product 的人类传播视图，`.research/communication/<product-slug>/` 保存材料盘点、审计、追溯与验证等内部支持 artifact，生成与验证代码进入 `scripts/communication/` 或项目既有代码区。`<product-slug>` 只是每个传播产品自己的稳定标识，不代表固定研究方向。普通 draft 的历史版本由 Git 保存，不默认用 `archive/` 或连续 `*_vN` 文件复制代替版本控制；只有具有真实投稿、修订或其他外部交付身份的历史状态继续作为明确 artifact 保存。
+传播工作区把“给人直接阅读/提交的产品”和“支撑产品生成与审计的内部资产”分开：`communication/<product-slug>/` 保存当前 Communication Product 的人类传播视图，`.research/communication/<product-slug>/` 保存材料盘点、审计、追溯与验证等内部支持 artifact，生成与验证代码进入 `scripts/communication/` 或项目既有代码区。`<product-slug>` 只是每个传播产品自己的稳定标识，不代表固定研究方向。普通 draft 的历史版本由 Git 保存，不默认用 `archive/` 或连续 `*_vN` 文件复制代替版本控制；只有具有真实投稿、修订或其他外部交付身份的历史状态继续作为明确 artifact 保存。已有 artifact 因目录整理移动时，先完成真实文件移动，再用 `research-db relocate-communication-artifact` 同步数据库路径；不要直接修改 SQLite。
 
 进入长篇写作后，第一步不是直接起草正文，而是先判定整篇传播产物到底是在**报告已经完成的研究、综合既有文献，还是提出未来研究计划**。若主要贡献来自本项目新产生的 Study / Data / Analysis / Observation，则按原始研究论文流程；若主要贡献来自既有文献的组织、比较、批判和综合，则按普通叙述性综述流程；若核心任务是说明未来准备回答什么、怎样回答、如何判断成败以及为什么可行，则按 Proposal 流程。原始研究论文中的 literature review 不会因此变成综述；普通综述有表格、概念图或 bibliometric summary 也不会因此自动变成原始研究论文；Proposal 中有 preliminary data 也不会因此自动变成 Results manuscript。
 

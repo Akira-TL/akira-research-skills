@@ -11,9 +11,14 @@ SCRIPT_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 from research_db_core import init_database  # noqa: E402
-from research_db_ops.communication import record_communication  # noqa: E402
+from research_db_ops.communication import (  # noqa: E402
+    list_communications,
+    record_communication,
+    relocate_communication_artifact,
+)
 from research_db_ops.completion import validate_completion  # noqa: E402
 from research_db_ops.downstream import record_dataset  # noqa: E402
+from research_db_support.storage import ResearchDbError  # noqa: E402
 
 
 class CommunicationProvenanceTests(unittest.TestCase):
@@ -282,6 +287,171 @@ COMMUNICATION
 
         reasons = {item["reason"] for item in result["communication"]["blockers"]}
         self.assertIn("communication_derived_output_outside_workspace", reasons)
+
+    def test_relocation_updates_completed_derived_artifact_path(self) -> None:
+        source_commit = self._commit("RESEARCH: freeze scientific source")
+        old_path = self.root / "manuscript" / "main-results" / "RESULTS.md"
+        old_path.parent.mkdir(parents=True, exist_ok=True)
+        old_path.write_text("# 结果\n\n传播结果保持当前证据边界。\n", encoding="utf-8")
+        record_communication(
+            self.root,
+            {
+                "slug": "main-results",
+                "title": "主要结果传播稿",
+                "purpose": "形成面向科研读者的结果传播稿",
+                "audience": "科研读者",
+                "source_commit": source_commit,
+                "status": "completed",
+                "artifacts": [
+                    {
+                        "role": "results",
+                        "path": "manuscript/main-results/RESULTS.md",
+                        "timing_role": "derived_output",
+                    }
+                ],
+            },
+        )
+        self._commit("DOCS: record legacy communication")
+        new_path = self.root / "communication" / "main-results" / "RESULTS.md"
+        new_path.parent.mkdir(parents=True, exist_ok=True)
+        old_path.rename(new_path)
+
+        relocation = relocate_communication_artifact(
+            self.root,
+            {
+                "slug": "main-results",
+                "old_path": "manuscript/main-results/RESULTS.md",
+                "new_path": "communication/main-results/RESULTS.md",
+                "reason": "move deliverable into the human communication view",
+            },
+        )
+
+        self.assertTrue(relocation["ok"])
+        self.assertEqual(relocation["old_path"], "manuscript/main-results/RESULTS.md")
+        self.assertEqual(relocation["new_path"], "communication/main-results/RESULTS.md")
+        product = list_communications(self.root)["communications"][0]
+        self.assertEqual(len(product["artifacts"]), 1)
+        self.assertEqual(product["artifacts"][0]["path"], "communication/main-results/RESULTS.md")
+        self.assertEqual(product["artifacts"][0]["role"], "results")
+        self.assertEqual(product["artifacts"][0]["timing_role"], "derived_output")
+
+        self._commit("DOCS: relocate communication artifact")
+        result = validate_completion(self.root)
+        self.assertTrue(result["ok"], result["errors"])
+
+    def test_relocation_rejects_completed_source_support(self) -> None:
+        old_path = self.root / "support" / "main-results" / "source.md"
+        old_path.parent.mkdir(parents=True, exist_ok=True)
+        old_path.write_text("# 来源支持\n\n这是传播前已经存在的支持材料。\n", encoding="utf-8")
+        source_commit = self._commit("RESEARCH: freeze source support")
+        record_communication(
+            self.root,
+            {
+                "slug": "main-results",
+                "title": "主要结果传播稿",
+                "purpose": "形成面向科研读者的结果传播稿",
+                "audience": "科研读者",
+                "source_commit": source_commit,
+                "status": "completed",
+                "artifacts": [
+                    {
+                        "role": "traceability",
+                        "path": "support/main-results/source.md",
+                        "timing_role": "source_support",
+                    }
+                ],
+            },
+        )
+        new_path = self.root / ".research" / "communication" / "main-results" / "materials" / "source.md"
+        new_path.parent.mkdir(parents=True, exist_ok=True)
+        old_path.rename(new_path)
+
+        with self.assertRaisesRegex(ResearchDbError, "source_support"):
+            relocate_communication_artifact(
+                self.root,
+                {
+                    "slug": "main-results",
+                    "old_path": "support/main-results/source.md",
+                    "new_path": ".research/communication/main-results/materials/source.md",
+                    "reason": "reorganize source support",
+                },
+            )
+
+    def test_relocation_rejects_target_for_other_product(self) -> None:
+        source_commit = self._commit("RESEARCH: freeze scientific source")
+        old_path = self.root / "manuscript" / "main-results" / "RESULTS.md"
+        old_path.parent.mkdir(parents=True, exist_ok=True)
+        old_path.write_text("# 结果\n\n传播结果保持当前证据边界。\n", encoding="utf-8")
+        record_communication(
+            self.root,
+            {
+                "slug": "main-results",
+                "title": "主要结果传播稿",
+                "purpose": "形成面向科研读者的结果传播稿",
+                "audience": "科研读者",
+                "source_commit": source_commit,
+                "status": "completed",
+                "artifacts": [
+                    {
+                        "role": "results",
+                        "path": "manuscript/main-results/RESULTS.md",
+                        "timing_role": "derived_output",
+                    }
+                ],
+            },
+        )
+        new_path = self.root / "communication" / "other-product" / "RESULTS.md"
+        new_path.parent.mkdir(parents=True, exist_ok=True)
+        old_path.rename(new_path)
+
+        with self.assertRaisesRegex(ResearchDbError, "main-results"):
+            relocate_communication_artifact(
+                self.root,
+                {
+                    "slug": "main-results",
+                    "old_path": "manuscript/main-results/RESULTS.md",
+                    "new_path": "communication/other-product/RESULTS.md",
+                    "reason": "invalid cross-product move",
+                },
+            )
+
+    def test_relocation_requires_old_path_to_be_absent(self) -> None:
+        source_commit = self._commit("RESEARCH: freeze scientific source")
+        old_path = self.root / "manuscript" / "main-results" / "RESULTS.md"
+        old_path.parent.mkdir(parents=True, exist_ok=True)
+        old_path.write_text("# 结果\n\n传播结果保持当前证据边界。\n", encoding="utf-8")
+        record_communication(
+            self.root,
+            {
+                "slug": "main-results",
+                "title": "主要结果传播稿",
+                "purpose": "形成面向科研读者的结果传播稿",
+                "audience": "科研读者",
+                "source_commit": source_commit,
+                "status": "completed",
+                "artifacts": [
+                    {
+                        "role": "results",
+                        "path": "manuscript/main-results/RESULTS.md",
+                        "timing_role": "derived_output",
+                    }
+                ],
+            },
+        )
+        new_path = self.root / "communication" / "main-results" / "RESULTS.md"
+        new_path.parent.mkdir(parents=True, exist_ok=True)
+        new_path.write_text(old_path.read_text(encoding="utf-8"), encoding="utf-8")
+
+        with self.assertRaisesRegex(ResearchDbError, "旧路径"):
+            relocate_communication_artifact(
+                self.root,
+                {
+                    "slug": "main-results",
+                    "old_path": "manuscript/main-results/RESULTS.md",
+                    "new_path": "communication/main-results/RESULTS.md",
+                    "reason": "copy is not relocation",
+                },
+            )
 
 
 if __name__ == "__main__":
