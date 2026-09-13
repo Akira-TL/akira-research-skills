@@ -4,21 +4,11 @@
 
 `ngs` 是 Akira Research 的可选领域适配层；OpenAI `ngs-analysis` 仍是独立第三方执行来源，不随本仓库 vendoring，也不是安装 Research family 的前置条件。
 
-任务真正进入 NGS execution 时，先检查当前环境是否已经提供可核验的 `ngs-analysis` source / plugin / runner。Akira Lattice 管理环境可以继续通过只读 source view：
+任务真正进入 NGS execution 时，先检查当前项目是否已经提供可核验的 OpenAI NGS Skill / runner。若没有，使用 Akira Router 登记的 OpenAI Plugins 来源查看当前 Skill 清单，并只定位与 assay 直接相关的最窄候选。
 
-```text
-~/.agents/external/ngs-analysis
-```
+**不存在可核验 upstream 时只把 NGS execution 标为 optional dependency blocker**：说明需要的 assay / runner 与来源，然后请求用户决定是否项目级安装；不得扫描任意路径、循环尝试安装、从模型记忆重建 runner 参数，或把第三方正文复制进 Research repo。
 
-提供固定版本；其他独立项目可以使用用户明确安装或提供的等价官方来源。**不存在可核验 upstream 时只把 NGS execution 标为 optional dependency blocker**：说明需要的 assay / runner 与来源，然后请求用户决定是否安装；不得扫描任意路径、循环尝试安装、从模型记忆重建 runner 参数，或把第三方正文复制进 Research repo。
-
-若使用 Lattice source view，每次执行前读取：
-
-```text
-~/.agents/external/ngs-analysis/.codex-plugin/plugin.json
-```
-
-并固定实际 Git commit、plugin version 与 runner/workflow 路径。若使用其他用户批准的 upstream，记录其等价稳定 identity / version / location。旧首次接入曾固定于 OpenAI `plugins` commit `1e285826e604f66f7208f7ac4dba0fe8341d1f57`、`ngs-analysis` 1.0.3；这只是历史基线，不代表独立安装必须使用该版本，也不能把“最新 upstream”自动漂移进科研执行。
+使用用户批准的 upstream 后，记录实际来源、版本 / commit、安装位置与 runner/workflow identity。旧首次接入曾使用 OpenAI `plugins` 中的 `ngs-analysis` 1.0.3；这只是历史基线，不代表当前项目必须使用该版本。
 
 ## Upstream lane map
 
