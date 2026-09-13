@@ -1,11 +1,11 @@
 # Akira Research 安装
 
-Akira Research 是完整科研产品族，只在真实科研任务需要时安装到机器级 Skill 注册表，不属于默认基础安装集。
+Akira Research 是完整科研产品族，只在真实科研任务需要时由 `akira` Router 安装到机器级 Skill 注册表；Lattice 根安装器不预装 Research。
 
 ## 安装完整 Research suite
 
 ```bash
-python3 ~/.agents/scripts/skills.py install \
+uv run python ~/.agents/skills/akira/scripts/skills.py install \
   https://github.com/Akira-TL/akira-research-skills.git \
   --all \
   --root skills/research
@@ -16,7 +16,7 @@ python3 ~/.agents/scripts/skills.py install \
 ## 安装前检查远端 Skill
 
 ```bash
-python3 ~/.agents/scripts/skills.py inspect \
+uv run python ~/.agents/skills/akira/scripts/skills.py inspect \
   https://github.com/Akira-TL/akira-research-skills.git
 ```
 

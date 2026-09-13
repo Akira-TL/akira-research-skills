@@ -26,7 +26,7 @@ Research Question / Active Uncertainty
 ## Installation
 
 ```bash
-python3 ~/.agents/scripts/skills.py install \
+uv run python ~/.agents/skills/akira/scripts/skills.py install \
   https://github.com/Akira-TL/akira-research-skills.git \
   --all \
   --root skills/research
@@ -35,7 +35,7 @@ python3 ~/.agents/scripts/skills.py install \
 查看远端可发现 Skill：
 
 ```bash
-python3 ~/.agents/scripts/skills.py inspect \
+uv run python ~/.agents/skills/akira/scripts/skills.py inspect \
   https://github.com/Akira-TL/akira-research-skills.git
 ```
 

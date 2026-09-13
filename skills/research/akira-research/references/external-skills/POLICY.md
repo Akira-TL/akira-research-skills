@@ -4,7 +4,7 @@ Akira Research 的科研决策、Research Tree、provenance、evidence boundary 
 
 ## 1. 默认不安装
 
-外部 Skill 不进入 Akira Lattice 的默认基础安装集，不因为“可能有用”而预装到机器级 `~/.agents/skills/`，也不以 Git submodule 的方式挂入 Akira 自研 Skill 源码。
+外部 Skill 不由 Lattice 根安装器预装；只有真实任务需要且用户明确同意时，才由 `akira` Router 安装到机器级 `~/.agents/skills/`。外部 Skill 也不以 Git submodule 的方式挂入 Akira 自研 Skill 源码。
 
 当前允许作为**按需发现源**的科研 Skill 仓库为：
 
@@ -43,13 +43,13 @@ K-Dense-AI/scientific-agent-skills
 
 ## 4. 用户确认后只安装所需机器级 Skill
 
-用户明确同意后，先用 Akira 安装器检查远端 source，再只安装真实需要的 Skill：
+用户明确同意后，先用 `akira` Router 自带安装器检查远端 source，再只安装真实需要的 Skill：
 
 ```bash
-python3 ~/.agents/scripts/skills.py inspect \
+uv run python ~/.agents/skills/akira/scripts/skills.py inspect \
   https://github.com/K-Dense-AI/scientific-agent-skills.git
 
-python3 ~/.agents/scripts/skills.py install \
+uv run python ~/.agents/skills/akira/scripts/skills.py install \
   https://github.com/K-Dense-AI/scientific-agent-skills.git \
   --skill <skill-name>
 ```
