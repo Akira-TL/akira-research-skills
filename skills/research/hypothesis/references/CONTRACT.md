@@ -32,36 +32,7 @@ Hypothesis 以集合为单位设计。每个集合对应一个 Active Uncertaint
 
 当详细预测超过 `RESEARCH.md` 可承载的短状态时，在项目中按需创建 `hypotheses/<slug>.md`。该文件是当前 hypothesis set 的 canonical working artifact；`RESEARCH.md` 只保留 Active Uncertainty 与 pointer，不复制全部预测矩阵。
 
-推荐结构：
-
-```text
-# Hypothesis Set: <name>
-
-## Target Uncertainty
-<与 RESEARCH.md 相同的 primary question>
-
-## H1 — <short name>
-Statement: <在明确 scope 下的解释>
-Key assumptions:
-- ...
-Predictions:
-- If <measurement/condition>, expect <observable result>.
-Falsifiers:
-- <result that would materially weaken H1>
-
-## H2 — <short name>
-...
-
-## Discriminator Matrix
-| Evidence / result | H1 predicts | H2 predicts | Interpretation if observed |
-| ... | ... | ... | ... |
-
-## Current Evidence
-- <pointer to research-db evidence / Paper IDs / analysis artifact>
-
-## Decision Boundary
-<什么结果足以改变路线；什么结果仍不能区分>
-```
+长期人类 artifact 的固定路径、H1/H2、Navigation、缺失状态和目录索引只由 [`HUMAN-FORMAT.md`](HUMAN-FORMAT.md) 定义。本科研契约只定义 Hypothesis 的科学语义；具体 Hypothesis 数量、scope、assumption、prediction、falsifier 与判别细节在该固定结构的 H3+ 中展开。
 
 `Statement` 必须带 scope。比如“Blautia A causes adaptation”过宽；“在目标人群和暴露定义下，Blautia A 的变化对某个预定义 host adaptation phenotype 具有独立可干预贡献”才是可设计检验的 target。
 

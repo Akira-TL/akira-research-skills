@@ -17,19 +17,7 @@ Analysis 的任务是用已经冻结、可追溯的数据去估计 [`design`](..
 
 需要独立分析时按需创建 `analysis/<slug>/`，至少保留一个简洁 `README.md` 作为该分析的人类入口。科研代码不放在这个人类结果目录里：项目级可复用 Python 实现进入 `src/<project-package>/`，具体 Python 分析入口进入 `scripts/analyses/`，R 绘图入口进入 `scripts/figures/`；每次执行的 config/output/log 使用独立 `.research/analysis/<slug>/<attempt-key>/` 工作目录。完整 Attempt 隔离见 [`ATTEMPTS.md`](ATTEMPTS.md)。
 
-`README.md` 至少回答：
-
-```text
-Question / target contrast
-Data freeze / input pointers
-Unit of inference
-Primary analysis
-Exploratory analyses
-Key assumptions
-Outputs
-Reproduction command / entrypoint
-Result boundary
-```
+长期人类 Analysis README 的固定路径、H1/H2、Navigation、缺失状态和目录索引只由 [`HUMAN-FORMAT.md`](HUMAN-FORMAT.md) 定义。本科研契约只定义 Analysis 的科学语义、执行边界、freeze、diagnostics、sensitivity 与 Interpretation 交接。
 
 核心数值结果必须能从冻结输入、Git commit、配置与环境重新生成；Notebook 可以用于探索，但不应成为唯一不可重放的 primary-result source。同一 Analysis 下的参数/specification 尝试用 Analysis Attempt 记录，不复制代码快照；真正科学路线分叉才建立新的 Analysis / Git research branch。
 

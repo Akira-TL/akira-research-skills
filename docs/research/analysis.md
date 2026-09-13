@@ -11,3 +11,5 @@
 高通量测序（Next-Generation Sequencing, NGS）的 assay-specific pipeline、reference/database、preflight、runner 与 execution provenance 由 `analysis` 调用 `ngs` 执行；统计方法、design formula、contrast、normalization、covariate、multiple-testing 与 sensitivity 的科研决定仍由 `analysis` 拥有。upstream 的自动方法选择不能替代确认性 Analysis 的结果前冻结。
 
 若同一 Analysis 的实现优化可以由稳定机械指标衡量，可把多个 Attempt 组织成受控迭代：先固定 baseline、metric、higher/lower 方向、target 与 guard，再让每个 Attempt 只包含一个主要可解释变化；改善、未改善和失效路线都保留原因。达到机械 target 只代表这轮执行优化完成，不能自动升级 scientific Claim，也不能用外部 controller 接管科研 Git 历史。
+
+长期人类 Analysis 入口固定为 `analysis/<slug>/README.md`，目录索引为 `analysis/README.md`。正文使用固定 H1/H2 与 Navigation，并链接已知 Design 和全部输入 Dataset；模型、诊断、敏感性分析和图表在对应 H2 下使用 H3+ 展开。目录索引固定包含 `Objects` 与 `Relations`，后者用相对链接展示 Analysis 与关联 Design、输入 Dataset 的关系，并可继续承载可核验的结果后反向入口。机器 Attempt 目录 `.research/analysis/` 不作为普通人类阅读入口。

@@ -67,16 +67,77 @@ class ResearchTreeStudyTests(unittest.TestCase):
             {"root_slug": "objective-root", "active_slug": "question-main"},
         )
 
-    def _write_design(self) -> None:
+    def _write_design(self, slug: str) -> None:
         (self.root / "designs").mkdir(exist_ok=True)
-        (self.root / "designs" / "descriptive.md").write_text(
-            "# Design\n\n描述性研究设计。\n",
+        (self.root / "designs" / f"{slug}.md").write_text(
+            f"""# Design: {slug}
+
+## Navigation
+
+- [Research](../RESEARCH.md)
+
+## Target Uncertainty
+
+当前 Research Question Node 定义的总体均值问题。
+
+## Hypotheses and Discriminator
+
+不适用：当前设计直接由 Research Question 驱动，不依赖正式 Hypothesis Set。
+
+## Estimand / Target Contrast
+
+总体均值。
+
+## Population / Experimental System
+
+目标观察总体。
+
+## Sampling and Experimental Unit
+
+参与者为独立实验单位。
+
+## Groups / Exposure / Intervention / Comparator
+
+不适用：当前为描述性设计。
+
+## Measurements and Timepoints
+
+测量预定义主要结局。
+
+## Controls and Bias Protection
+
+通过预定义测量流程与样本映射控制主要偏倚来源。
+
+## Primary Analysis Alignment
+
+按参与者层级估计总体均值。
+
+## Precision / Sample Size Rationale
+
+当前测试只验证设计 provenance，不声称现实样本量充分性。
+
+## Decision Boundary
+
+结果解释受预定义目标总体、实验单位与测量边界约束。
+
+## Exploratory Analyses
+
+不适用：当前没有额外探索性分析。
+
+## Feasibility / Ethics / Access Constraints
+
+当前测试 fixture 无额外访问或伦理限制。
+
+## Freeze and Amendments
+
+进入执行前冻结；后续修订必须作为显式 amendment 记录。
+""",
             encoding="utf-8",
         )
 
     def test_question_driven_design_does_not_require_hypothesis_set(self) -> None:
         self._record_question_tree()
-        self._write_design()
+        self._write_design("descriptive-design")
 
         result = record_design(
             self.root,
@@ -87,7 +148,7 @@ class ResearchTreeStudyTests(unittest.TestCase):
                 "target_estimand": "Population mean",
                 "primary_outcome": "Measured outcome",
                 "experimental_unit": "participant",
-                "artifact_path": "designs/descriptive.md",
+                "artifact_path": "designs/descriptive-design.md",
                 "status": "draft",
                 "feasibility_status": "unresolved",
                 "feasibility_summary": "Awaiting execution resources.",
@@ -150,7 +211,7 @@ class ResearchTreeStudyTests(unittest.TestCase):
 
     def test_study_records_execution_and_links_dataset(self) -> None:
         self._record_question_tree()
-        self._write_design()
+        self._write_design("execution-design")
         record_design(
             self.root,
             {
@@ -160,7 +221,7 @@ class ResearchTreeStudyTests(unittest.TestCase):
                 "target_estimand": "Population mean",
                 "primary_outcome": "Measured outcome",
                 "experimental_unit": "participant",
-                "artifact_path": "designs/descriptive.md",
+                "artifact_path": "designs/execution-design.md",
                 "status": "frozen",
                 "feasibility_status": "ready",
                 "freeze_commit": "freeze-placeholder",
@@ -270,9 +331,9 @@ class ResearchTreeStudyTests(unittest.TestCase):
             check=True,
         )
         self._record_question_tree()
-        self._write_design()
+        self._write_design("descriptive-design")
         subprocess.run(
-            ["git", "-C", str(self.root), "add", "designs/descriptive.md"],
+            ["git", "-C", str(self.root), "add", "designs/descriptive-design.md"],
             check=True,
         )
         subprocess.run(
@@ -296,7 +357,7 @@ class ResearchTreeStudyTests(unittest.TestCase):
                 "target_estimand": "Population mean",
                 "primary_outcome": "Measured outcome",
                 "experimental_unit": "participant",
-                "artifact_path": "designs/descriptive.md",
+                "artifact_path": "designs/descriptive-design.md",
                 "status": "frozen",
                 "feasibility_status": "ready",
                 "freeze_commit": freeze_commit,

@@ -35,44 +35,7 @@ Design 的任务是把 Hypothesis set 中的 discriminator 变成能够实际获
 
 当设计需要独立保存时，按需创建 `designs/<slug>.md`。它是该研究动作的 canonical design artifact；`RESEARCH.md` 只保留当前 Active Work 和 pointer。Design 一旦成为真实数据产生或未来结果判别的依据，使用 `research-db record-design` 登记其关联 Hypothesis Set、主要估计目标、主要结局、实验单位、feasibility 状态和 artifact path；冻结时记录真实 Git `freeze_commit`。数据库不复制完整组别表、预测矩阵或判定边界正文。
 
-推荐结构：
-
-```text
-# Design: <name>
-
-## Target Uncertainty
-
-## Hypotheses and Discriminator
-- H1 predicts ...
-- H2 predicts ...
-- Target evidence: ...
-
-## Estimand / Target Contrast
-
-## Population / Experimental System
-
-## Sampling and Experimental Unit
-
-## Groups / Exposure / Intervention / Comparator
-
-## Measurements and Timepoints
-
-## Controls and Bias Protection
-
-## Primary Analysis Alignment
-
-## Precision / Sample Size Rationale
-
-## Decision Boundary
-
-## Exploratory Analyses
-
-## Feasibility / Ethics / Access Constraints
-
-## Freeze and Amendments
-```
-
-不要求每个项目机械填满所有标题；只保留影响识别、可重复性和解释边界的部分。
+长期人类 Design artifact 的固定路径、H1/H2、Navigation、缺失状态和目录索引只由 [`HUMAN-FORMAT.md`](HUMAN-FORMAT.md) 定义。本科研契约只定义 identification、measurement、bias、precision、feasibility 与结果前边界等科学语义。固定 H2 必须保留；某项不适用、未知或尚待确认时显式写明状态，领域方法与细节在 H3+ 展开。
 
 ## 4. Identification 与 bias protection
 

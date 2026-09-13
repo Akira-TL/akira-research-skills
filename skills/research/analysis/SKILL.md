@@ -19,7 +19,7 @@ description: 执行可重建、可审计的科研分析；当已有可分析 Dat
 - confirmatory、sensitivity、exploratory 的边界；
 - 需要返回的 estimate、diagnostics、Observation 与图表。
 
-科研分析、Design alignment、Estimate-first、sensitivity、amendment 与 Hypothesis Evaluation 的完整规则见 [`references/RESEARCH-CONTRACT.md`](references/RESEARCH-CONTRACT.md)。缺少会改变统计含义的关键信息时返回总 Router，不用软件默认值替代科研决定。
+科研分析、Design alignment、Estimate-first、sensitivity、amendment 与 Hypothesis Evaluation 的完整规则见 [`references/RESEARCH-CONTRACT.md`](references/RESEARCH-CONTRACT.md)。长期人类 Analysis README 必须按 [`references/HUMAN-FORMAT.md`](references/HUMAN-FORMAT.md) 的固定路径、H1/H2、Navigation 与目录索引格式保存。缺少会改变统计含义的关键信息时返回总 Router，不用软件默认值替代科研决定。
 
 ## 2. 方法依据与 Docs-first
 

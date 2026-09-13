@@ -5,6 +5,10 @@ from typing import Any
 
 from research_db_support.academic_language import require_academic_language_before_freeze
 from research_db_support.storage import ResearchDbError, connect
+from research_db_ops.completion.human import (
+    require_design_human_format_before_freeze,
+    require_hypothesis_human_format_before_freeze,
+)
 import research_db_ops.common as common
 
 
@@ -92,6 +96,11 @@ def record_hypothesis_set(project_root: Path, bundle: dict[str, Any]) -> dict[st
                 "SELECT * FROM hypothesis_sets WHERE slug = ?", (slug,)
             ).fetchone()
             if status == "frozen" and (existing is None or str(existing["status"]) == "draft"):
+                require_hypothesis_human_format_before_freeze(
+                    project_root,
+                    slug=slug,
+                    artifact_path=artifact_path,
+                )
                 path = Path(artifact_path)
                 require_academic_language_before_freeze(
                     project_root,
@@ -276,14 +285,16 @@ def record_design(project_root: Path, bundle: dict[str, Any]) -> dict[str, Any]:
         connection.execute("BEGIN IMMEDIATE")
         try:
             hypothesis_set_id: int | None = None
+            hypothesis_artifact_path: str | None = None
             if hypothesis_slug is not None:
                 hypothesis = connection.execute(
-                    "SELECT id, status, freeze_commit FROM hypothesis_sets WHERE slug = ?",
+                    "SELECT id, status, freeze_commit, artifact_path FROM hypothesis_sets WHERE slug = ?",
                     (hypothesis_slug,),
                 ).fetchone()
                 if hypothesis is None:
                     raise ResearchDbError(f"Design 引用不存在的 Hypothesis Set：{hypothesis_slug}")
                 hypothesis_set_id = int(hypothesis["id"])
+                hypothesis_artifact_path = str(hypothesis["artifact_path"])
                 if status in {"frozen", "execution_ready"}:
                     if hypothesis["status"] == "draft":
                         raise ResearchDbError("Design 冻结前，关联 Hypothesis Set 必须先冻结或闭合。")
@@ -310,6 +321,12 @@ def record_design(project_root: Path, bundle: dict[str, Any]) -> dict[str, Any]:
             if status in {"frozen", "execution_ready"} and (
                 existing is None or str(existing["status"]) == "draft"
             ):
+                require_design_human_format_before_freeze(
+                    project_root,
+                    slug=slug,
+                    artifact_path=artifact_path,
+                    hypothesis_path=hypothesis_artifact_path,
+                )
                 path = Path(artifact_path)
                 require_academic_language_before_freeze(
                     project_root,

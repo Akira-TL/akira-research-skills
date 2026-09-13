@@ -83,16 +83,115 @@ ANALYSIS
         self.tempdir.cleanup()
 
     def _write_plan_assets(self) -> None:
-        (self.root / "data" / "sleep").mkdir(parents=True)
-        (self.root / "analysis" / "trajectory").mkdir(parents=True)
-        (self.root / "data" / "sleep" / "README.md").write_text(
-            "# 数据来源\n\n受试者是独立推断单位。\n", encoding="utf-8"
+        (self.root / "data" / "sleep-data").mkdir(parents=True)
+        (self.root / "analysis" / "sleep-trajectory").mkdir(parents=True)
+        (self.root / "data" / "sleep-data" / "README.md").write_text(
+            """# Dataset: Sleep repeated measures
+
+## Navigation
+
+- [Research](../../RESEARCH.md)
+
+## Dataset Identity
+
+测试用重复测量数据集。
+
+## Research Purpose
+
+用于估计纵向变化趋势。
+
+## Source and Version
+
+来源为测试 fixture，当前版本固定。
+
+## Population and Sample Mapping
+
+受试者是独立推断单位。
+
+## Data Layers and Artifacts
+
+原始 CSV 为原始数据层。
+
+## Metadata / Missingness / Exclusions
+
+不适用：当前没有额外缺失或排除。
+
+## QC and Anomalies
+
+不适用：当前没有会改变分析的异常。
+
+## Processing and Reproduction
+
+分析入口由项目脚本记录。
+
+## Freeze / Access / Ethics
+
+当前测试输入由 Git 提交固定；无额外访问限制。
+""",
+            encoding="utf-8",
         )
-        (self.root / "data" / "sleep" / "raw.csv").write_text(
+        (self.root / "data" / "README.md").write_text(
+            "# Data\n\n## Objects\n\n- [Sleep repeated measures](sleep-data/README.md) — 测试数据集。\n\n"
+            "## Relations\n\n- [Sleep repeated measures](sleep-data/README.md) → [Sleep trajectory analysis](../analysis/sleep-trajectory/README.md)\n",
+            encoding="utf-8",
+        )
+        (self.root / "data" / "sleep-data" / "raw.csv").write_text(
             "subject,day,y\n1,0,10\n1,1,12\n", encoding="utf-8"
         )
-        (self.root / "analysis" / "trajectory" / "README.md").write_text(
-            "# 分析计划\n\n主要估计量为每日变化斜率。\n", encoding="utf-8"
+        (self.root / "analysis" / "sleep-trajectory" / "README.md").write_text(
+            """# Analysis: Sleep trajectory analysis
+
+## Navigation
+
+- [Research](../../RESEARCH.md)
+- [数据集](../../data/sleep-data/README.md)
+
+## Question / Target Contrast
+
+估计总体平均每日变化。
+
+## Inputs and Data Freeze
+
+使用 sleep-data 的冻结输入。
+
+## Unit of Inference
+
+受试者。
+
+## Primary Analysis
+
+混合模型估计总体平均变化。
+
+## Exploratory / Sensitivity Analyses
+
+不适用：当前没有额外探索或敏感性分析。
+
+## Assumptions and Diagnostics
+
+检查模型收敛与主要残差诊断。
+
+## Outputs
+
+主要估计量与诊断结果作为已登记产物保存。
+
+## Reproduction
+
+入口为 `scripts/analyses/trajectory.py`。
+
+## Result Boundary
+
+结果仅回答当前纵向目标对比。
+
+## Amendments
+
+不适用：计划阶段没有修订。
+""",
+            encoding="utf-8",
+        )
+        (self.root / "analysis" / "README.md").write_text(
+            "# Analyses\n\n## Objects\n\n- [Sleep trajectory analysis](sleep-trajectory/README.md) — 确认性纵向分析。\n\n"
+            "## Relations\n\n- [Sleep trajectory analysis](sleep-trajectory/README.md) → [Sleep repeated measures](../data/sleep-data/README.md)\n",
+            encoding="utf-8",
         )
         (self.root / "scripts" / "analyses").mkdir(parents=True, exist_ok=True)
         (self.root / "scripts" / "analyses" / "trajectory.py").write_text(
@@ -109,11 +208,11 @@ ANALYSIS
                 "source": "test fixture",
                 "received_at": "2026-08-28T00:00:00+00:00",
                 "unit_of_inference": "participant",
-                "provenance_path": "data/sleep/README.md",
+                "provenance_path": "data/sleep-data/README.md",
                 "artifacts": [
                     {
                         "role": "raw",
-                        "location": "data/sleep/raw.csv",
+                        "location": "data/sleep-data/raw.csv",
                     }
                 ],
             },
@@ -131,7 +230,7 @@ ANALYSIS
                 "estimand": "Population-average change per study day",
                 "unit_of_inference": "participant",
                 "primary_analysis": "Mixed model with participant random intercept and slope",
-                "analysis_path": "analysis/trajectory/README.md",
+                "analysis_path": "analysis/sleep-trajectory/README.md",
                 "code_path": "scripts/analyses/trajectory.py",
                 "dataset_slugs": ["sleep-data"],
             },
@@ -181,7 +280,7 @@ ANALYSIS
         freeze_commit = self._commit("ANALYSIS: freeze primary plan")
         self._select_attempt(freeze_commit)
 
-        outputs = self.root / "analysis" / "trajectory" / "outputs"
+        outputs = self.root / "analysis" / "sleep-trajectory" / "outputs"
         outputs.mkdir()
         estimate_path = outputs / "primary.csv"
         diagnostic_path = outputs / "diagnostic.txt"
@@ -200,14 +299,14 @@ ANALYSIS
                 "estimand": "Population-average change per study day",
                 "unit_of_inference": "participant",
                 "primary_analysis": "Mixed model with participant random intercept and slope",
-                "analysis_path": "analysis/trajectory/README.md",
+                "analysis_path": "analysis/sleep-trajectory/README.md",
                 "code_path": "scripts/analyses/trajectory.py",
                 "dataset_slugs": ["sleep-data"],
                 "freeze_commit": freeze_commit,
                 "completed_at": completed_at,
                 "artifacts": [
-                    {"role": "estimate", "path": "analysis/trajectory/outputs/primary.csv"},
-                    {"role": "diagnostic", "path": "analysis/trajectory/outputs/diagnostic.txt"},
+                    {"role": "estimate", "path": "analysis/sleep-trajectory/outputs/primary.csv"},
+                    {"role": "diagnostic", "path": "analysis/sleep-trajectory/outputs/diagnostic.txt"},
                 ],
                 "amendments": [
                     {
@@ -222,7 +321,7 @@ ANALYSIS
                         "effect": "+11.4 units/day",
                         "statistics": {"estimate": 11.4, "ci_low": 7.8, "ci_high": 15.1},
                         "scope": "Current repeated-measures dataset",
-                        "source_path": "analysis/trajectory/outputs/primary.csv",
+                        "source_path": "analysis/sleep-trajectory/outputs/primary.csv",
                         "source_locator": "row slope",
                     }
                 ],
@@ -234,9 +333,9 @@ ANALYSIS
         self.assertTrue(result["ok"], result["errors"])
         self.assertTrue(result["downstream"]["ready"])
         canonical = set(result["git"]["canonical_paths"])
-        self.assertIn("data/sleep/raw.csv", canonical)
+        self.assertIn("data/sleep-data/raw.csv", canonical)
         self.assertIn("scripts/analyses/trajectory.py", canonical)
-        self.assertIn("analysis/trajectory/outputs/primary.csv", canonical)
+        self.assertIn("analysis/sleep-trajectory/outputs/primary.csv", canonical)
 
     def test_post_result_dataset_provenance_can_remain_canonical_without_joining_freeze(self) -> None:
         self._write_plan_assets()
@@ -245,7 +344,7 @@ ANALYSIS
         freeze_commit = self._commit("ANALYSIS: freeze primary plan")
         self._select_attempt(freeze_commit)
 
-        provenance_path = self.root / "data" / "sleep" / "post-result-provenance.md"
+        provenance_path = self.root / "data" / "sleep-data" / "post-result-provenance.md"
         provenance_path.write_text(
             "# 后验来源核验\n\n结果可见后补充的来源与测量语义核验。\n",
             encoding="utf-8",
@@ -259,18 +358,18 @@ ANALYSIS
                 "source": "test fixture",
                 "received_at": "2026-08-28T00:00:00+00:00",
                 "unit_of_inference": "participant",
-                "provenance_path": "data/sleep/README.md",
+                "provenance_path": "data/sleep-data/README.md",
                 "artifacts": [
-                    {"role": "raw", "location": "data/sleep/raw.csv"},
+                    {"role": "raw", "location": "data/sleep-data/raw.csv"},
                     {
                         "role": "metadata",
-                        "location": "data/sleep/post-result-provenance.md",
+                        "location": "data/sleep-data/post-result-provenance.md",
                     },
                 ],
             },
         )
 
-        outputs = self.root / "analysis" / "trajectory" / "outputs"
+        outputs = self.root / "analysis" / "sleep-trajectory" / "outputs"
         outputs.mkdir()
         estimate_path = outputs / "primary.csv"
         estimate_path.write_text("term,estimate\nslope,11.4\n", encoding="utf-8")
@@ -285,25 +384,25 @@ ANALYSIS
                 "estimand": "Population-average change per study day",
                 "unit_of_inference": "participant",
                 "primary_analysis": "Mixed model with participant random intercept and slope",
-                "analysis_path": "analysis/trajectory/README.md",
+                "analysis_path": "analysis/sleep-trajectory/README.md",
                 "code_path": "scripts/analyses/trajectory.py",
                 "dataset_slugs": ["sleep-data"],
                 "freeze_commit": freeze_commit,
                 "dataset_artifact_timing": [
                     {
                         "dataset_slug": "sleep-data",
-                        "location": "data/sleep/post-result-provenance.md",
+                        "location": "data/sleep-data/post-result-provenance.md",
                         "timing_role": "post_result_context",
                         "reason": "Source provenance was added only after the primary result was visible.",
                     }
                 ],
                 "artifacts": [
-                    {"role": "estimate", "path": "analysis/trajectory/outputs/primary.csv"}
+                    {"role": "estimate", "path": "analysis/sleep-trajectory/outputs/primary.csv"}
                 ],
                 "observations": [
                     {
                         "statement": "A result exists.",
-                        "source_path": "analysis/trajectory/outputs/primary.csv",
+                        "source_path": "analysis/sleep-trajectory/outputs/primary.csv",
                     }
                 ],
             },
@@ -313,13 +412,13 @@ ANALYSIS
         result = validate_completion(self.root)
         self.assertTrue(result["ok"], result["errors"])
         self.assertIn(
-            "data/sleep/post-result-provenance.md",
+            "data/sleep-data/post-result-provenance.md",
             set(result["git"]["canonical_paths"]),
         )
 
     def test_post_result_context_must_actually_postdate_the_analysis_freeze(self) -> None:
         self._write_plan_assets()
-        provenance_path = self.root / "data" / "sleep" / "preexisting-provenance.md"
+        provenance_path = self.root / "data" / "sleep-data" / "preexisting-provenance.md"
         provenance_path.write_text(
             "# 既有来源核验\n\n该文件在结果前已经存在。\n", encoding="utf-8"
         )
@@ -333,12 +432,12 @@ ANALYSIS
                 "source": "test fixture",
                 "received_at": "2026-08-28T00:00:00+00:00",
                 "unit_of_inference": "participant",
-                "provenance_path": "data/sleep/README.md",
+                "provenance_path": "data/sleep-data/README.md",
                 "artifacts": [
-                    {"role": "raw", "location": "data/sleep/raw.csv"},
+                    {"role": "raw", "location": "data/sleep-data/raw.csv"},
                     {
                         "role": "metadata",
-                        "location": "data/sleep/preexisting-provenance.md",
+                        "location": "data/sleep-data/preexisting-provenance.md",
                     },
                 ],
             },
@@ -346,7 +445,7 @@ ANALYSIS
         self._record_planned_analysis()
         freeze_commit = self._commit("ANALYSIS: freeze plan with provenance already present")
 
-        outputs = self.root / "analysis" / "trajectory" / "outputs"
+        outputs = self.root / "analysis" / "sleep-trajectory" / "outputs"
         outputs.mkdir()
         (outputs / "primary.csv").write_text("term,estimate\nslope,11.4\n", encoding="utf-8")
         record_analysis(
@@ -360,25 +459,25 @@ ANALYSIS
                 "estimand": "Population-average change per study day",
                 "unit_of_inference": "participant",
                 "primary_analysis": "Mixed model with participant random intercept and slope",
-                "analysis_path": "analysis/trajectory/README.md",
+                "analysis_path": "analysis/sleep-trajectory/README.md",
                 "code_path": "scripts/analyses/trajectory.py",
                 "dataset_slugs": ["sleep-data"],
                 "freeze_commit": freeze_commit,
                 "dataset_artifact_timing": [
                     {
                         "dataset_slug": "sleep-data",
-                        "location": "data/sleep/preexisting-provenance.md",
+                        "location": "data/sleep-data/preexisting-provenance.md",
                         "timing_role": "post_result_context",
                         "reason": "Incorrectly claimed to be post-result context.",
                     }
                 ],
                 "artifacts": [
-                    {"role": "estimate", "path": "analysis/trajectory/outputs/primary.csv"}
+                    {"role": "estimate", "path": "analysis/sleep-trajectory/outputs/primary.csv"}
                 ],
                 "observations": [
                     {
                         "statement": "A result exists.",
-                        "source_path": "analysis/trajectory/outputs/primary.csv",
+                        "source_path": "analysis/sleep-trajectory/outputs/primary.csv",
                     }
                 ],
             },
@@ -393,7 +492,7 @@ ANALYSIS
             if item["reason"] == "analysis_post_result_context_present_at_freeze"
         ]
         self.assertEqual(len(blockers), 1)
-        self.assertEqual(blockers[0]["paths"], ["data/sleep/preexisting-provenance.md"])
+        self.assertEqual(blockers[0]["paths"], ["data/sleep-data/preexisting-provenance.md"])
 
     def test_post_result_context_scope_is_specific_to_each_analysis(self) -> None:
         self._write_plan_assets()
@@ -401,7 +500,7 @@ ANALYSIS
         self._record_planned_analysis()
         first_freeze = self._commit("ANALYSIS: freeze first plan")
 
-        provenance_path = self.root / "data" / "sleep" / "post-result-provenance.md"
+        provenance_path = self.root / "data" / "sleep-data" / "post-result-provenance.md"
         provenance_path.write_text(
             "# 后验来源核验\n\n第一轮结果后补充。\n", encoding="utf-8"
         )
@@ -414,17 +513,17 @@ ANALYSIS
                 "source": "test fixture",
                 "received_at": "2026-08-28T00:00:00+00:00",
                 "unit_of_inference": "participant",
-                "provenance_path": "data/sleep/README.md",
+                "provenance_path": "data/sleep-data/README.md",
                 "artifacts": [
-                    {"role": "raw", "location": "data/sleep/raw.csv"},
+                    {"role": "raw", "location": "data/sleep-data/raw.csv"},
                     {
                         "role": "metadata",
-                        "location": "data/sleep/post-result-provenance.md",
+                        "location": "data/sleep-data/post-result-provenance.md",
                     },
                 ],
             },
         )
-        first_outputs = self.root / "analysis" / "trajectory" / "outputs"
+        first_outputs = self.root / "analysis" / "sleep-trajectory" / "outputs"
         first_outputs.mkdir()
         (first_outputs / "primary.csv").write_text("term,estimate\nslope,11.4\n", encoding="utf-8")
         record_analysis(
@@ -438,25 +537,25 @@ ANALYSIS
                 "estimand": "Population-average change per study day",
                 "unit_of_inference": "participant",
                 "primary_analysis": "Mixed model with participant random intercept and slope",
-                "analysis_path": "analysis/trajectory/README.md",
+                "analysis_path": "analysis/sleep-trajectory/README.md",
                 "code_path": "scripts/analyses/trajectory.py",
                 "dataset_slugs": ["sleep-data"],
                 "freeze_commit": first_freeze,
                 "dataset_artifact_timing": [
                     {
                         "dataset_slug": "sleep-data",
-                        "location": "data/sleep/post-result-provenance.md",
+                        "location": "data/sleep-data/post-result-provenance.md",
                         "timing_role": "post_result_context",
                         "reason": "Added after the first analysis result became visible.",
                     }
                 ],
                 "artifacts": [
-                    {"role": "estimate", "path": "analysis/trajectory/outputs/primary.csv"}
+                    {"role": "estimate", "path": "analysis/sleep-trajectory/outputs/primary.csv"}
                 ],
                 "observations": [
                     {
                         "statement": "First result exists.",
-                        "source_path": "analysis/trajectory/outputs/primary.csv",
+                        "source_path": "analysis/sleep-trajectory/outputs/primary.csv",
                     }
                 ],
             },
@@ -532,7 +631,7 @@ ANALYSIS
             and item["analysis"] == "sleep-trajectory-second"
         ]
         self.assertEqual(len(blockers), 1)
-        self.assertIn("data/sleep/post-result-provenance.md", blockers[0]["paths"])
+        self.assertIn("data/sleep-data/post-result-provenance.md", blockers[0]["paths"])
 
     def test_completion_rejects_committed_changes_to_frozen_code_and_input(self) -> None:
         self._write_plan_assets()
@@ -540,13 +639,13 @@ ANALYSIS
         self._record_planned_analysis()
         freeze_commit = self._commit("ANALYSIS: freeze primary plan")
 
-        (self.root / "data" / "sleep" / "raw.csv").write_text(
+        (self.root / "data" / "sleep-data" / "raw.csv").write_text(
             "subject,day,y\n1,0,10\n1,1,99\n", encoding="utf-8"
         )
         (self.root / "scripts" / "analyses" / "trajectory.py").write_text(
             "print('changed after results were visible')\n", encoding="utf-8"
         )
-        outputs = self.root / "analysis" / "trajectory" / "outputs"
+        outputs = self.root / "analysis" / "sleep-trajectory" / "outputs"
         outputs.mkdir()
         estimate_path = outputs / "primary.csv"
         estimate_path.write_text("term,estimate\nslope,11.4\n", encoding="utf-8")
@@ -561,17 +660,17 @@ ANALYSIS
                 "estimand": "Population-average change per study day",
                 "unit_of_inference": "participant",
                 "primary_analysis": "Mixed model with participant random intercept and slope",
-                "analysis_path": "analysis/trajectory/README.md",
+                "analysis_path": "analysis/sleep-trajectory/README.md",
                 "code_path": "scripts/analyses/trajectory.py",
                 "dataset_slugs": ["sleep-data"],
                 "freeze_commit": freeze_commit,
                 "artifacts": [
-                    {"role": "estimate", "path": "analysis/trajectory/outputs/primary.csv"}
+                    {"role": "estimate", "path": "analysis/sleep-trajectory/outputs/primary.csv"}
                 ],
                 "observations": [
                     {
                         "statement": "A result exists.",
-                        "source_path": "analysis/trajectory/outputs/primary.csv",
+                        "source_path": "analysis/sleep-trajectory/outputs/primary.csv",
                     }
                 ],
             },
@@ -588,14 +687,14 @@ ANALYSIS
         self.assertEqual(len(blockers), 1)
         self.assertEqual(
             set(blockers[0]["paths"]),
-            {"data/sleep/raw.csv", "scripts/analyses/trajectory.py"},
+            {"data/sleep-data/raw.csv", "scripts/analyses/trajectory.py"},
         )
 
     def test_result_artifact_cannot_exist_in_declared_pre_result_freeze(self) -> None:
         self._write_plan_assets()
         self._record_dataset()
         self._record_planned_analysis()
-        outputs = self.root / "analysis" / "trajectory" / "outputs"
+        outputs = self.root / "analysis" / "sleep-trajectory" / "outputs"
         outputs.mkdir()
         estimate_path = outputs / "primary.csv"
         estimate_path.write_text("term,estimate\nslope,11.4\n", encoding="utf-8")
@@ -612,17 +711,17 @@ ANALYSIS
                 "estimand": "Population-average change per study day",
                 "unit_of_inference": "participant",
                 "primary_analysis": "Mixed model with participant random intercept and slope",
-                "analysis_path": "analysis/trajectory/README.md",
+                "analysis_path": "analysis/sleep-trajectory/README.md",
                 "code_path": "scripts/analyses/trajectory.py",
                 "dataset_slugs": ["sleep-data"],
                 "freeze_commit": freeze_commit,
                 "artifacts": [
-                    {"role": "estimate", "path": "analysis/trajectory/outputs/primary.csv"}
+                    {"role": "estimate", "path": "analysis/sleep-trajectory/outputs/primary.csv"}
                 ],
                 "observations": [
                     {
                         "statement": "A result exists.",
-                        "source_path": "analysis/trajectory/outputs/primary.csv",
+                        "source_path": "analysis/sleep-trajectory/outputs/primary.csv",
                     }
                 ],
             },
@@ -648,7 +747,7 @@ ANALYSIS
                 "estimand": "Population-average change per study day",
                 "unit_of_inference": "participant",
                 "primary_analysis": "Mixed model with participant random intercept and slope",
-                "analysis_path": "analysis/trajectory/README.md",
+                "analysis_path": "analysis/sleep-trajectory/README.md",
                 "code_path": "scripts/analyses/trajectory.py",
                 "dataset_slugs": ["sleep-data"],
                 "freeze_commit": freeze_commit,
@@ -666,7 +765,7 @@ ANALYSIS
                     "estimand": "Post-hoc maximum day contrast",
                     "unit_of_inference": "participant",
                     "primary_analysis": "Mixed model with participant random intercept and slope",
-                    "analysis_path": "analysis/trajectory/README.md",
+                    "analysis_path": "analysis/sleep-trajectory/README.md",
                     "code_path": "scripts/analyses/trajectory.py",
                     "dataset_slugs": ["sleep-data"],
                     "freeze_commit": freeze_commit,

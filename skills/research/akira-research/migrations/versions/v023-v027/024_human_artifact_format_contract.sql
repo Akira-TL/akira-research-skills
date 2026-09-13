@@ -1,0 +1,3 @@
+-- Activate strict human artifact format contracts.
+-- Existing project Git baseline is recorded by `research-db migrate` so unchanged
+-- pre-migration human artifacts can remain historically frozen without being rewritten.

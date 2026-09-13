@@ -17,11 +17,11 @@ description: 把当前 Research Question 中真正竞争的解释转成有范围
 
 每个 Hypothesis 明确 statement、scope、关键 assumptions、observable predictions 与能够实质削弱它的结果。预测必须在用于判别的新结果可见前形成，且落到真实可测 observation 层。
 
-完整科研契约见 [`references/CONTRACT.md`](references/CONTRACT.md)。
+完整科研契约见 [`references/CONTRACT.md`](references/CONTRACT.md)。一旦形成长期人类 Hypothesis Set artifact，严格按 [`references/HUMAN-FORMAT.md`](references/HUMAN-FORMAT.md) 的固定路径、H1/H2、Navigation 与目录索引格式写入；H3+ 才用于科学内容展开。
 
 ## 3. 保存来源与冻结边界
 
-区分用户提出、Agent 提议以及用户对 Agent proposal 的接受决定；接受探索不等于科学支持，也不改变原始来源。需要作为后续确认性 Design / Analysis 判别依据的 Hypothesis Set，按项目现有 `research-db` 契约登记并在结果前冻结；首次进入 frozen 前先通过学术语言检查，需要修正的人类科研正文必须在冻结前完成。
+区分用户提出、Agent 提议以及用户对 Agent proposal 的接受决定；接受探索不等于科学支持，也不改变原始来源。需要作为后续确认性 Design / Analysis 判别依据的 Hypothesis Set，按项目现有 `research-db` 契约登记并在结果前冻结；首次进入 frozen 前，`research-db` 先机械核验 `HUMAN-FORMAT.md` 的固定路径、H1/H2 与已知上游 Navigation，再执行学术语言检查。任一检查未通过都不得写入 frozen 状态，需要修正的人类科研正文必须在冻结前完成。
 
 ## 4. 返回总 Router
 

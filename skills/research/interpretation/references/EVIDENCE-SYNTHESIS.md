@@ -40,36 +40,8 @@ Synthesis 必须接收：
 - 不生成 evidence score 替代科学判断。
 - 不隐藏 contradiction、negative result 或 reporting gap。
 
-## 人类可读综合格式（内部模板）
+## 人类可读综合格式
 
-Evidence Synthesis 的人类可读输出应保持下面的信息结构，避免退化为普通文献综述；标题可按用户语言采用规范学术表述，不把内部模板名当作新的学术概念：
-
-```text
-Research Question:
-
-Current Evidence State:
-
-Supported:
-- claim
-- linked evidence units
-- scope boundary
-
-Indirectly Supported:
-- claim
-- inference gap
-
-Qualified:
-- limitation
-- alternative explanation
-
-Contradicted:
-- conflicting evidence
-
-Unresolved:
-- question that current evidence cannot distinguish
-
-Most Discriminating Next Evidence:
-- observation / experiment / analysis that would reduce uncertainty
-```
+长期保存为项目级 Interpretation 的人类综合，固定路径、H1/H2、Navigation、缺失状态和目录索引只由 [`HUMAN-FORMAT.md`](HUMAN-FORMAT.md) 定义。本文件只定义证据综合的科学语义：必须区分 `supported`、`indirectly_supported`、`qualified`、`contradicted` 与 `unresolved`，并给出最有判别力的下一条 evidence。
 
 该报告是 derived synthesis，不替代 `research.sqlite` 中的 Paper、Observation、Claim、Issue 和 Relation canonical records。

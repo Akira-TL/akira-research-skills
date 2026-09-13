@@ -6,6 +6,7 @@ from typing import Any
 from research_db_validation import validate
 from research_db_ops.candidates import discovery_readiness
 from .git import run_git
+from .human import core_human_artifact_readiness
 from .language import canonical_paths, academic_language_readiness
 from .literature import literature_completion_readiness
 from .project import (
@@ -20,6 +21,7 @@ from .messages import (
     append_communication_errors,
     append_downstream_errors,
     append_literature_errors,
+    append_human_artifact_errors,
     append_planning_errors,
     append_project_state_errors,
     append_research_tree_errors,
@@ -71,6 +73,7 @@ def validate_completion(project_root: Path) -> dict[str, Any]:
             "warnings": warnings,
             "discovery": dict(blocked),
             "literature": dict(blocked),
+            "human_artifacts": dict(blocked),
             "downstream": dict(blocked),
             "planning": dict(blocked),
             "research_tree": dict(blocked),
@@ -93,6 +96,8 @@ def validate_completion(project_root: Path) -> dict[str, Any]:
 
     literature = literature_completion_readiness(project_root, readiness)
     append_literature_errors(errors, literature["blockers"])
+    human_artifacts = core_human_artifact_readiness(project_root)
+    append_human_artifact_errors(errors, human_artifacts["blockers"])
     downstream = downstream_completion_readiness(project_root)
     append_downstream_errors(errors, downstream["blockers"])
     planning = planning_completion_readiness(project_root)
@@ -157,6 +162,7 @@ def validate_completion(project_root: Path) -> dict[str, Any]:
         "warnings": warnings,
         "discovery": readiness,
         "literature": literature,
+        "human_artifacts": human_artifacts,
         "downstream": downstream,
         "planning": planning,
         "research_tree": research_tree,

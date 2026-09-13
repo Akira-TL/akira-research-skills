@@ -70,7 +70,10 @@ from research_db_cli import (
     register_execution_commands,
     register_project_commands,
 )
-from research_db_support.schema import ACADEMIC_LANGUAGE_LEGACY_BASELINE_META_KEY
+from research_db_support.schema import (
+    ACADEMIC_LANGUAGE_LEGACY_BASELINE_META_KEY,
+    HUMAN_ARTIFACT_LEGACY_BASELINE_META_KEY,
+)
 from research_db_support.storage import connect
 
 
@@ -106,11 +109,19 @@ def cmd_migrate(args: argparse.Namespace) -> int:
                 "ON CONFLICT(key) DO NOTHING",
                 (ACADEMIC_LANGUAGE_LEGACY_BASELINE_META_KEY, legacy_baseline_commit),
             )
+            if 24 in applied:
+                connection.execute(
+                    "INSERT INTO meta(key, value) VALUES(?, ?) "
+                    "ON CONFLICT(key) DO NOTHING",
+                    (HUMAN_ARTIFACT_LEGACY_BASELINE_META_KEY, legacy_baseline_commit),
+                )
 
     payload = status(project_root)
     payload["applied_migrations"] = applied
     if applied and legacy_baseline_commit:
         payload["academic_language_legacy_baseline_commit"] = legacy_baseline_commit
+        if 24 in applied:
+            payload["human_artifact_legacy_baseline_commit"] = legacy_baseline_commit
     emit(payload)
     return 0
 

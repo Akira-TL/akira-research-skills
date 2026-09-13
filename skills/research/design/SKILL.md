@@ -17,7 +17,7 @@ description: 把 Research Question、Hypothesis prediction 或其他明确 scien
 
 在选择实验技术前明确 population / system、exposure / intervention / condition、comparator、outcome / measurement、time、unit of inference，以及真正要识别的 estimand / target contrast。
 
-完整 identification、measurement validity、bias protection、sample-size / precision 与 decision-boundary 规则见 [`references/CONTRACT.md`](references/CONTRACT.md)。
+完整 identification、measurement validity、bias protection、sample-size / precision 与 decision-boundary 规则见 [`references/CONTRACT.md`](references/CONTRACT.md)。长期人类 Design artifact 必须按 [`references/HUMAN-FORMAT.md`](references/HUMAN-FORMAT.md) 的固定路径、H1/H2、Navigation 与目录索引格式保存；领域细节放入 H3+，不删改固定 H2。
 
 ## 3. 形成可执行设计
 
@@ -27,6 +27,6 @@ description: 把 Research Question、Hypothesis prediction 或其他明确 scien
 
 ## 4. 冻结与交接
 
-当 Design 将用于真实数据产生或确认性结果判别时，按项目 `research-db` 契约保存 canonical design artifact 与结果前 freeze。首次进入 frozen / execution-ready 前先通过学术语言检查；需要修正的人类科研正文必须在冻结前完成。实际实施由 `study` 记录，任何实际偏离必须作为真实 execution / amendment 保存，而不是回写原 Design。
+当 Design 将用于真实数据产生或确认性结果判别时，按项目 `research-db` 契约保存 canonical design artifact 与结果前 freeze。首次进入 frozen / execution-ready 前，`research-db` 先机械核验 `HUMAN-FORMAT.md` 的固定路径、H1/H2 与已知上游 Navigation，再执行学术语言检查；任一检查未通过都不得写入 frozen / execution-ready。需要修正的人类科研正文必须在冻结前完成。实际实施由 `study` 记录，任何实际偏离必须作为真实 execution / amendment 保存，而不是回写原 Design。
 
 完成标准：研究对象、估计目标、独立单位、comparison、measurement、主要 bias protection、precision 与 decision boundary 足以判断该研究能否回答当前 scientific target，并明确是可直接实施还是仍有 blocker。

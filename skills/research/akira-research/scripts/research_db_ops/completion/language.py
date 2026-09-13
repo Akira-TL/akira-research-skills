@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import sqlite3
-import subprocess
-import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -10,16 +7,33 @@ from research_db_support.academic_language import (
     academic_language_blockers_for_path,
     project_uses_chinese_research_text,
 )
-from research_db_support.schema import (
-    ACADEMIC_LANGUAGE_LEGACY_BASELINE_META_KEY,
-    latest_version,
-)
+from research_db_support.schema import ACADEMIC_LANGUAGE_LEGACY_BASELINE_META_KEY
 from research_db_support.storage import connect, database_path
-from .git import commit_has_path, path_changed_after, run_git
+from .human.legacy import (
+    legacy_baseline_commit,
+    path_is_unchanged_since_baseline,
+    validate_legacy_baseline,
+)
 from .state import CURRENT_LOOPS
 
 def canonical_paths(project_root: Path) -> list[str]:
     paths = {"RESEARCH.md", ".research/research.sqlite"}
+    for relative in (
+        "research-tree/README.md",
+        "hypotheses/README.md",
+        "designs/README.md",
+        "study/README.md",
+        "data/README.md",
+        "analysis/README.md",
+        "interpretation/README.md",
+    ):
+        if (project_root / relative).is_file():
+            paths.add(relative)
+    interpretation_dir = project_root / "interpretation"
+    if interpretation_dir.is_dir():
+        for path in interpretation_dir.glob("*.md"):
+            if path.is_file():
+                paths.add(path.relative_to(project_root).as_posix())
     db_path = database_path(project_root)
     if not db_path.exists():
         return sorted(paths)
@@ -161,79 +175,18 @@ def _academic_language_paths(project_root: Path) -> list[Path]:
 
 
 def _legacy_language_baseline_commit(project_root: Path) -> str | None:
-    db_path = database_path(project_root)
-    if not db_path.exists():
-        return None
-    with connect(db_path) as connection:
-        try:
-            row = connection.execute(
-                "SELECT value FROM meta WHERE key = ?",
-                (ACADEMIC_LANGUAGE_LEGACY_BASELINE_META_KEY,),
-            ).fetchone()
-        except sqlite3.OperationalError:
-            return None
-    value = str(row["value"]).strip() if row else ""
-    return value or None
-
-
-def _schema_version_at_commit(project_root: Path, commit: str) -> int | None:
-    result = subprocess.run(
-        [
-            "git",
-            "-C",
-            str(project_root),
-            "show",
-            f"{commit}:.research/research.sqlite",
-        ],
-        capture_output=True,
-        check=False,
-    )
-    if result.returncode != 0 or not result.stdout:
-        return None
-    with tempfile.NamedTemporaryFile(suffix=".sqlite") as handle:
-        handle.write(result.stdout)
-        handle.flush()
-        try:
-            with sqlite3.connect(handle.name) as connection:
-                version = int(connection.execute("PRAGMA user_version").fetchone()[0])
-                if version:
-                    return version
-                row = connection.execute(
-                    "SELECT value FROM meta WHERE key = 'schema_version'"
-                ).fetchone()
-                return int(row[0]) if row else None
-        except (sqlite3.DatabaseError, ValueError, TypeError):
-            return None
+    return legacy_baseline_commit(project_root, ACADEMIC_LANGUAGE_LEGACY_BASELINE_META_KEY)
 
 
 def _validate_legacy_language_baseline(
     project_root: Path,
     baseline_commit: str | None,
 ) -> tuple[str | None, dict[str, Any] | None]:
-    if not baseline_commit:
-        return None, None
-    if run_git(
-        project_root, "merge-base", "--is-ancestor", baseline_commit, "HEAD"
-    ).returncode != 0:
-        return None, {
-            "reason": "academic_language_legacy_baseline_invalid",
-            "baseline_commit": baseline_commit,
-            "detail": "legacy baseline 不是当前 HEAD 的祖先。",
-        }
-    baseline_schema_version = _schema_version_at_commit(project_root, baseline_commit)
-    current_schema_version = latest_version()
-    if baseline_schema_version is None or baseline_schema_version >= current_schema_version:
-        return None, {
-            "reason": "academic_language_legacy_baseline_invalid",
-            "baseline_commit": baseline_commit,
-            "baseline_schema_version": baseline_schema_version,
-            "current_schema_version": current_schema_version,
-            "detail": (
-                "legacy baseline 只允许由真实 schema migration 记录；baseline commit 中的数据库 "
-                "schema 必须低于当前版本。"
-            ),
-        }
-    return baseline_commit, None
+    return validate_legacy_baseline(
+        project_root,
+        baseline_commit,
+        invalid_reason="academic_language_legacy_baseline_invalid",
+    )
 
 
 def _path_is_unchanged_legacy_text(
@@ -241,23 +194,7 @@ def _path_is_unchanged_legacy_text(
     path: Path,
     baseline_commit: str | None,
 ) -> bool:
-    if not baseline_commit:
-        return False
-    try:
-        relative_path = path.resolve().relative_to(project_root.resolve()).as_posix()
-    except ValueError:
-        return False
-    if run_git(
-        project_root, "merge-base", "--is-ancestor", baseline_commit, "HEAD"
-    ).returncode != 0:
-        return False
-    if not commit_has_path(project_root, baseline_commit, relative_path):
-        return False
-    if path_changed_after(project_root, baseline_commit, relative_path):
-        return False
-    return run_git(
-        project_root, "diff", "--quiet", baseline_commit, "--", relative_path
-    ).returncode == 0
+    return path_is_unchanged_since_baseline(project_root, path, baseline_commit)
 
 
 def academic_language_readiness(project_root: Path) -> dict[str, Any]:

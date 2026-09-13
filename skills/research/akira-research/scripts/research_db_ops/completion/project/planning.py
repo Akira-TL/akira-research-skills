@@ -117,7 +117,7 @@ def planning_completion_readiness(project_root: Path) -> dict[str, Any]:
             actual = {
                 path.relative_to(project_root).as_posix()
                 for path in directory.rglob("*.md")
-                if path.is_file()
+                if path.is_file() and path != directory / "README.md"
             }
             orphaned = sorted(actual - registered)
             if orphaned:

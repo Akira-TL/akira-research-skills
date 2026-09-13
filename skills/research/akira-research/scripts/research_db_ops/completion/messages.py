@@ -75,6 +75,69 @@ def append_literature_errors(errors: list[str], blockers: list[dict[str, Any]]) 
         elif reason == "database_missing":
             errors.append("research.sqlite 不存在；不能完成 Literature completion gate。")
 
+def append_human_artifact_errors(errors: list[str], blockers: list[dict[str, Any]]) -> None:
+    for blocker in blockers:
+        reason = str(blocker.get("reason", "unknown"))
+        path = str(blocker.get("path", "human artifact"))
+        if reason == "human_artifact_path_invalid":
+            errors.append(
+                f"人类科研 artifact 路径不符合 owner 固定格式：{path}；应为 {blocker.get('expected')}。"
+            )
+        elif reason == "human_artifact_missing_file":
+            errors.append(f"已登记的人类科研 artifact 不存在：{path}。")
+        elif reason == "human_artifact_upstream_link_missing":
+            errors.append(
+                f"人类科研 artifact 缺少已知上游导航：{path} → {blocker.get('target')}。"
+            )
+        elif reason == "human_index_missing_file":
+            errors.append(f"存在长期科研对象但缺少目录人类索引：{path}。")
+        elif reason == "human_index_missing_object_link":
+            errors.append(
+                f"目录人类索引没有覆盖全部 canonical 对象：{path}；缺少 "
+                + ", ".join(str(value) for value in blocker.get("targets", []))
+            )
+        elif reason == "human_index_missing_relation_link":
+            errors.append(
+                f"目录人类索引没有暴露已知科研对象关系：{path}；Relations 缺少 "
+                + ", ".join(str(value) for value in blocker.get("targets", []))
+            )
+        elif reason == "interpretation_human_path_nested":
+            errors.append(
+                "Interpretation 人类 artifact 必须保持 interpretation/<slug>.md 平铺结构："
+                + ", ".join(str(value) for value in blocker.get("paths", []))
+            )
+        elif reason == "interpretation_upstream_link_missing":
+            errors.append(f"Interpretation artifact 缺少 Research 首页之外的真实上游人类入口：{path}。")
+        elif reason == "human_markdown_h1_invalid":
+            errors.append(f"人类科研 Markdown 的一级标题不符合 owner 格式：{path}。")
+        elif reason == "human_markdown_section_order_invalid":
+            errors.append(f"人类科研 Markdown 的二级章节集合或顺序不符合 owner 格式：{path}。")
+        elif reason == "human_markdown_empty_sections":
+            errors.append(
+                f"人类科研 Markdown 存在空的必需章节：{path}（"
+                + ", ".join(str(value) for value in blocker.get("sections", []))
+                + "）。"
+            )
+        elif reason == "human_markdown_versioned_marker":
+            errors.append(f"人类科研 Markdown 不得使用 v1/v2 等格式版本 marker：{path}。")
+        elif reason == "human_artifact_legacy_baseline_invalid":
+            errors.append(
+                "人类科研格式迁移基线无效；不能据此豁免旧格式。"
+                f" baseline={blocker.get('baseline_commit')}；{blocker.get('detail')}"
+            )
+        elif reason in {
+            "human_markdown_link_absolute",
+            "human_markdown_link_outside_project",
+            "human_markdown_link_internal",
+            "human_markdown_link_missing",
+        }:
+            errors.append(
+                f"人类科研 Markdown 导航链接无效或越过人类/机器边界：{path} → {blocker.get('target')}。"
+            )
+        elif reason == "database_missing":
+            errors.append("research.sqlite 不存在；不能校验核心人类科研 artifact。")
+
+
 def append_downstream_errors(errors: list[str], blockers: list[dict[str, Any]]) -> None:
     for blocker in blockers:
         reason = str(blocker.get("reason", "unknown"))

@@ -524,8 +524,13 @@ Best next evidence: 定义可识别的中介估计目标并取得对应判别证
             marker = connection.execute(
                 "SELECT value FROM meta WHERE key = 'academic_language_legacy_baseline_commit'"
             ).fetchone()
+            human_marker = connection.execute(
+                "SELECT value FROM meta WHERE key = 'human_artifact_legacy_baseline_commit'"
+            ).fetchone()
         self.assertIsNotNone(marker)
         self.assertEqual(marker[0], baseline)
+        self.assertIsNotNone(human_marker)
+        self.assertEqual(human_marker[0], baseline)
 
         (self.root / "RESEARCH.md").write_text(
             legacy_text + "\n迁移后新增的 exploratory analysis 只用于测试新文本仍受规范约束。\n",
@@ -671,99 +676,6 @@ Best next evidence: 定义可识别的中介估计目标并取得对应判别证
             )
         result = academic_language_readiness(self.root)
         self.assertTrue(result["ready"], result["blockers"])
-
-    def test_planning_completion_requires_registered_frozen_artifacts(self) -> None:
-        hypotheses = self.root / "hypotheses"
-        designs = self.root / "designs"
-        hypotheses.mkdir()
-        designs.mkdir()
-        hypothesis_path = hypotheses / "causal-set.md"
-        design_path = designs / "causal-design.md"
-        hypothesis_path.write_text("# 假设集合\n\nH1 与 H2 给出不同预测。\n", encoding="utf-8")
-        design_path.write_text("# 研究设计\n\n主要估计目标与实验单位已经定义。\n", encoding="utf-8")
-
-        orphaned = planning_completion_readiness(self.root)
-        reasons = {item["reason"] for item in orphaned["blockers"]}
-        self.assertIn("hypothesis_artifacts_unregistered", reasons)
-        self.assertIn("design_artifacts_unregistered", reasons)
-
-        subprocess.run(
-            ["git", "-C", str(self.root), "add", "RESEARCH.md", ".research/research.sqlite", "hypotheses", "designs"],
-            check=True,
-        )
-        subprocess.run(
-            ["git", "-C", str(self.root), "commit", "-m", "RESEARCH: freeze hypothesis and design"],
-            check=True,
-            capture_output=True,
-        )
-        freeze_commit = subprocess.run(
-            ["git", "-C", str(self.root), "rev-parse", "HEAD"],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-
-        record_hypothesis_proposal(
-            self.root,
-            {
-                "slug": "causal-direct-effect",
-                "origin": "agent",
-                "original_statement": "目标因素可能具有独立因果贡献。",
-                "rationale": "该解释与当前目标不确定性一致，并需要与替代解释形成可判别预测。",
-            },
-        )
-        record_hypothesis_set(
-            self.root,
-            {
-                "slug": "causal-set",
-                "title": "因果竞争假设",
-                "target_uncertainty": "目标因素是否具有独立因果贡献？",
-                "artifact_path": "hypotheses/causal-set.md",
-                "status": "frozen",
-                "freeze_commit": freeze_commit,
-                "proposal_slugs": ["causal-direct-effect"],
-            },
-        )
-        record_design(
-            self.root,
-            {
-                "slug": "causal-design",
-                "title": "因果判别设计",
-                "hypothesis_set_slug": "causal-set",
-                "target_estimand": "干预组与对照组的主要结局差异",
-                "primary_outcome": "主要结局",
-                "experimental_unit": "独立随机化集群",
-                "artifact_path": "designs/causal-design.md",
-                "status": "frozen",
-                "feasibility_status": "unresolved",
-                "feasibility_summary": "关键设施和精度参数仍需确认。",
-                "freeze_commit": freeze_commit,
-            },
-        )
-        ready = planning_completion_readiness(self.root)
-        self.assertTrue(ready["ready"], ready["blockers"])
-        self.assertEqual(ready["hypothesis_set_count"], 1)
-        self.assertEqual(ready["design_count"], 1)
-        self.assertEqual(ready["frozen_design_count"], 1)
-
-        subprocess.run(
-            ["git", "-C", str(self.root), "add", ".research/research.sqlite"],
-            check=True,
-        )
-        subprocess.run(
-            ["git", "-C", str(self.root), "commit", "-m", "CHORE: register planning provenance"],
-            check=True,
-            capture_output=True,
-        )
-        clean = validate_completion(self.root)
-        self.assertTrue(clean["ok"], clean["errors"])
-        self.assertIn("hypotheses/causal-set.md", clean["git"]["canonical_paths"])
-        self.assertIn("designs/causal-design.md", clean["git"]["canonical_paths"])
-
-        design_path.write_text("# 研究设计\n\n冻结后的设计被未经提交地修改。\n", encoding="utf-8")
-        dirty = validate_completion(self.root)
-        self.assertFalse(dirty["ok"])
-        self.assertTrue(any("designs/causal-design.md" in error for error in dirty["errors"]))
 
     def test_completion_requires_committed_canonical_research_state(self) -> None:
         subprocess.run(

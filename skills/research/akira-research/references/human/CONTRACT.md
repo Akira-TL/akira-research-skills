@@ -37,7 +37,7 @@ H3 及更深层级可以按真实领域内容展开。机械 validator 只检查
 
 `.research/` 是机器状态和内部支持区。人类文档可以用内联代码或文字说明其中的 provenance pointer，但普通阅读导航不得把 `.research/` 文件作为用户点击进入的主要目标。
 
-每个 owner 负责写入创建时已经确定的上游关系；可更新索引负责反向发现。目录 README 是科研对象索引，不是裸文件清单。
+每个 owner 负责写入创建时已经确定的上游关系；可更新索引负责反向发现。核心科研对象的目录 README 固定区分 `Objects` 与 `Relations`：前者列 canonical 对象，后者用项目内相对链接暴露数据库或 artifact 中已经确定的上/下游关系。目录 README 是科研对象阅读图，不是裸文件清单。
 
 完成标准：复制或克隆整个项目后，人类导航仍可工作；validator 能识别断开的本地链接和越过人类/机器边界的导航。
 
@@ -66,3 +66,18 @@ Hypothesis、Design 或其他受结果可见前 freeze 约束的 artifact，一�
 `References` 用于 provenance、数据库、外部资源或其他精确 pointer；机器内部路径可以在这里作为内联代码记录，但不能伪装成人类阅读链接。
 
 owner Skill 可以采用不同章节名称，但必须在自己的 human format reference 中保持这种职责分离。
+
+## 7. 历史 artifact 通过迁移基线兼容，不回写冻结正文
+
+严格格式启用前已经存在的长期人类 artifact 可能属于结果前冻结或历史实施记录，不能仅为了新的排版契约被迫改写。旧项目执行包含人类格式契约激活 migration 的 `research-db migrate` 时，系统记录**迁移前 Git HEAD** 作为 legacy baseline。
+
+仅当某个旧 artifact 同时满足以下条件时，允许继续保留迁移前格式：
+
+- 该路径在真实 migration baseline commit 中已经存在；
+- baseline 的数据库 schema 低于当前 schema，不能用当前版本伪造 baseline；
+- baseline 之后该路径没有任何提交改写；
+- 当前 working tree 内容也与 baseline 相同。
+
+这类 artifact 作为历史记录保留，completion 将其列入 `grandfathered_paths`；新建的目录索引仍按当前格式提供反向导航。artifact 一旦在 migration 后被编辑，就立即失去 legacy 兼容资格，必须整体采用当前 owner `HUMAN-FORMAT.md`。新项目和 migration 后新建的 artifact 从一开始就没有豁免。
+
+因此 legacy baseline 解决的是“不要为排版破坏历史科研版本”，不是允许长期维持两套可编辑格式，也不能通过手工写入 meta marker 绕过当前格式。

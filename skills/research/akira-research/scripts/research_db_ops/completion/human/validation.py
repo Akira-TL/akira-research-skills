@@ -39,7 +39,8 @@ def human_markdown_blockers(
     project_root: Path,
     relative_path: str,
     *,
-    expected_h1: str,
+    expected_h1: str | None = None,
+    expected_h1_prefix: str | None = None,
     expected_h2: tuple[str, ...],
 ) -> tuple[dict[str, str], list[dict[str, Any]]]:
     path = project_root / relative_path
@@ -57,12 +58,18 @@ def human_markdown_blockers(
         )
 
     h1 = [match.group(1).strip() for match in _H1_RE.finditer(text)]
-    if h1 != [expected_h1]:
+    h1_valid = len(h1) == 1
+    if h1_valid and expected_h1 is not None:
+        h1_valid = h1[0] == expected_h1
+    if h1_valid and expected_h1_prefix is not None:
+        h1_valid = h1[0].startswith(expected_h1_prefix) and len(h1[0]) > len(expected_h1_prefix)
+    if not h1_valid:
         blockers.append(
             {
                 "reason": "human_markdown_h1_invalid",
                 "path": relative_path,
                 "expected": expected_h1,
+                "expected_prefix": expected_h1_prefix,
                 "headings": h1,
                 "count": len(h1),
             }
@@ -148,3 +155,33 @@ def human_markdown_blockers(
             )
 
     return sections, blockers
+
+
+def human_markdown_local_targets(
+    project_root: Path,
+    relative_path: str,
+    *,
+    section: str | None = None,
+) -> set[str]:
+    path = project_root / relative_path
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    if section is not None:
+        _, sections = _sections(text)
+        text = sections.get(section, "")
+
+    root = project_root.resolve()
+    targets: set[str] = set()
+    for match in _LINK_RE.finditer(text):
+        target = _markdown_target(match.group(1))
+        if not target or target.startswith("#") or _SCHEME_RE.match(target):
+            continue
+        path_part = target.split("#", 1)[0].split("?", 1)[0]
+        if not path_part or Path(path_part).is_absolute():
+            continue
+        resolved = (path.parent / path_part).resolve()
+        try:
+            relative = resolved.relative_to(root).as_posix()
+        except ValueError:
+            continue
+        targets.add(relative)
+    return targets

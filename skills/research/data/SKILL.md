@@ -17,7 +17,7 @@ description: 管理科研数据从 raw 到 curated / derived / analysis-ready �
 
 至少区分 raw、curated、derived，不原地覆盖 raw。Sample / participant / experimental unit identity 必须能追溯；technical replicate、aliquot、library、lane、batch、timepoint 与 biological unit 不得混淆。
 
-完整 Dataset identity、missingness、QC、transformation、freeze、external storage 与 Git 边界见 [`references/CONTRACT.md`](references/CONTRACT.md)。
+完整 Dataset identity、missingness、QC、transformation、freeze、external storage 与 Git 边界见 [`references/CONTRACT.md`](references/CONTRACT.md)。长期人类 Dataset README 必须按 [`references/HUMAN-FORMAT.md`](references/HUMAN-FORMAT.md) 的固定路径、H1/H2、Navigation 与目录索引格式保存。
 
 ## 3. QC 与 transformation
 

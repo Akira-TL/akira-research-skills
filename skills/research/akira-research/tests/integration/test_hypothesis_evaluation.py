@@ -28,7 +28,7 @@ class HypothesisEvaluationTests(unittest.TestCase):
         self.root = Path(self.tempdir.name)
         (self.root / "hypotheses").mkdir(parents=True)
         (self.root / "designs").mkdir(parents=True)
-        (self.root / "data" / "trial").mkdir(parents=True)
+        (self.root / "data" / "trial-data").mkdir(parents=True)
         (self.root / "analysis" / "primary").mkdir(parents=True)
         (self.root / "scripts" / "analyses").mkdir(parents=True)
         (self.root / "RESEARCH.md").write_text(
@@ -77,21 +77,222 @@ A 相对 B 的平均处理效应属于哪个预定义效应区域？
             encoding="utf-8",
         )
         (self.root / "hypotheses" / "treatment-effect.md").write_text(
-            "# 假设集合\n\n比较正向、较小和负向处理效应。\n",
+            """# Hypothesis Set: Treatment effect hypothesis set
+
+## Navigation
+
+- [Research](../RESEARCH.md)
+
+## Target Uncertainty
+
+A 相对 B 的平均处理效应属于哪个预定义效应区域？
+
+## Hypotheses
+
+### H1 — 正向效应
+
+Statement: 平均处理效应位于预定义正向区域。
+
+### H2 — 较小效应
+
+Statement: 平均处理效应低于实际意义阈值。
+
+## Discriminator Matrix
+
+主要估计量及其区间用于区分预定义效应区域。
+
+## Current Evidence
+
+未知：结果尚未可见。
+
+## Decision Boundary
+
+使用结果前定义的效应区域边界。
+""",
+            encoding="utf-8",
+        )
+        (self.root / "hypotheses" / "README.md").write_text(
+            "# Hypotheses\n\n## Objects\n\n- [Treatment effect hypothesis set](treatment-effect.md) — 冻结的效应区域假设集。\n\n"
+            "## Relations\n\n- [Treatment effect hypothesis set](treatment-effect.md) → [Treatment effect design](../designs/treatment-effect.md)\n",
             encoding="utf-8",
         )
         (self.root / "designs" / "treatment-effect.md").write_text(
-            "# 研究设计\n\n主要估计目标为 A 相对 B 的平均处理效应。\n",
+            """# Design: Treatment effect design
+
+## Navigation
+
+- [Research](../RESEARCH.md)
+- [Hypothesis Set](../hypotheses/treatment-effect.md)
+
+## Target Uncertainty
+
+A 相对 B 的平均处理效应属于哪个预定义效应区域？
+
+## Hypotheses and Discriminator
+
+比较预定义效应区域，主要估计量用于判别。
+
+## Estimand / Target Contrast
+
+E[Y(A)-Y(B)]。
+
+## Population / Experimental System
+
+测试总体。
+
+## Sampling and Experimental Unit
+
+个体为独立实验单位。
+
+## Groups / Exposure / Intervention / Comparator
+
+随机分配 A 与 B。
+
+## Measurements and Timepoints
+
+测量个体主要结局。
+
+## Controls and Bias Protection
+
+随机分配保护主要比较。
+
+## Primary Analysis Alignment
+
+按个体估计 A-B 平均差。
+
+## Precision / Sample Size Rationale
+
+测试 fixture 只验证溯源，不声称现实样本量依据。
+
+## Decision Boundary
+
+按结果前效应区域边界判别。
+
+## Exploratory Analyses
+
+不适用：当前没有探索性分析。
+
+## Feasibility / Ethics / Access Constraints
+
+不适用：测试 fixture 无额外限制。
+
+## Freeze and Amendments
+
+该设计在结果可见前冻结。
+""",
             encoding="utf-8",
         )
-        (self.root / "data" / "trial" / "README.md").write_text(
-            "# 数据来源\n\n个体是独立实验单位。\n", encoding="utf-8"
+        (self.root / "designs" / "README.md").write_text(
+            "# Designs\n\n## Objects\n\n- [Treatment effect design](treatment-effect.md) — 冻结设计。\n\n"
+            "## Relations\n\n- [Treatment effect design](treatment-effect.md) → [Treatment effect hypothesis set](../hypotheses/treatment-effect.md), [Primary analysis](../analysis/primary/README.md)\n",
+            encoding="utf-8",
         )
-        (self.root / "data" / "trial" / "raw.csv").write_text(
+        (self.root / "data" / "trial-data" / "README.md").write_text(
+            """# Dataset: Trial data
+
+## Navigation
+
+- [Research](../../RESEARCH.md)
+
+## Dataset Identity
+
+测试试验数据集。
+
+## Research Purpose
+
+用于估计 A-B 平均处理效应。
+
+## Source and Version
+
+来源为测试 fixture，当前版本固定。
+
+## Population and Sample Mapping
+
+个体是独立实验单位。
+
+## Data Layers and Artifacts
+
+原始 CSV 为原始数据。
+
+## Metadata / Missingness / Exclusions
+
+不适用：当前没有额外缺失或排除。
+
+## QC and Anomalies
+
+不适用：当前没有会改变分析的异常。
+
+## Processing and Reproduction
+
+分析入口由正式脚本记录。
+
+## Freeze / Access / Ethics
+
+由 Git 提交固定；无额外访问限制。
+""", encoding="utf-8"
+        )
+        (self.root / "data" / "README.md").write_text(
+            "# Data\n\n## Objects\n\n- [Trial data](trial-data/README.md) — 测试数据集。\n\n"
+            "## Relations\n\n- [Trial data](trial-data/README.md) → [Primary analysis](../analysis/primary/README.md)\n",
+            encoding="utf-8",
+        )
+        (self.root / "data" / "trial-data" / "raw.csv").write_text(
             "subject,treatment,y\n1,A,10\n2,B,9\n", encoding="utf-8"
         )
         (self.root / "analysis" / "primary" / "README.md").write_text(
-            "# 分析计划\n\n主要比较 A-B 平均差。\n", encoding="utf-8"
+            """# Analysis: Primary analysis
+
+## Navigation
+
+- [Research](../../RESEARCH.md)
+- [研究设计](../../designs/treatment-effect.md)
+- [数据集](../../data/trial-data/README.md)
+
+## Question / Target Contrast
+
+估计 A-B 平均处理效应。
+
+## Inputs and Data Freeze
+
+使用 trial-data 冻结输入。
+
+## Unit of Inference
+
+个体。
+
+## Primary Analysis
+
+估计 A-B 平均差及其不确定性。
+
+## Exploratory / Sensitivity Analyses
+
+不适用：当前没有额外探索或敏感性分析。
+
+## Assumptions and Diagnostics
+
+检查主要模型假设与诊断。
+
+## Outputs
+
+结果估计与诊断进入已登记产物。
+
+## Reproduction
+
+入口为 `scripts/analyses/primary.py`。
+
+## Result Boundary
+
+结果仅用于判别预定义效应区域。
+
+## Amendments
+
+不适用：当前没有修订。
+""", encoding="utf-8"
+        )
+        (self.root / "analysis" / "README.md").write_text(
+            "# Analyses\n\n## Objects\n\n- [Primary analysis](primary/README.md) — 主要确认性分析。\n\n"
+            "## Relations\n\n- [Primary analysis](primary/README.md) → [Treatment effect design](../designs/treatment-effect.md), [Trial data](../data/trial-data/README.md)\n",
+            encoding="utf-8",
         )
         (self.root / "scripts" / "analyses" / "primary.py").write_text(
             "print('analysis')\n", encoding="utf-8"
@@ -176,11 +377,99 @@ A 相对 B 的平均处理效应属于哪个预定义效应区域？
                 "source": "test fixture",
                 "received_at": "2026-08-28T00:00:00+00:00",
                 "unit_of_inference": "individual",
-                "provenance_path": "data/trial/README.md",
-                "artifacts": [{"role": "raw", "location": "data/trial/raw.csv"}],
+                "provenance_path": "data/trial-data/README.md",
+                "artifacts": [{"role": "raw", "location": "data/trial-data/raw.csv"}],
             },
         )
         return uncertainty, estimand
+
+    def test_hypothesis_freeze_rejects_invalid_human_format_before_state_transition(self) -> None:
+        (self.root / "hypotheses" / "treatment-effect.md").write_text(
+            "# 假设集合\n\n缺少固定章节和导航。\n",
+            encoding="utf-8",
+        )
+        scientific_freeze = self._commit("RESEARCH: stage invalid hypothesis format")
+        record_hypothesis_proposal(
+            self.root,
+            {
+                "slug": "treatment-effect-regions",
+                "origin": "agent",
+                "original_statement": "处理效应可能落在预定义的不同效应区域。",
+                "rationale": "该 proposal 将当前不确定性操作化为竞争状态。",
+            },
+        )
+
+        with self.assertRaisesRegex(ResearchDbError, "冻结前人类格式检查失败"):
+            record_hypothesis_set(
+                self.root,
+                {
+                    "slug": "treatment-effect",
+                    "title": "Treatment effect hypothesis set",
+                    "target_uncertainty": "A 相对 B 的平均处理效应属于哪个预定义效应区域？",
+                    "artifact_path": "hypotheses/treatment-effect.md",
+                    "status": "frozen",
+                    "freeze_commit": scientific_freeze,
+                    "proposal_slugs": ["treatment-effect-regions"],
+                },
+            )
+
+        with sqlite3.connect(self.root / ".research" / "research.sqlite") as connection:
+            row = connection.execute(
+                "SELECT status FROM hypothesis_sets WHERE slug='treatment-effect'"
+            ).fetchone()
+        self.assertIsNone(row)
+
+    def test_design_freeze_rejects_invalid_human_format_before_state_transition(self) -> None:
+        scientific_freeze = self._commit("RESEARCH: stage planning artifacts")
+        uncertainty = "A 相对 B 的平均处理效应属于哪个预定义效应区域？"
+        record_hypothesis_proposal(
+            self.root,
+            {
+                "slug": "treatment-effect-regions",
+                "origin": "agent",
+                "original_statement": "处理效应可能落在预定义的不同效应区域。",
+                "rationale": "该 proposal 将当前不确定性操作化为竞争状态。",
+            },
+        )
+        record_hypothesis_set(
+            self.root,
+            {
+                "slug": "treatment-effect",
+                "title": "Treatment effect hypothesis set",
+                "target_uncertainty": uncertainty,
+                "artifact_path": "hypotheses/treatment-effect.md",
+                "status": "frozen",
+                "freeze_commit": scientific_freeze,
+                "proposal_slugs": ["treatment-effect-regions"],
+            },
+        )
+        (self.root / "designs" / "treatment-effect.md").write_text(
+            "# 研究设计\n\n缺少固定章节和上游导航。\n",
+            encoding="utf-8",
+        )
+
+        with self.assertRaisesRegex(ResearchDbError, "冻结前人类格式检查失败"):
+            record_design(
+                self.root,
+                {
+                    "slug": "treatment-effect",
+                    "title": "Treatment effect design",
+                    "hypothesis_set_slug": "treatment-effect",
+                    "target_estimand": "E[Y(A)-Y(B)]",
+                    "primary_outcome": "individual outcome",
+                    "experimental_unit": "individual",
+                    "artifact_path": "designs/treatment-effect.md",
+                    "status": "frozen",
+                    "feasibility_status": "ready",
+                    "freeze_commit": scientific_freeze,
+                },
+            )
+
+        with sqlite3.connect(self.root / ".research" / "research.sqlite") as connection:
+            row = connection.execute(
+                "SELECT status FROM research_designs WHERE slug='treatment-effect'"
+            ).fetchone()
+        self.assertIsNone(row)
 
     def test_matching_confirmatory_analysis_requires_explicit_design_link(self) -> None:
         uncertainty, estimand = self._record_planning_and_dataset()
@@ -349,7 +638,7 @@ A 相对 B 的平均处理效应属于哪个预定义效应区域？
                 "source": "test fixture",
                 "received_at": "2026-08-28T00:00:00+00:00",
                 "unit_of_inference": "individual",
-                "provenance_path": "data/trial/README.md",
+                "provenance_path": "data/trial-data/README.md",
                 "artifacts": [{"role": "other", "location": "scripts/curate.py"}],
             },
         )
@@ -366,7 +655,7 @@ A 相对 B 的平均处理效应属于哪个预定义效应区域？
                     "source": "test fixture",
                     "received_at": "2026-08-28T00:00:00+00:00",
                     "unit_of_inference": "individual",
-                    "provenance_path": "data/trial/README.md",
+                    "provenance_path": "data/trial-data/README.md",
                     "artifacts": [{"role": "other", "location": "scripts/curate.py"}],
                 },
             )

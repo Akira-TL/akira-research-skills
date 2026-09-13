@@ -21,7 +21,7 @@ description: 把 Analysis result、Study/Design 边界与 literature evidence �
 
 ## 3. 综合 evidence
 
-跨论文和项目自身 evidence 按 evidence unit、independence、directness、scope 与 Critical Issue 综合，不按论文数量投票。需要形成项目级 evidence synthesis 时读取 [`references/EVIDENCE-SYNTHESIS.md`](references/EVIDENCE-SYNTHESIS.md)。
+跨论文和项目自身 evidence 按 evidence unit、independence、directness、scope 与 Critical Issue 综合，不按论文数量投票。需要形成项目级 evidence synthesis 时读取 [`references/EVIDENCE-SYNTHESIS.md`](references/EVIDENCE-SYNTHESIS.md)；形成长期人类 Interpretation artifact 时严格按 [`references/HUMAN-FORMAT.md`](references/HUMAN-FORMAT.md) 的固定路径、H1/H2、Navigation 与目录索引格式保存。
 
 Observation 对 Hypothesis / Claim 的 `supports`、`weakens`、`contradicts`、`qualifies` 等关系必须有 canonical basis；没有可追溯证据时保持 unresolved。
 
