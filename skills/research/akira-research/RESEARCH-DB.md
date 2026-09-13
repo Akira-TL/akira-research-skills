@@ -1,6 +1,6 @@
 # Research SQLite Contract
 
-本文件定义 `akira-research` 的项目级科研知识数据库契约。当前已实现 schema migration、`init`、`migrate`、`ingest-paper`、`add-paper-artifacts`、`ingest-reading`、`ingest-critical`、`record-communication`、`relocate-communication-artifact`、`status`、`validate`、FTS 检索与 `evidence` 查询。
+本文件定义 `akira-research` 的项目级科研知识数据库契约。当前已实现 schema migration、`init`、`migrate`、`ingest-paper`、`add-paper-artifacts`、`ingest-reading`、`ingest-critical`、Communication target workspace / release tag 管理、`relocate-communication-artifact`、`status`、`validate`、FTS 检索与 `evidence` 查询。
 
 ## 1. Source of truth
 
@@ -235,9 +235,11 @@ schema v19 同时加入 `research_nodes`、`research_edges` 与单例 `research_
 
 从 schema v26 起，Communication Product 还可以显式登记 `canonical_source_path`，用于标识该传播产品唯一的可编辑内容 authority。目标期刊准备不再复制新的 manuscript identity，而是通过 `communication_journals` 登记稳定 `journal code → journal name` 映射，通过 `communication_target_workspaces` 建立固定 `communication/<product-slug>/<journal-code>-release/`，再由 `communication_target_files` 固定 manifest、配置、build source、模板 source 与 QA 依据的 Git content OID。同一 Product 可以有多个 target workspace，但都指向同一 `canonical_source_path`。
 
-Target workspace 的 `source_commit` 是“本次目标格式 build 实际消费的 Communication source commit”，与 `communication_products.source_commit` 的“传播开始前科学证据冻结 commit”职责不同。`record-target-workspace` 要求 target `manifest.json` 同时声明 journal code、共享 canonical source、该 source commit、配置、build source、模板状态、QA 依据和 expected generated outputs。DOCX、XLSX、PDF、PPTX 等复合表示，以及 manifest 明确声明为 generated output 的 LaTeX 等文件，不作为 target source 登记，也不能留在 release source tree 里继续手改；发现问题时回到 canonical source / config / generator / template source 重建。
+Target workspace 的 `source_commit` 是“本次目标格式 build 实际消费的 Communication source commit”，与 `communication_products.source_commit` 的“传播开始前科学证据冻结 commit”职责不同。`record-target-workspace` 要求 target `manifest.json` 同时声明 journal code、共享 canonical source、该 source commit、配置、build source、argv 形式 `build_command`、模板状态、QA 依据和 expected generated outputs；`build_command` 必须用 `{output_dir}` 把正式 checkpoint 构建定向到临时目录。DOCX、XLSX、PDF、PPTX 等复合表示，以及 manifest 明确声明为 generated output 的 LaTeX 等文件，不作为 target source 登记，也不能留在 release source tree 里继续手改；发现问题时回到 canonical source / config / generator / template source 重建。
 
-完成的 Communication Product 会检查科学 `source_commit` 是否真实存在并属于当前历史、派生产物是否晚于 source commit，以及 source commit 后 Hypothesis / Design / Data / Analysis 等已登记科学 artifact 是否又发生变化。已登记 target workspace 另外检查 journal/workspace/manifest identity、canonical source 自 target source commit 后是否漂移、target source 文件 content OID 是否变化、manifest 文件集合是否漂移，以及生成表示是否误存进 source tree。该门禁可以审计版本与 build provenance，却不能自动判断一句标题或 Discussion Claim 是否在语义上过强；这种科研语义仍由主模型审查。
+从 schema v27 起，`communication_release_tags` 保存正式 manuscript checkpoint 与真实公开 release 的不可变 Git provenance。checkpoint 采用 `<article-code>/<journal-code>-<版本号>.<修订号>`，每个 target lineage 从 `1.0` 开始，同一整数 baseline 的修订号连续递增；新的整数 baseline 要保存用户批准或显式项目决定。创建 checkpoint 前除了检查 clean tree、source/build OID 与版本序列，还会实际在临时输出目录执行 manifest 的 `build_command`，要求全部 `generated_outputs` 可重建且构建过程不污染 source tree。public release 在已有 checkpoint 上增加 `-release-YYYYMMDD`，保存 release 日期与 evidence，并要求与基础 checkpoint 指向同一个 commit；它记录已经发生的公开事件，不要求当前 HEAD 仍处在当时的 target build 状态。表同时保存 commit OID 与 annotated tag object OID，使 completion 能发现 tag 缺失、lightweight 重建、对象替换或 commit 移动。正式稿件 tag 只通过 `research-db tag-communication-release` 创建，不使用 `v1.0`、第三段 patch、`final` 或 `latest`。
+
+完成的 Communication Product 会检查科学 `source_commit` 是否真实存在并属于当前历史、派生产物是否晚于 source commit，以及 source commit 后 Hypothesis / Design / Data / Analysis 等已登记科学 artifact 是否又发生变化。已登记 target workspace 另外检查 journal/workspace/manifest identity、canonical source 自 target source commit 后是否漂移、target source 文件 content OID 是否变化、manifest 文件集合是否漂移，以及生成表示是否误存进 source tree。已登记正式 manuscript tag 还会反查真实 Git ref、annotated tag 类型、tag object OID、commit OID 与 public release/base checkpoint 一致性，并拒绝 `<article-code>/...` 下未登记或非法命名的 tag。该门禁可以审计版本与 build provenance，却不能自动判断一句标题或 Discussion Claim 是否在语义上过强；这种科研语义仍由主模型审查。
 
 已有传播 artifact 需要因工作区整理改变路径时，先完成真实文件系统/Git 移动，再使用 `research-db relocate-communication-artifact` 更新既有 `communication_artifacts.path` 并写入 `change_log`。该操作不创建新 artifact，也不允许借迁移改变 role、`timing_role`、`source_commit` 或 Product 定义；目标路径必须已经存在，旧路径必须已经消失。对 completed Product 的 `source_support` 当前 fail closed，因为其路径是 pre-communication source commit 时序证明的一部分；若该类 artifact 需要重新组织，应设计能够保留历史身份的正式 migration，而不是静默改路径。
 
@@ -616,6 +618,7 @@ research-db hypothesis-evaluations
 research-db record-communication [bundle]
 research-db record-journal [bundle]
 research-db record-target-workspace [bundle]
+research-db tag-communication-release [bundle]
 research-db communications
 research-db status
 research-db validate
@@ -675,7 +678,7 @@ research-db paper-context P000001 --for-sidecar
 - Research Tree Node artifact 缺失、parent chain 出现 cycle、root/active state 悬空或 active path 不属于 root 子树；
 - Study provenance path / 本地 Study artifact 缺失、Study 引用未冻结或不存在的 Design、Sample parent 跨 Study、Assay-Sample 映射跨 Study，或 Study 时间状态自相矛盾；
 - Hypothesis Evaluation 引用未完成 Analysis、引用的解释 artifact 不属于同一 Analysis，或其 Hypothesis Set 与 Analysis 所实现 Design 不一致；
-- Communication artifact 指向不存在文件或不存在的 Communication Product；target journal code/workspace/manifest identity 不一致、canonical source 不合法、target source/build source 漂移，或 target release source tree 中保存了 declared/generated DOCX、XLSX、PDF、PPTX、LaTeX 等输出；
+- Communication artifact 指向不存在文件或不存在的 Communication Product；target journal code/workspace/manifest identity 不一致、canonical source 不合法、target source/build source 漂移，或 target release source tree 中保存了 declared/generated DOCX、XLSX、PDF、PPTX、LaTeX 等输出；正式 manuscript tag 非 annotated、缺失、对象/commit 被改写、未登记/命名非法，或 public release 与基础 checkpoint 不同 commit；
 - schema version / migration 状态异常；
 - sidecar pointer 指向不存在文件时给出明确错误或 warning。
 

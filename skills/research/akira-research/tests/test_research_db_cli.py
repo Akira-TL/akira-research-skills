@@ -203,6 +203,10 @@ class ResearchDbCliTests(unittest.TestCase):
             ["--project", str(self.root), "record-target-workspace"]
         )
         self.assertIsNone(target_args.bundle)
+        tag_args = build_parser().parse_args(
+            ["--project", str(self.root), "tag-communication-release"]
+        )
+        self.assertIsNone(tag_args.bundle)
         relocation_args = build_parser().parse_args(
             ["--project", str(self.root), "relocate-communication-artifact"]
         )
@@ -214,6 +218,10 @@ class ResearchDbCliTests(unittest.TestCase):
         self.assertEqual(
             bundle_path(self.root, "record-target-workspace", None),
             self.root / ".research" / "bundles" / "communication-target-workspace.json",
+        )
+        self.assertEqual(
+            bundle_path(self.root, "tag-communication-release", None),
+            self.root / ".research" / "bundles" / "communication-release-tag.json",
         )
         self.assertEqual(
             bundle_path(self.root, "relocate-communication-artifact", None),
@@ -282,7 +290,7 @@ class ResearchDbCliTests(unittest.TestCase):
             self.assertEqual(cmd_migrate(args), 0)
         payload = json.loads(stdout.getvalue())
 
-        self.assertEqual(payload["applied_migrations"], [25, 26])
+        self.assertEqual(payload["applied_migrations"], [25, 26, 27])
         self.assertEqual(payload["literature_human_format_legacy_baseline_commit"], baseline)
         self.assertEqual(
             payload["literature_marker_migration"]["migrated_paths"],
@@ -293,7 +301,7 @@ class ResearchDbCliTests(unittest.TestCase):
         self.assertNotIn("<!-- akira:literature-note:v1 -->", migrated)
         self.assertIn("用户笔记和正文必须原样保留。", migrated)
         with closing(sqlite3.connect(db_path)) as connection:
-            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 26)
+            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 27)
             stored = connection.execute(
                 "SELECT value FROM meta WHERE key = ?",
                 (LITERATURE_HUMAN_FORMAT_LEGACY_BASELINE_META_KEY,),

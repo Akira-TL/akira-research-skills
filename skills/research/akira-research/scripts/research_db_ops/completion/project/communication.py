@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
 from research_db_support.storage import ResearchDbError, connect, database_path
+from research_db_ops.communication.release_tag import (
+    BASELINE_APPROVAL_SOURCES,
+    RELEASE_EVIDENCE_SOURCES,
+    parse_communication_tag,
+)
 from research_db_ops.communication.target import (
     file_content_oid,
     load_target_manifest,
@@ -117,6 +123,7 @@ def communication_completion_readiness(project_root: Path) -> dict[str, Any]:
             "communication_journals",
             "communication_target_workspaces",
             "communication_target_files",
+            "communication_release_tags",
         }
         missing = sorted(required - tables)
         if missing:
@@ -160,6 +167,16 @@ def communication_completion_readiness(project_root: Path) -> dict[str, Any]:
             FROM communication_target_files AS ctf
             JOIN communication_target_workspaces AS ctw ON ctw.id = ctf.target_id
             ORDER BY ctf.id
+            """
+        ).fetchall()
+        release_tag_rows = connection.execute(
+            """
+            SELECT crt.*, ctw.product_id AS product_id, ctw.journal_code AS journal_code,
+                   cp.slug AS product_slug
+            FROM communication_release_tags AS crt
+            JOIN communication_target_workspaces AS ctw ON ctw.id = crt.target_id
+            JOIN communication_products AS cp ON cp.id = ctw.product_id
+            ORDER BY crt.id
             """
         ).fetchall()
         actual_target_directories = _target_release_directories(project_root)
@@ -445,6 +462,217 @@ def communication_completion_readiness(project_root: Path) -> dict[str, Any]:
                             "communication": slug,
                             "journal_code": code,
                             "paths": unexpected_target_paths,
+                        }
+                    )
+
+        checkpoint_rows_by_target: dict[int, list[Any]] = {}
+        for row in release_tag_rows:
+            if str(row["tag_kind"]) == "checkpoint":
+                checkpoint_rows_by_target.setdefault(int(row["target_id"]), []).append(row)
+        for target_id, rows in checkpoint_rows_by_target.items():
+            ordered = sorted(
+                rows,
+                key=lambda row: (int(row["version_number"]), int(row["revision_number"])),
+            )
+            previous: tuple[int, int] | None = None
+            for row in ordered:
+                current = (int(row["version_number"]), int(row["revision_number"]))
+                slug = str(row["product_slug"])
+                code = str(row["journal_code"])
+                if previous is None:
+                    if current != (1, 0):
+                        blockers.append(
+                            {
+                                "reason": "communication_release_version_sequence_invalid",
+                                "communication": slug,
+                                "journal_code": code,
+                                "version": f"{current[0]}.{current[1]}",
+                                "detail": "lineage 必须从 1.0 开始。",
+                            }
+                        )
+                elif current[0] == previous[0] and current[1] == previous[1] + 1:
+                    pass
+                elif current[0] == previous[0] + 1 and current[1] == 0:
+                    approval_source = str(row["baseline_approval_source"] or "").strip()
+                    approval = str(row["baseline_approval"] or "").strip()
+                    if approval_source not in BASELINE_APPROVAL_SOURCES or not approval:
+                        blockers.append(
+                            {
+                                "reason": "communication_release_baseline_approval_missing",
+                                "communication": slug,
+                                "journal_code": code,
+                                "version": f"{current[0]}.{current[1]}",
+                            }
+                        )
+                else:
+                    blockers.append(
+                        {
+                            "reason": "communication_release_version_sequence_invalid",
+                            "communication": slug,
+                            "journal_code": code,
+                            "version": f"{current[0]}.{current[1]}",
+                            "previous": f"{previous[0]}.{previous[1]}",
+                        }
+                    )
+                previous = current
+
+        for row in release_tag_rows:
+            if str(row["tag_kind"]) != "release":
+                continue
+            slug = str(row["product_slug"])
+            code = str(row["journal_code"])
+            release_date = str(row["release_date"] or "").strip()
+            evidence_source = str(row["release_evidence_source"] or "").strip()
+            evidence = str(row["release_evidence"] or "").strip()
+            invalid_date = False
+            try:
+                parsed_release_date = datetime.strptime(release_date, "%Y-%m-%d").date()
+                invalid_date = parsed_release_date > date.today()
+            except ValueError:
+                invalid_date = True
+            if (
+                invalid_date
+                or evidence_source not in RELEASE_EVIDENCE_SOURCES
+                or not evidence
+            ):
+                blockers.append(
+                    {
+                        "reason": "communication_public_release_evidence_invalid",
+                        "communication": slug,
+                        "journal_code": code,
+                        "tag": str(row["tag_name"]),
+                        "release_date": release_date,
+                    }
+                )
+
+        release_rows_by_key = {
+            (
+                int(row["target_id"]),
+                int(row["version_number"]),
+                int(row["revision_number"]),
+                str(row["tag_kind"]),
+            ): row
+            for row in release_tag_rows
+        }
+        registered_release_tags = {str(row["tag_name"]) for row in release_tag_rows}
+        for release_tag in release_tag_rows:
+            tag_name = str(release_tag["tag_name"])
+            slug = str(release_tag["product_slug"])
+            code = str(release_tag["journal_code"])
+            version_number = int(release_tag["version_number"])
+            revision_number = int(release_tag["revision_number"])
+            tag_kind = str(release_tag["tag_kind"])
+            release_date = str(release_tag["release_date"] or "").strip() or None
+            expected_tag = f"{slug}/{code}-{version_number}.{revision_number}"
+            if tag_kind == "release" and release_date:
+                expected_tag += "-release-" + release_date.replace("-", "")
+            parsed = parse_communication_tag(tag_name)
+            if parsed is None or tag_name != expected_tag:
+                blockers.append(
+                    {
+                        "reason": "communication_release_tag_name_invalid",
+                        "communication": slug,
+                        "journal_code": code,
+                        "tag": tag_name,
+                        "expected": expected_tag,
+                    }
+                )
+                continue
+
+            ref = f"refs/tags/{tag_name}"
+            if run_git(project_root, "show-ref", "--verify", "--quiet", ref).returncode != 0:
+                blockers.append(
+                    {
+                        "reason": "communication_release_tag_missing",
+                        "communication": slug,
+                        "journal_code": code,
+                        "tag": tag_name,
+                    }
+                )
+                continue
+            object_type = run_git(project_root, "cat-file", "-t", ref)
+            if object_type.returncode != 0 or object_type.stdout.strip() != "tag":
+                blockers.append(
+                    {
+                        "reason": "communication_release_tag_not_annotated",
+                        "communication": slug,
+                        "journal_code": code,
+                        "tag": tag_name,
+                    }
+                )
+            object_oid = run_git(project_root, "rev-parse", "--verify", ref)
+            current_object_oid = object_oid.stdout.strip() if object_oid.returncode == 0 else ""
+            if current_object_oid != str(release_tag["tag_object_oid"]):
+                blockers.append(
+                    {
+                        "reason": "communication_release_tag_object_changed",
+                        "communication": slug,
+                        "journal_code": code,
+                        "tag": tag_name,
+                        "recorded": str(release_tag["tag_object_oid"]),
+                        "actual": current_object_oid,
+                    }
+                )
+            peeled = run_git(project_root, "rev-parse", "--verify", f"{ref}^{{commit}}")
+            current_commit = peeled.stdout.strip() if peeled.returncode == 0 else ""
+            if current_commit != str(release_tag["commit_oid"]):
+                blockers.append(
+                    {
+                        "reason": "communication_release_tag_commit_changed",
+                        "communication": slug,
+                        "journal_code": code,
+                        "tag": tag_name,
+                        "recorded": str(release_tag["commit_oid"]),
+                        "actual": current_commit,
+                    }
+                )
+            if tag_kind == "release":
+                base = release_rows_by_key.get(
+                    (int(release_tag["target_id"]), version_number, revision_number, "checkpoint")
+                )
+                if base is None:
+                    blockers.append(
+                        {
+                            "reason": "communication_release_base_tag_missing",
+                            "communication": slug,
+                            "journal_code": code,
+                            "tag": tag_name,
+                        }
+                    )
+                elif str(base["commit_oid"]) != str(release_tag["commit_oid"]):
+                    blockers.append(
+                        {
+                            "reason": "communication_release_commit_mismatch",
+                            "communication": slug,
+                            "journal_code": code,
+                            "tag": tag_name,
+                            "base_tag": str(base["tag_name"]),
+                        }
+                    )
+
+        product_slugs = [
+            str(row["slug"])
+            for row in connection.execute("SELECT slug FROM communication_products ORDER BY id")
+        ]
+        for slug in product_slugs:
+            listed = run_git(project_root, "tag", "--list", f"{slug}/*")
+            if listed.returncode != 0:
+                continue
+            for tag_name in (line.strip() for line in listed.stdout.splitlines() if line.strip()):
+                if parse_communication_tag(tag_name) is None:
+                    blockers.append(
+                        {
+                            "reason": "communication_release_tag_name_invalid",
+                            "communication": slug,
+                            "tag": tag_name,
+                        }
+                    )
+                elif tag_name not in registered_release_tags:
+                    blockers.append(
+                        {
+                            "reason": "communication_release_tag_unregistered",
+                            "communication": slug,
+                            "tag": tag_name,
                         }
                     )
 

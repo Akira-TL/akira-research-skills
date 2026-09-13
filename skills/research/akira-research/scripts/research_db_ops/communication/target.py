@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import re
+import os
 import subprocess
+import tempfile
 import unicodedata
 from pathlib import Path
 from typing import Any
@@ -167,6 +169,19 @@ def load_target_manifest(
         for item in build_sources_raw
     ]
 
+    build_command_raw = payload.get("build_command")
+    if not isinstance(build_command_raw, list) or not build_command_raw:
+        raise ResearchDbError("manifest build_command 必须是非空 argv 数组。")
+    build_command: list[str] = []
+    for item in build_command_raw:
+        value = common.text(item, required=True, field="manifest build_command")
+        assert value is not None
+        build_command.append(value)
+    if not any("{output_dir}" in item for item in build_command):
+        raise ResearchDbError(
+            "manifest build_command 必须显式包含 `{output_dir}` 占位符，使 formal tag build 写入临时输出目录。"
+        )
+
     template_status = common.enum_value(
         payload.get("template_status"),
         TARGET_TEMPLATE_STATUSES,
@@ -226,9 +241,51 @@ def load_target_manifest(
         "workspace_path": workspace_relative,
         "manifest_path": manifest_relative,
         "template_status": template_status,
+        "build_command": build_command,
         "generated_outputs": generated_outputs,
         "files": files,
     }
+
+
+def verify_target_build(project_root: Path, manifest: dict[str, Any]) -> dict[str, Any]:
+    workspace_relative = str(manifest["workspace_path"])
+    workspace = project_root / workspace_relative
+    command_template = [str(item) for item in manifest["build_command"]]
+    generated_outputs = [str(item) for item in manifest["generated_outputs"]]
+    with tempfile.TemporaryDirectory(prefix="akira-release-build-") as temporary:
+        output_dir = Path(temporary).resolve()
+        command = [item.replace("{output_dir}", str(output_dir)) for item in command_template]
+        env = dict(os.environ)
+        env["AKIRA_RELEASE_OUTPUT_DIR"] = str(output_dir)
+        try:
+            result = subprocess.run(
+                command,
+                cwd=workspace,
+                env=env,
+                text=True,
+                capture_output=True,
+                check=False,
+                timeout=900,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise ResearchDbError(f"target release build 无法执行：{exc}") from exc
+        if result.returncode != 0:
+            detail = result.stderr.strip() or result.stdout.strip() or f"exit={result.returncode}"
+            raise ResearchDbError(f"target release build 失败：{detail}")
+        missing = [
+            item
+            for item in generated_outputs
+            if not (output_dir / item).is_file()
+        ]
+        if missing:
+            raise ResearchDbError(
+                "target release build 没有生成 manifest 声明的输出：" + ", ".join(missing)
+            )
+        return {
+            "ok": True,
+            "command": command_template,
+            "generated_outputs": generated_outputs,
+        }
 
 
 def stored_generated_outputs(

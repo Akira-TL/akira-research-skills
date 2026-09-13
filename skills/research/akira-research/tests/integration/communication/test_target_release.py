@@ -142,7 +142,19 @@ class CommunicationTargetReleaseTests(unittest.TestCase):
         workspace = self.root / "communication" / "yak-ecology" / f"{code}-release"
         workspace.mkdir(parents=True)
         (workspace / "build.py").write_text(
-            "# target-specific build entrypoint\n",
+            """from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--output-dir", required=True)
+args = parser.parse_args()
+output_dir = Path(args.output_dir)
+output_dir.mkdir(parents=True, exist_ok=True)
+for name in ("manuscript.tex", "manuscript.docx", "source-data.xlsx"):
+    (output_dir / name).write_bytes(b"deterministic test output")
+""",
             encoding="utf-8",
         )
         (workspace / "journal.json").write_text(
@@ -160,6 +172,7 @@ class CommunicationTargetReleaseTests(unittest.TestCase):
             "source_commit": source_commit,
             "config": "journal.json",
             "build_sources": ["build.py"],
+            "build_command": [sys.executable, "build.py", "--output-dir", "{output_dir}"],
             "template_status": "provided",
             "templates": ["template.tex"],
             "qa_evidence": ["QA.md"],

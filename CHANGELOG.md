@@ -18,3 +18,5 @@
 - 旧项目升级到严格人类格式契约时记录迁移前 Git baseline；只有契约启用前且迁移后未改动的历史 artifact 可原样保留，一旦迁移后编辑即必须采用当前格式，避免为了排版回写结果前冻结科研正文。
 - Literature 人类阅读区采用无格式版本号的 `akira:literature-note` 类型标记，并严格化 `literature/README.md`、Collection、论文文件命名、同名 PDF 与本地导航；迁移只确定性替换历史版本型 marker，更早旧 note 只在真实 Git migration baseline 下保持兼容。
 - Communication 草稿默认保持 venue-neutral，并为一个逻辑内容登记唯一 canonical editable source；目标期刊使用项目内稳定短代码和 `<journal-code>-release/` target workspace，共享同一稿件源，同时用 manifest、Git source commit 与 build-source content OID 检查 source/build drift，并阻止把 DOCX、XLSX、PDF、PPTX 或声明为 generated output 的 LaTeX 等生成表示当作可编辑 authority。
+- Communication 正式稿件 checkpoint 统一使用不可变 annotated tag：`<article-code>/<journal-code>-1.0`、`1.1` 等两段版本模型，新的整数 baseline 必须有用户批准或显式项目决定；formal checkpoint 会在临时目录实际执行 target manifest 的 `build_command` 验证可重建输出，真实公开后才允许增加 `-release-YYYYMMDD`，并要求与基础 checkpoint 指向同一个 commit。
+- 正式目标期刊稿件版本只通过 `research-db tag-communication-release` 建立 annotated Git tag：每个 article/journal lineage 从 `1.0` 开始，同一 baseline 连续使用 `1.1`、`1.2` 等修订号，新的整数 baseline 要求用户批准或显式项目决定；只有真实公开后才允许 `-release-YYYYMMDD`，并强制与基础 checkpoint 指向同一 commit。成功创建的正式稿件 tag 不得移动、force 更新、删除重建或复用名称。

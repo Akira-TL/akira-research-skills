@@ -59,7 +59,7 @@ communication/<article-code>/
 <journal-code>-release/
 ```
 
-`NC-release/` 表示“面向 NC 的 target release workspace”，不是“这篇论文已经公开发表”。真正公开发布的 Git tag 由独立发布契约管理，不能因为目录名带 `release` 就宣称论文已经正式发布。
+`NC-release/` 表示“面向 NC 的 target release workspace”，不是“这篇论文已经公开发表”。正式 manuscript checkpoint 与真正公开发布的 Git tag 统一由 [`RELEASE-TAGS.md`](RELEASE-TAGS.md) 管理；不能因为目录名带 `release` 就宣称论文已经正式发布。
 
 共享、多期刊复用的 build library / validator 继续放在 `scripts/communication/` 或项目既有代码区；只属于某一目标期刊的 entrypoint、配置、模板 source、manifest 与 QA 依据放在该 `<journal-code>-release/` 内。
 
@@ -74,6 +74,7 @@ communication/<article-code>/
   "source_commit": "<包含当前 canonical source 的 Git commit>",
   "config": "journal.json",
   "build_sources": ["build.py"],
+  "build_command": ["python", "build.py", "--output-dir", "{output_dir}"],
   "template_status": "provided",
   "templates": ["template.tex"],
   "qa_evidence": ["QA.md"],
@@ -93,6 +94,7 @@ communication/<article-code>/
 - `source_commit`：本次 target build 实际消费的 **Communication source commit**；它与 `communication_products.source_commit` 的“传播开始前科学证据冻结 commit”不是同一个概念；
 - `config`：目标期刊转换配置；
 - `build_sources`：本目标需要的转换/构建入口，至少一个；
+- `build_command`：正式稿件 checkpoint 前实际执行的 argv 数组，必须显式包含 `{output_dir}` 占位符；构建只能把生成表示写入该临时目录，不得回写 target source tree；
 - `template_status`：`provided | not_provided | not_applicable`；只有 `provided` 时 `templates` 才非空；
 - `templates`：目标期刊正式模板或项目维护的目标格式模板 source；
 - `qa_evidence`：当前 target build 的 QA 依据入口，至少一个；
@@ -116,7 +118,7 @@ research-db record-target-workspace
 }
 ```
 
-登记时会把 manifest/config/build source/template/QA 文件的 Git content OID 固定下来。之后这些文件发生变化，target workspace 自动进入 stale 状态，必须重新 build、重新 QA，再重新登记；不能静默沿用旧 target provenance。
+登记时会把 manifest/config/build source/template/QA 文件的 Git content OID 固定下来。之后这些文件发生变化，target workspace 自动进入 stale 状态，必须重新 build、重新 QA，再重新登记；不能静默沿用旧 target provenance。`record-target-workspace` 只固定 source/build provenance，不把一次本地构建成功冒充正式稿件 checkpoint；真正建立稿件版本 tag 时，`tag-communication-release` 会在临时输出目录实际执行 `build_command`，并要求 `generated_outputs` 全部生成成功。
 
 ## 5. 生成表示不是可编辑 authority
 
@@ -182,6 +184,7 @@ Target workspace 可以视为当前可用，至少满足：
 - manifest 的 journal/source/source_commit 与数据库一致；
 - canonical source 位于 product workspace，而不位于任何 target release workspace；
 - manifest/config/build source/template/QA 都存在、受 Git 管理并与登记 content OID 一致；
+- `build_command` 是非空 argv 数组并显式使用 `{output_dir}`，formal checkpoint 时可以在临时目录实际生成全部 `generated_outputs`；
 - canonical source 自 `source_commit` 后没有发生未重建的变化；
 - target workspace 没有保存 DOCX/XLSX/PDF/PPTX 等生成表示，也没有保存 manifest 声明的其他 generated output；
 - QA 依据存在；真正页面型交付物还按 `RENDERED-OUTPUT-QA.md` 执行实际渲染验收。

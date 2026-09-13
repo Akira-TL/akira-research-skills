@@ -9,6 +9,7 @@ from research_db_ops.communication import (
     record_journal,
     record_target_workspace,
     relocate_communication_artifact,
+    tag_communication_release,
 )
 
 
@@ -16,6 +17,7 @@ COMMUNICATION_BUNDLE_DEFAULTS = {
     "record-communication": "communication.json",
     "record-journal": "communication-journal.json",
     "record-target-workspace": "communication-target-workspace.json",
+    "tag-communication-release": "communication-release-tag.json",
     "relocate-communication-artifact": "communication-artifact-relocation.json",
 }
 
@@ -52,6 +54,16 @@ def register_communication_commands(
             record_target_workspace(
                 project_root,
                 load_json(project_root, "record-target-workspace", args.bundle),
+            )
+        )
+        return 0
+
+    def cmd_tag_communication_release(args: Any) -> int:
+        project_root = discover_project_root(args.project)
+        emit(
+            tag_communication_release(
+                project_root,
+                load_json(project_root, "tag-communication-release", args.bundle),
             )
         )
         return 0
@@ -96,6 +108,12 @@ def register_communication_commands(
             "登记 <journal-code>-release target build workspace，并绑定共享 canonical communication source。",
             "Target workspace JSON bundle；默认 .research/bundles/communication-target-workspace.json；传 '-' 从 stdin 读取。",
             cmd_record_target_workspace,
+        ),
+        (
+            "tag-communication-release",
+            "通过唯一受支持的 release gate 创建不可变 annotated manuscript checkpoint/public release tag。",
+            "Communication release tag JSON bundle；默认 .research/bundles/communication-release-tag.json；传 '-' 从 stdin 读取。",
+            cmd_tag_communication_release,
         ),
         (
             "relocate-communication-artifact",

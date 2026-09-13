@@ -19,7 +19,7 @@ Document Type 确定后，再按 [`references/context/DISCIPLINE-VENUE.md`](refe
 
 只从当前 `RESEARCH.md`、`research.sqlite`、Design / Study / Data / Analysis artifacts、原始论文及已完成 Interpretation 取事实。写作中发现新的科学解释或关键事实缺口时返回 `interpretation` 或其他对应 Skill，先更新 canonical state，再继续传播。
 
-传播产品开始产生多个文件时，先按 [`references/workspace/WORKSPACE-LAYOUT.md`](references/workspace/WORKSPACE-LAYOUT.md) 建立人类传播视图、内部传播支持区与可重放代码边界；不要等到稿件、Figure、Supplement、audit 和 validator 全部生成后再依赖 README 解释混杂目录。论文或综述需要目标期刊转换时，再读取 [`references/workspace/TARGET-RELEASE.md`](references/workspace/TARGET-RELEASE.md)：同一逻辑内容只保留一个 canonical editable source，期刊 workspace 只保存目标配置、build source、模板、manifest 与 QA 依据，DOCX / XLSX / PDF / generated LaTeX 等输出发生问题时回到 source / generator 重建。
+传播产品开始产生多个文件时，先按 [`references/workspace/WORKSPACE-LAYOUT.md`](references/workspace/WORKSPACE-LAYOUT.md) 建立人类传播视图、内部传播支持区与可重放代码边界；不要等到稿件、Figure、Supplement、audit 和 validator 全部生成后再依赖 README 解释混杂目录。论文或综述需要目标期刊转换时，再读取 [`references/workspace/TARGET-RELEASE.md`](references/workspace/TARGET-RELEASE.md)：同一逻辑内容只保留一个 canonical editable source，期刊 workspace 只保存目标配置、build source、模板、manifest 与 QA 依据，DOCX / XLSX / PDF / generated LaTeX 等输出发生问题时回到 source / generator 重建。形成正式稿件 checkpoint 或真实公开 release 时再读取 [`references/workspace/RELEASE-TAGS.md`](references/workspace/RELEASE-TAGS.md)，只通过 `research-db tag-communication-release` 建立不可变 annotated tag；普通草稿和每次 Git commit 不打稿件版本 tag。
 
 完整 Claim traceability、Results / Discussion / Methods、figure / table、citation 与 communication provenance 规则见 [`references/CONTRACT.md`](references/CONTRACT.md)。
 

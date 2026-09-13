@@ -580,7 +580,7 @@ class CoreHumanArtifactFormatTests(unittest.TestCase):
             capture_output=True,
         ).stdout.strip()
 
-        with patch("research_db_ops.completion.human.legacy.latest_version", return_value=26):
+        with patch("research_db_ops.completion.human.legacy.latest_version", return_value=27):
             accepted, blocker = validate_legacy_baseline(
                 self.root,
                 baseline,
@@ -592,7 +592,7 @@ class CoreHumanArtifactFormatTests(unittest.TestCase):
         self.assertIsNotNone(blocker)
         assert blocker is not None
         self.assertEqual(blocker["reason"], "human_artifact_legacy_baseline_invalid")
-        self.assertEqual(blocker["baseline_schema_version"], 26)
+        self.assertEqual(blocker["baseline_schema_version"], 27)
         self.assertEqual(blocker["introduced_in_schema"], 24)
 
     def test_index_must_link_every_registered_object(self) -> None:

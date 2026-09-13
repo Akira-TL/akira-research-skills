@@ -624,6 +624,13 @@ def list_communications(project_root: Path, *, limit: int = 100) -> dict[str, An
                         (target["id"],),
                     )
                 ]
+                target_item["release_tags"] = [
+                    dict(x)
+                    for x in connection.execute(
+                        "SELECT * FROM communication_release_tags WHERE target_id = ? ORDER BY version_number, revision_number, tag_kind",
+                        (target["id"],),
+                    )
+                ]
                 targets.append(target_item)
             item["target_workspaces"] = targets
             rows.append(item)

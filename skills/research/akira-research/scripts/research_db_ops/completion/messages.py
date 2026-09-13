@@ -574,6 +574,40 @@ def append_communication_errors(errors: list[str], blockers: list[dict[str, Any]
                 "项目出现 `<journal-code>-release/` 目录但没有登记对应 target journal/workspace："
                 + ", ".join(str(path) for path in blocker.get("paths", []))
             )
+        elif reason in {
+            "communication_release_tag_name_invalid",
+            "communication_release_tag_unregistered",
+        }:
+            errors.append(
+                f"Communication Product {blocker.get('communication')} 存在未通过正式 tag gate 建立的稿件 tag 或非法命名：{blocker.get('tag')}。"
+            )
+        elif reason in {
+            "communication_release_tag_missing",
+            "communication_release_tag_not_annotated",
+            "communication_release_tag_object_changed",
+            "communication_release_tag_commit_changed",
+        }:
+            errors.append(
+                f"Communication Product {blocker.get('communication')} 的正式 manuscript tag 已缺失、变为 lightweight 或被移动/重建：{blocker.get('tag')}。正式 tag 一经创建不可改写。"
+            )
+        elif reason in {
+            "communication_release_version_sequence_invalid",
+            "communication_release_baseline_approval_missing",
+        }:
+            errors.append(
+                f"Communication Product {blocker.get('communication')} / {blocker.get('journal_code')} 的正式稿件版本序列或整数 baseline 批准依据无效：{blocker.get('version')}。"
+            )
+        elif reason == "communication_public_release_evidence_invalid":
+            errors.append(
+                f"Communication Product {blocker.get('communication')} 的公开 release tag 缺少真实日期/evidence，或日期位于未来：{blocker.get('tag')}。"
+            )
+        elif reason in {
+            "communication_release_base_tag_missing",
+            "communication_release_commit_mismatch",
+        }:
+            errors.append(
+                f"Communication Product {blocker.get('communication')} 的公开 release tag 没有保持与基础 manuscript checkpoint 同一 commit：{blocker.get('tag')}。"
+            )
         elif reason == "completed_communication_missing_artifacts":
             errors.append(f"Communication Product {blocker.get('communication')} 已完成但没有登记传播 artifact。")
         elif reason in {"communication_assets_present_without_database", "communication_schema_missing"}:

@@ -50,6 +50,7 @@ REQUIRED_TABLES = {
     "communication_journals",
     "communication_target_workspaces",
     "communication_target_files",
+    "communication_release_tags",
     "research_nodes",
     "research_edges",
     "research_tree_state",
