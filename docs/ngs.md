@@ -11,7 +11,7 @@
 
 ## Upstream
 
-Akira 不复制第三方 NGS Skill 正文。OpenAI 官方 `openai/plugins` 由 Lattice 独立 submodule 固定版本，`ngs-analysis` 通过 `~/.agents/external/ngs-analysis` 暴露为运行时 source view。Akira `ngs` 根据当前 assay 按需读取 upstream Skill、registry、preflight、resource gate、runner 与 run envelope。
+Akira 不复制第三方 NGS Skill 正文。`ngs-analysis` 是按需外部执行来源，不是安装 Research family 的前置依赖；Lattice 环境可以继续提供 `~/.agents/external/ngs-analysis` 固定 source view，独立科研项目也可以使用用户明确安装或提供的等价官方来源。真正进入 NGS execution 而 upstream 缺失时，Agent 只报告所需能力并请求用户决定，不自行安装或猜测 runner 参数。
 
 upstream 的自动方法选择、软件 fallback 和方便性默认不拥有科研决策权。确认性分析的方法、design formula、contrast、normalization、covariate、multiple-testing 与 sensitivity 必须先由 Akira `analysis` 依据 Research Design 和 estimand 决定，再交给 NGS runner 执行。
 

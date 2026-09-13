@@ -1,6 +1,6 @@
 # 用户授权访问
 
-当网页抓取（WebFetch）、HTTP 请求或围绕目标论文的精确解析检索（exact-work resolution search）已定位目标页面，但全文需要用户已有的机构、订阅或出版社权限时，把浏览器部分明确路由到 [`../../../productivity/browser-access/SKILL.md`](../../../productivity/browser-access/SKILL.md)，并严格遵循其授权、持久浏览器配置和人工登录边界。
+当网页抓取、HTTP 请求或围绕目标论文的精确解析检索（exact-work resolution search）已定位目标页面，但全文需要用户已有的机构、订阅或出版社权限时，优先调用当前环境已经安装或提供的 `browser-access` / 等价可控浏览器能力，并遵循该能力自己的授权、持久浏览器配置和人工登录边界。当前项目只安装 Research family 且没有可控浏览器能力时，返回 `MANUAL_ACQUISITION_REQUIRED` 并告诉用户缺少的是可选浏览器能力；不要沿旧 Akira 总仓相对路径寻找 Skill，也不要为了继续自动化自行安装或反复尝试其他浏览器方案。
 
 交接目标只有两个：
 

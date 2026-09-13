@@ -2,32 +2,27 @@
 
 ## Source of truth
 
-第三方执行源由 Akira Lattice 以独立 Git submodule 管理：
+`ngs` 是 Akira Research 的可选领域适配层；OpenAI `ngs-analysis` 仍是独立第三方执行来源，不随本仓库 vendoring，也不是安装 Research family 的前置条件。
 
-```text
-skills/openai-plugins
-└── plugins/ngs-analysis
-```
-
-运行时通过只读 source view 暴露：
+任务真正进入 NGS execution 时，先检查当前环境是否已经提供可核验的 `ngs-analysis` source / plugin / runner。Akira Lattice 管理环境可以继续通过只读 source view：
 
 ```text
 ~/.agents/external/ngs-analysis
 ```
 
-该目录应直接指向 Lattice submodule 中的 `plugins/ngs-analysis`，并视为只读第三方源码。Akira 适配层不得直接修改 upstream checkout；需要改变科研行为时优先修改 Akira adapter，需要修补第三方实现时另行建立明确 fork / patch 流程。每次使用前读取：
+提供固定版本；其他独立项目可以使用用户明确安装或提供的等价官方来源。**不存在可核验 upstream 时只把 NGS execution 标为 optional dependency blocker**：说明需要的 assay / runner 与来源，然后请求用户决定是否安装；不得扫描任意路径、循环尝试安装、从模型记忆重建 runner 参数，或把第三方正文复制进 Research repo。
+
+若使用 Lattice source view，每次执行前读取：
 
 ```text
 ~/.agents/external/ngs-analysis/.codex-plugin/plugin.json
 ```
 
-以其中当前 `name`、`version`、`license` 与目录结构为准。Akira 不复制第三方 Skill 正文；需要 assay-specific 细节时直接读取当前 upstream 文件。
-
-当前首次接入固定于 OpenAI `plugins` repository commit `1e285826e604f66f7208f7ac4dba0fe8341d1f57`，其中 `ngs-analysis` 为 1.0.3。后续升级通过 submodule pointer 显式发生，不把“最新 upstream”自动漂移进科研执行。
+并固定实际 Git commit、plugin version 与 runner/workflow 路径。若使用其他用户批准的 upstream，记录其等价稳定 identity / version / location。旧首次接入曾固定于 OpenAI `plugins` commit `1e285826e604f66f7208f7ac4dba0fe8341d1f57`、`ngs-analysis` 1.0.3；这只是历史基线，不代表独立安装必须使用该版本，也不能把“最新 upstream”自动漂移进科研执行。
 
 ## Upstream lane map
 
-根据实际任务按需读取最窄 Skill：
+当前 upstream 提供相应路径时，根据实际任务按需读取最窄 Skill，例如：
 
 ```text
 skills/ngs-analysis-router/SKILL.md
@@ -50,22 +45,11 @@ skills/ngs-amplicon-microbiome/SKILL.md
 skills/ngs-shotgun-metagenomics/SKILL.md
 ```
 
-通用结构化资料按需读取：
-
-```text
-references/intake-schema.json
-references/pipeline-registry.json
-references/reference-registry.json
-references/database-registry.json
-references/run-envelope-schema.json
-references/runtime-install-guidance.md
-```
-
-实际执行优先使用 upstream 已提供的 `scripts/` 与 `workflows/`；调用前读取目标 runner 的 `--help` 或源码中参数定义，不从旧会话、模型记忆或本文件缓存具体 CLI 参数。
+通用 registry / run-envelope 等资料也只从当前实际 upstream 读取。调用 runner 前读取其当前 `--help` 或源码参数定义，不从旧会话、本文件或模型记忆缓存具体 CLI 参数。
 
 ## Akira 覆盖规则
 
-upstream 提供 execution implementation 与 assay-specific guidance，但以下决定仍由 Akira canonical Skill 拥有：
+upstream 提供 execution implementation 与 assay-specific guidance，但以下决定仍由本仓库 canonical Skill 拥有：
 
 - Research Question、Active Uncertainty 与 branch：`akira-research` / `research-tree`；
 - Study / Sample / Assay 的真实发生事件：`study`；
@@ -74,7 +58,7 @@ upstream 提供 execution implementation 与 assay-specific guidance，但以下
 - scientific Claim 与 evidence boundary：`interpretation`；
 - 适用科研规范：`research-standards`。
 
-当 upstream guidance 与上述 canonical 科研语义冲突时，保留 upstream 作为工具实现证据，并按 Akira scientific contract 决定是否执行、如何解释以及需要什么 amendment。
+当 upstream guidance 与上述科研语义冲突时，保留 upstream 作为工具实现依据，并按 Akira scientific contract 决定是否执行、如何解释以及需要什么 amendment。
 
 ## 安装与下载
 

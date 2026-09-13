@@ -17,9 +17,9 @@ description: 为 Akira Research 执行高通量测序（Next-Generation Sequenci
 
 ## 2. 识别 assay 与上游能力
 
-根据实际输入与 assay 选择最窄执行通道。需要查看官方 OpenAI `ngs-analysis` 的 assay-specific 规则、runner、registry、resource gate 或 run envelope 时读取 [`references/UPSTREAM.md`](references/UPSTREAM.md)，并从运行时 source view `~/.agents/external/ngs-analysis/` 读取对应原始文件；不要把第三方 Skill 正文复制进 Akira 自研 Skill。
+根据实际输入与 assay 选择最窄执行通道。需要查看官方 OpenAI `ngs-analysis` 的 assay-specific 规则、runner、registry、resource gate 或 run envelope 时读取 [`references/UPSTREAM.md`](references/UPSTREAM.md)，再使用当前环境已经存在且可核验的 upstream source；不要把第三方 Skill 正文复制进 Akira Research。
 
-执行前核验运行时 source view 与其 `.codex-plugin/plugin.json`，并记录当前 upstream Git commit、plugin version 与实际 runner/workflow 相对路径。source view 不存在或目标 runner/registry 缺失时，把它作为执行环境 blocker 返回 owning Skill；不要从模型记忆重建 upstream 参数或默认值。
+执行前固定实际 upstream identity、版本与 runner/workflow 路径。Research family 独立安装后如果 upstream 尚未提供，把它作为**可选领域执行依赖**返回 owning Skill，并向用户说明需要什么能力；未获同意不安装、不扫描替代路径，也不从模型记忆重建 upstream 参数或默认值。
 
 完成标准：assay、输入层级、选用的 upstream lane / runner 与必要 reference/database 已明确，且实际读取了会影响执行的当前 upstream 文件。
 
