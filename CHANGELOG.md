@@ -17,3 +17,4 @@
 - Hypothesis / Design 首次进入 frozen / execution-ready 前先通过严格人类格式 preflight，再执行学术语言检查；格式错误不会先写入冻结状态，避免 completion 阶段才发现必须回写冻结正文。
 - 旧项目升级到严格人类格式契约时记录迁移前 Git baseline；只有契约启用前且迁移后未改动的历史 artifact 可原样保留，一旦迁移后编辑即必须采用当前格式，避免为了排版回写结果前冻结科研正文。
 - Literature 人类阅读区采用无格式版本号的 `akira:literature-note` 类型标记，并严格化 `literature/README.md`、Collection、论文文件命名、同名 PDF 与本地导航；迁移只确定性替换历史版本型 marker，更早旧 note 只在真实 Git migration baseline 下保持兼容。
+- Communication 草稿默认保持 venue-neutral，并为一个逻辑内容登记唯一 canonical editable source；目标期刊使用项目内稳定短代码和 `<journal-code>-release/` target workspace，共享同一稿件源，同时用 manifest、Git source commit 与 build-source content OID 检查 source/build drift，并阻止把 DOCX、XLSX、PDF、PPTX 或声明为 generated output 的 LaTeX 等生成表示当作可编辑 authority。

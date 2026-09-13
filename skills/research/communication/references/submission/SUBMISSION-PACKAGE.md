@@ -19,7 +19,9 @@ current author instructions / policy source
 
 不同阶段的文件要求不能混用。例如 initial cover letter、revision response、accepted-manuscript source files 和 production proof 是不同交付物；不要因为以前某个阶段要求某文件，就默认当前阶段仍要求。
 
-如果目标 venue 尚未确定，可以准备 venue-neutral manuscript，但不能假装已经知道 citation style、word limit、cover letter、declaration 或 file format。
+如果目标 venue 尚未确定，可以继续完成 venue-neutral manuscript，但不能假装已经知道 citation style、word limit、cover letter、declaration 或 file format，也不要求为了投稿准备提前选择期刊。真正进入本 Submission Package workflow 时，按 [`../workspace/TARGET-RELEASE.md`](../workspace/TARGET-RELEASE.md) 先登记稳定 journal code，并建立 `<journal-code>-release/`；所有目标期刊 deliverable 都从同一个 canonical editable source 构建，不复制第二份可独立修改的 manuscript。
+
+Target release workspace 负责保存该期刊的配置、build source、模板、manifest 与 QA 依据。DOCX、XLSX、PDF、generated LaTeX 等正式表示只由 source/build 生成；若这些表示有内容或排版错误，回到 canonical source、配置、generator 或模板 source 修正后重新 build，不直接修改生成文件。
 
 ## 2. 建立 Deliverable Matrix
 

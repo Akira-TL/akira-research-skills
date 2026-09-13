@@ -16,7 +16,7 @@ scripts/communication/
 
 - `communication/<product-slug>/`：人类传播视图。保存作者、合作者、审稿人或目标受众需要直接阅读、检查或提交的传播产物；
 - `.research/communication/<product-slug>/`：内部传播支持区。保存材料盘点、引用/方法/一致性审计、追溯表、验证报告、reviewer-style stress test 等主要供 Agent 或科研审计使用的支持 artifact；
-- `scripts/communication/`：可重放生成器、转换器与 validator。代码保持在正常工程代码区，不因属于某个传播产品就复制进人类传播目录。
+- `scripts/communication/`：跨目标复用的可重放生成器、转换器与 validator。代码保持在正常工程代码区；仅某一目标期刊需要的 entrypoint、配置、模板 source、manifest 与 QA 依据按 [`TARGET-RELEASE.md`](TARGET-RELEASE.md) 放入对应 `<journal-code>-release/`。
 
 `<product-slug>` 是当前 Communication Product 的稳定技术标识，不代表某个固定研究方向、论文类型或领域名称。每个真实传播产品根据自身目的选择 slug；不得把示例 slug 当作目录规范。
 
@@ -29,10 +29,10 @@ communication/
 ├── README.md                 # 可选：多产品导航
 └── <product-slug>/
     ├── README.md             # 可选：该产品的人类入口
-    ├── <主要交付物>
+    ├── <canonical editable source / 主要交付内容>
     ├── figures/              # 按需
     ├── supplement/           # 按需
-    └── submission/           # 仅真实投稿/提交 package 需要时出现
+    └── <journal-code>-release/  # 仅真实目标期刊转换时出现
 ```
 
 这里不规定某种论文必须叫 `manuscript.md`，也不规定 Figure、Supplement 或 submission 子目录必须存在；结构随真实传播类型和 venue 要求出现。唯一固定原则是：**用户进入 `communication/<product-slug>/` 时，应主要看到当前传播产品本身，而不是生成和审计它的后台文件。**
@@ -66,11 +66,11 @@ communication/
 
 内部支持 artifact 仍可作为 `communication_artifacts` 登记、进入 Git 完整性门禁和长期溯源；隐藏目录只改变人类阅读界面，不降低其审计地位，也不会把它提升为 canonical scientific evidence。
 
-## 4. 版本与历史
+## 4. 版本、目标期刊与历史
 
-普通 draft 的历史版本由 Git 保存，不默认建立 `archive/`，也不通过 `*_v0.md`、`*_v1.md` 的无限复制代替版本控制。当前工作区优先保留正在使用的有效版本。
+普通 draft 的历史版本由 Git 保存，不默认建立 `archive/`，也不通过 `*_v0.md`、`*_v1.md`、`final`、`latest` 等文件副本代替版本控制。当前工作区只维护同一逻辑内容的 canonical editable source。
 
-只有具有独立外部身份或真实交付意义的历史状态，例如首次投稿 package、正式 revision、resubmission、accepted manuscript，才继续作为独立 Communication Product 或明确的 submission/revision artifact 保存。
+目标期刊不是新的科学稿件 identity。一个 Communication Product 可以拥有多个 `<journal-code>-release/`，但它们都从同一个 canonical editable source 构建；具体契约见 [`TARGET-RELEASE.md`](TARGET-RELEASE.md)。首次投稿、修订、重新投稿以及真正公开发布的历史身份由 Git commit / tag 与相应 provenance 表达，不靠复制一份可继续独立修改的 manuscript 保存历史。
 
 ## 5. 产品边界与数据库登记
 

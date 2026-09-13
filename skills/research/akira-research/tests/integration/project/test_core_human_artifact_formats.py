@@ -592,7 +592,7 @@ class CoreHumanArtifactFormatTests(unittest.TestCase):
         self.assertIsNotNone(blocker)
         assert blocker is not None
         self.assertEqual(blocker["reason"], "human_artifact_legacy_baseline_invalid")
-        self.assertEqual(blocker["baseline_schema_version"], 25)
+        self.assertEqual(blocker["baseline_schema_version"], 26)
         self.assertEqual(blocker["introduced_in_schema"], 24)
 
     def test_index_must_link_every_registered_object(self) -> None:

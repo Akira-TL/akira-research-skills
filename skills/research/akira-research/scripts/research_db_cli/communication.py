@@ -6,12 +6,16 @@ from research_db_core import discover_project_root
 from research_db_ops.communication import (
     list_communications,
     record_communication,
+    record_journal,
+    record_target_workspace,
     relocate_communication_artifact,
 )
 
 
 COMMUNICATION_BUNDLE_DEFAULTS = {
     "record-communication": "communication.json",
+    "record-journal": "communication-journal.json",
+    "record-target-workspace": "communication-target-workspace.json",
     "relocate-communication-artifact": "communication-artifact-relocation.json",
 }
 
@@ -28,6 +32,26 @@ def register_communication_commands(
             record_communication(
                 project_root,
                 load_json(project_root, "record-communication", args.bundle),
+            )
+        )
+        return 0
+
+    def cmd_record_journal(args: Any) -> int:
+        project_root = discover_project_root(args.project)
+        emit(
+            record_journal(
+                project_root,
+                load_json(project_root, "record-journal", args.bundle),
+            )
+        )
+        return 0
+
+    def cmd_record_target_workspace(args: Any) -> int:
+        project_root = discover_project_root(args.project)
+        emit(
+            record_target_workspace(
+                project_root,
+                load_json(project_root, "record-target-workspace", args.bundle),
             )
         )
         return 0
@@ -57,9 +81,21 @@ def register_communication_commands(
     for name, help_text, bundle_help, handler in (
         (
             "record-communication",
-            "登记传播产物、pre-communication source commit 与派生 artifact provenance。",
+            "登记传播产物、pre-communication source commit、canonical editable source 与派生 artifact provenance。",
             "Communication JSON bundle；默认 .research/bundles/communication.json；传 '-' 从 stdin 读取。",
             cmd_record_communication,
+        ),
+        (
+            "record-journal",
+            "登记或刷新项目内稳定 target journal code；同一期刊不能创建多个临时代码。",
+            "Journal registry JSON bundle；默认 .research/bundles/communication-journal.json；传 '-' 从 stdin 读取。",
+            cmd_record_journal,
+        ),
+        (
+            "record-target-workspace",
+            "登记 <journal-code>-release target build workspace，并绑定共享 canonical communication source。",
+            "Target workspace JSON bundle；默认 .research/bundles/communication-target-workspace.json；传 '-' 从 stdin 读取。",
+            cmd_record_target_workspace,
         ),
         (
             "relocate-communication-artifact",

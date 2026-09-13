@@ -11,7 +11,7 @@ description: 把已经建立的 scientific state、方法、证据边界与 prov
 
 明确产物类型、受众与用途后，**正式起草长篇 prose 前先按 [`references/WRITING-ROUTER.md`](references/WRITING-ROUTER.md) 判定整篇文稿的主要科学贡献属于原始研究论文、普通文献综述，还是系统综述 / 范围综述 / 荟萃分析（Meta-analysis）等正式证据综合研究（evidence synthesis research）**。不得因为当前正在写 Introduction、文献回顾段落或某个分析章节，就混用整篇文稿的写作流程。
 
-Document Type 确定后，再按 [`references/context/DISCIPLINE-VENUE.md`](references/context/DISCIPLINE-VENUE.md) 判断目标学科共同体与 publication venue 的表达、审查和提交惯例。文稿类型决定科学写作流程；discipline / venue 只能改变同一 evidence 的呈现重点，不能反过来改变 canonical scientific state。目标 Venue 已知时调用 `research-standards` 核验当前官方 Author Instructions / reporting guideline / artifact policy；未知时不凭经验写死具体字数、章节名或附件要求。
+Document Type 确定后，再按 [`references/context/DISCIPLINE-VENUE.md`](references/context/DISCIPLINE-VENUE.md) 判断目标学科共同体。**普通草稿默认保持中立，不要求用户先选期刊，也不因某个潜在 Venue 提前改变整篇结构。** 只有用户真正进入投稿、终稿转换或其他明确目标期刊准备时，才调用 `research-standards` 核验当前官方 Author Instructions，并按 [`references/workspace/TARGET-RELEASE.md`](references/workspace/TARGET-RELEASE.md) 登记稳定期刊代码和 `<journal-code>-release/` target workspace。Document Type 决定科学写作流程；discipline / venue 只能改变同一 evidence 的目标表示，不能反过来改变 canonical scientific state。
 
 若目标属于系统综述、范围综述或荟萃分析，而正式检索、筛选、质量评价、数据提取或综合 provenance 尚未完成，退出 Communication 返回 `akira-research` 补齐科研流程，不能用普通综述写作替代方法学过程。
 
@@ -19,7 +19,7 @@ Document Type 确定后，再按 [`references/context/DISCIPLINE-VENUE.md`](refe
 
 只从当前 `RESEARCH.md`、`research.sqlite`、Design / Study / Data / Analysis artifacts、原始论文及已完成 Interpretation 取事实。写作中发现新的科学解释或关键事实缺口时返回 `interpretation` 或其他对应 Skill，先更新 canonical state，再继续传播。
 
-传播产品开始产生多个文件时，先按 [`references/workspace/WORKSPACE-LAYOUT.md`](references/workspace/WORKSPACE-LAYOUT.md) 建立人类传播视图、内部传播支持区与可重放代码边界；不要等到稿件、Figure、Supplement、audit 和 validator 全部生成后再依赖 README 解释混杂目录。
+传播产品开始产生多个文件时，先按 [`references/workspace/WORKSPACE-LAYOUT.md`](references/workspace/WORKSPACE-LAYOUT.md) 建立人类传播视图、内部传播支持区与可重放代码边界；不要等到稿件、Figure、Supplement、audit 和 validator 全部生成后再依赖 README 解释混杂目录。论文或综述需要目标期刊转换时，再读取 [`references/workspace/TARGET-RELEASE.md`](references/workspace/TARGET-RELEASE.md)：同一逻辑内容只保留一个 canonical editable source，期刊 workspace 只保存目标配置、build source、模板、manifest 与 QA 依据，DOCX / XLSX / PDF / generated LaTeX 等输出发生问题时回到 source / generator 重建。
 
 完整 Claim traceability、Results / Discussion / Methods、figure / table、citation 与 communication provenance 规则见 [`references/CONTRACT.md`](references/CONTRACT.md)。
 

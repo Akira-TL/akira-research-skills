@@ -231,9 +231,13 @@ schema v19 同时加入 `research_nodes`、`research_edges` 与单例 `research_
 
 从 schema v15 起，完整的 pre-data → Analysis → Interpretation 黑盒进一步稳定暴露出 `hypothesis_evaluations`：一次 Evaluation 连接一个 Hypothesis Set、一个 completed Analysis 和该 Analysis 已登记的具体解释/结果 artifact，并记录本轮总体判别为 `unresolved | partially_resolved | resolved | not_interpretable`、decision、summary 与时间。Evaluation 是追加式科研事件，同一 Hypothesis Set 可以被后续不同 Analysis 继续产生新的 Evaluation；同一 Analysis 对同一 Hypothesis Set 的评价不可覆盖。这样保存证据更新历史，而不把“最新科学状态”错误塞进 Hypothesis Set 的 freeze 生命周期字段。
 
-从 schema v16 起，科研传播黑盒进一步稳定暴露出 `communication_products` 与 `communication_artifacts`。Communication Product 只保存传播目标、受众、状态以及传播开始前的 `source_commit`；artifact 保存题目/摘要、方法、结果、讨论、图、图注、大众摘要、追溯文件和生成脚本等路径，并用 `timing_role=source_support|derived_output` 约束其相对 source commit 的时序。一个 Product 的 artifact 可以分布在 `communication/<product-slug>/`、`.research/communication/<product-slug>/` 与正常代码区，但必须继续由同一 product provenance 关联。传播文件进入 Git 完整性门禁，但它们仍是 canonical scientific evidence 的派生输出，不会因为进入数据库而成为第四类科研事实源。
+从 schema v16 起，科研传播黑盒进一步稳定暴露出 `communication_products` 与 `communication_artifacts`。Communication Product 保存传播目标、受众、状态以及传播开始前的科学 `source_commit`；artifact 保存题目/摘要、方法、结果、讨论、图、图注、大众摘要、追溯文件和生成脚本等路径，并用 `timing_role=source_support|derived_output` 约束其相对 source commit 的时序。一个 Product 的 artifact 可以分布在 `communication/<product-slug>/`、`.research/communication/<product-slug>/` 与正常代码区，但必须继续由同一 product provenance 关联。传播文件进入 Git 完整性门禁，但它们仍是 canonical scientific evidence 的派生输出，不会因为进入数据库而成为第四类科研事实源。
 
-完成的 Communication Product 会检查 `source_commit` 是否真实存在并属于当前历史、派生产物是否晚于 source commit，以及 source commit 后 Hypothesis / Design / Data / Analysis 等已登记科学 artifact 是否又发生变化。若科学源发生变化，传播稿必须基于新的稳定 evidence commit 重新审阅。该门禁可以审计版本关系，却不能自动判断一句标题或 Discussion Claim 是否在语义上过强；这种科研语义仍由主模型审查。
+从 schema v26 起，Communication Product 还可以显式登记 `canonical_source_path`，用于标识该传播产品唯一的可编辑内容 authority。目标期刊准备不再复制新的 manuscript identity，而是通过 `communication_journals` 登记稳定 `journal code → journal name` 映射，通过 `communication_target_workspaces` 建立固定 `communication/<product-slug>/<journal-code>-release/`，再由 `communication_target_files` 固定 manifest、配置、build source、模板 source 与 QA 依据的 Git content OID。同一 Product 可以有多个 target workspace，但都指向同一 `canonical_source_path`。
+
+Target workspace 的 `source_commit` 是“本次目标格式 build 实际消费的 Communication source commit”，与 `communication_products.source_commit` 的“传播开始前科学证据冻结 commit”职责不同。`record-target-workspace` 要求 target `manifest.json` 同时声明 journal code、共享 canonical source、该 source commit、配置、build source、模板状态、QA 依据和 expected generated outputs。DOCX、XLSX、PDF、PPTX 等复合表示，以及 manifest 明确声明为 generated output 的 LaTeX 等文件，不作为 target source 登记，也不能留在 release source tree 里继续手改；发现问题时回到 canonical source / config / generator / template source 重建。
+
+完成的 Communication Product 会检查科学 `source_commit` 是否真实存在并属于当前历史、派生产物是否晚于 source commit，以及 source commit 后 Hypothesis / Design / Data / Analysis 等已登记科学 artifact 是否又发生变化。已登记 target workspace 另外检查 journal/workspace/manifest identity、canonical source 自 target source commit 后是否漂移、target source 文件 content OID 是否变化、manifest 文件集合是否漂移，以及生成表示是否误存进 source tree。该门禁可以审计版本与 build provenance，却不能自动判断一句标题或 Discussion Claim 是否在语义上过强；这种科研语义仍由主模型审查。
 
 已有传播 artifact 需要因工作区整理改变路径时，先完成真实文件系统/Git 移动，再使用 `research-db relocate-communication-artifact` 更新既有 `communication_artifacts.path` 并写入 `change_log`。该操作不创建新 artifact，也不允许借迁移改变 role、`timing_role`、`source_commit` 或 Product 定义；目标路径必须已经存在，旧路径必须已经消失。对 completed Product 的 `source_support` 当前 fail closed，因为其路径是 pre-communication source commit 时序证明的一部分；若该类 artifact 需要重新组织，应设计能够保留历史身份的正式 migration，而不是静默改路径。
 
@@ -610,6 +614,8 @@ research-db designs
 research-db record-hypothesis-evaluation [bundle]
 research-db hypothesis-evaluations
 research-db record-communication [bundle]
+research-db record-journal [bundle]
+research-db record-target-workspace [bundle]
 research-db communications
 research-db status
 research-db validate
@@ -669,7 +675,7 @@ research-db paper-context P000001 --for-sidecar
 - Research Tree Node artifact 缺失、parent chain 出现 cycle、root/active state 悬空或 active path 不属于 root 子树；
 - Study provenance path / 本地 Study artifact 缺失、Study 引用未冻结或不存在的 Design、Sample parent 跨 Study、Assay-Sample 映射跨 Study，或 Study 时间状态自相矛盾；
 - Hypothesis Evaluation 引用未完成 Analysis、引用的解释 artifact 不属于同一 Analysis，或其 Hypothesis Set 与 Analysis 所实现 Design 不一致；
-- Communication artifact 指向不存在文件或不存在的 Communication Product；
+- Communication artifact 指向不存在文件或不存在的 Communication Product；target journal code/workspace/manifest identity 不一致、canonical source 不合法、target source/build source 漂移，或 target release source tree 中保存了 declared/generated DOCX、XLSX、PDF、PPTX、LaTeX 等输出；
 - schema version / migration 状态异常；
 - sidecar pointer 指向不存在文件时给出明确错误或 warning。
 
@@ -691,6 +697,6 @@ research-db paper-context P000001 --for-sidecar
 
 Research Tree 一旦已有 Node，完成验证要求设置唯一 root/active path，并保证 active node 位于 root 的结构子树中。Study 的 provenance path 与声明需要 Git 跟踪的本地 Study artifact 进入同一 canonical Git gate；completed Study 不能遗留 `status=started` 的 Assay。Study completion 只证明实际实施 provenance 已闭合，不表示 Dataset QC、Analysis 或 Interpretation 已完成。
 
-项目存在 `communication/` 传播产物时，完成验证还要求这些文件登记到 Communication Product，并记录其 pre-communication `source_commit`。已登记传播 artifact 会进入 Git 完整性检查；`derived_output` 不能在 source commit 中已经存在，`source_support` 必须在 source commit 中已经存在。若 source commit 之后 Hypothesis / Design / Data / Analysis 等已登记科学 artifact 又发生变化，旧传播稿必须基于新的稳定 evidence commit 重新审阅。这个 Git path 集合只承担完整性门禁，不把 Communication artifact 提升为 canonical scientific source。
+项目存在 `communication/` 传播产物时，完成验证还要求这些文件登记到 Communication Product，并记录其 pre-communication scientific `source_commit`。已登记传播 artifact 会进入 Git 完整性检查；`derived_output` 不能在 source commit 中已经存在，`source_support` 必须在 source commit 中已经存在。若 source commit 之后 Hypothesis / Design / Data / Analysis 等已登记科学 artifact 又发生变化，旧传播稿必须基于新的稳定 evidence commit 重新审阅。普通 venue-neutral draft 不要求 journal registry 或 target workspace；只有实际登记 target journal 后，completion 才进一步要求 `<journal-code>-release/` 的 manifest/config/build/template/QA 文件与登记 OID 一致、共享 canonical source 自 target source commit 后未漂移，且 source tree 中没有生成表示。这个 Git path 集合只承担完整性门禁，不把 Communication artifact 或 target build output 提升为 canonical scientific source。
 
 对于以中文为主体的科研项目，完成验证还会检查 `RESEARCH.md`、论文侧记、Hypothesis / Design、Dataset provenance、Analysis 人类入口、作为 `analysis_artifacts.role=other` 登记的人类分析文本以及已登记 Communication 文本中的明显大段英文科研叙述，并在这些人类可读科研文本中识别一小组已有成熟中文表述却裸用的常见英文术语。代码块、内联代码、路径、URL 和首次中英文括注不参与该术语检查；`log`、`diagnostic`、`estimate`、`table` 等机器输出或逐字保存的外部软件文档证据不作为中文科研正文检查，必须保留其原始内容。Hypothesis Set、Research Design 以及 Analysis 首次进入结果前冻结状态时，`research-db` 会先检查即将冻结的人类科研正文；语言问题应在 freeze 前修正，不能等结果可见后再修改冻结 artifact。完成门禁同时返回 `project_state` readiness：`RESEARCH.md` 必须保留 `Objective`、`Current Loop`、`Active Uncertainty`、`Current State`、`Active Work`、`Open Threads`、`Key Decisions`、`References` 八个二级 section，`Current Loop` 必须是规定定位词，且 `Active Work` 不能仍把 Git commit、`validate --completion`、clean-tree 等已经结束的收尾动作写成当前工作。这个机械检查只用于防止 current-state map 陈旧，不对科学问题是否解决作自动判断。随后要求项目根目录本身是独立版本仓库（Git repository）顶层、已经存在至少一个提交，且全部声明为需要 Git 跟踪的科研/传播 artifact 已被版本管理跟踪且没有未提交修改。普通 `validate` 通过不能替代这个完成门禁；`completion=true` 只表示该有边界完成门禁通过，仍不能解释成科学问题本身已经解决。

@@ -24,7 +24,7 @@
 
 目标 Venue 已知时，通过 `research-standards` 核验当前官方 Author Instructions、reporting guideline、artifact / data / code policy、匿名要求、长度和提交包要求。旧论文、第三方博客、模板仓库和模型记忆只能用于发现线索，不能替代当前官方规则。
 
-若目标 Venue 尚未确定，只采用该学科较稳定的通用表达与审查重点，不提前伪造具体字数、section 名、图表上限或提交附件要求。以后 Venue 确定后重新核验。
+若目标 Venue 尚未确定，继续完成 venue-neutral manuscript，只采用该学科较稳定的通用表达与审查重点，不提前伪造具体字数、section 名、图表上限或提交附件要求。Venue 不是普通草稿的前置条件；以后真正进入投稿/终稿转换时再核验，并按 [`../workspace/TARGET-RELEASE.md`](../workspace/TARGET-RELEASE.md) 建立目标期刊工作区。
 
 ## 3. Discipline overlay 只改变强调重点
 
@@ -80,4 +80,4 @@ Akira 不为每个学科复制一套完整论文 Skill。稳定的科学合同�
 - 未知 Venue 时没有凭经验写死具体 submission rule；
 - discipline / venue convention 不会把 evidence level 或 scientific scope 写强。
 
-若不同 Venue 选择会实质改变主文结构、篇幅、匿名、Data/Code、图表或 Supplement 策略，而用户尚未选择目标，则先呈现这个真实分叉，再决定是否继续写正式投稿版本。
+若不同 Venue 选择会实质改变主文结构、篇幅、匿名、Data/Code、图表或 Supplement 策略，而用户尚未选择目标，保持 canonical manuscript 为 venue-neutral 并继续科学写作；只有用户明确进入正式投稿/终稿准备时，才要求选择目标并派生对应 target release workspace，不回写第二份独立科学稿件。

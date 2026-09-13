@@ -107,6 +107,11 @@ def canonical_paths(project_root: Path) -> list[str]:
                 "SELECT path FROM communication_artifacts WHERE git_tracking = 'required' ORDER BY id"
             ):
                 paths.add(Path(str(row["path"])).as_posix())
+        if "communication_target_files" in tables:
+            for row in connection.execute(
+                "SELECT path FROM communication_target_files ORDER BY id"
+            ):
+                paths.add(Path(str(row["path"])).as_posix())
     return sorted(paths)
 
 

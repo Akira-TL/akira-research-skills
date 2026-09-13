@@ -516,6 +516,64 @@ def append_communication_errors(errors: list[str], blockers: list[dict[str, Any]
                 "传播稿必须基于最新稳定证据重新审阅："
                 + ", ".join(str(path) for path in blocker.get("paths", []))
             )
+        elif reason in {
+            "communication_target_workspace_identity_mismatch",
+            "communication_target_manifest_identity_mismatch",
+        }:
+            errors.append(
+                f"Communication Product {blocker.get('communication')} 的 target release workspace identity 与已登记 journal code 不一致。"
+            )
+        elif reason in {
+            "communication_target_canonical_source_missing",
+            "communication_canonical_source_unregistered",
+            "communication_canonical_source_inside_target",
+        }:
+            errors.append(
+                f"Communication Product {blocker.get('communication')} 缺少合法的共享 canonical editable source；target release 不能拥有第二份独立科学稿件。"
+            )
+        elif reason in {
+            "communication_target_source_commit_missing",
+            "communication_target_source_commit_not_found",
+            "communication_target_source_commit_not_ancestor",
+            "communication_target_source_missing_at_commit",
+        }:
+            errors.append(
+                f"Communication Product {blocker.get('communication')} / {blocker.get('journal_code')} 的 target source commit 无效。"
+            )
+        elif reason == "communication_target_source_drift":
+            errors.append(
+                f"Communication Product {blocker.get('communication')} / {blocker.get('journal_code')} 的 canonical source 已在 target build 后变化；必须重新 build 并重新登记 target workspace。"
+            )
+        elif reason in {
+            "communication_target_manifest_invalid",
+            "communication_target_manifest_file_drift",
+        }:
+            errors.append(
+                f"Communication Product {blocker.get('communication')} / {blocker.get('journal_code')} 的 target manifest 与当前 build source 不一致。"
+            )
+        elif reason in {
+            "communication_target_file_missing",
+            "communication_target_file_oid_unavailable",
+            "communication_target_build_source_drift",
+        }:
+            errors.append(
+                f"Communication Product {blocker.get('communication')} / {blocker.get('journal_code')} 的 target build source 已缺失或漂移：{blocker.get('path')}。"
+            )
+        elif reason == "communication_target_generated_output_stored":
+            errors.append(
+                f"Communication Product {blocker.get('communication')} / {blocker.get('journal_code')} 的 target release source tree 中保存了 DOCX/XLSX/PDF/PPTX 或 manifest 声明的其他生成表示；应修改 source/generator 后重建，而不是把生成文件作为可编辑 authority："
+                + ", ".join(str(path) for path in blocker.get("paths", []))
+            )
+        elif reason == "communication_target_unexpected_file":
+            errors.append(
+                f"Communication Product {blocker.get('communication')} / {blocker.get('journal_code')} 的 target release workspace 出现 manifest 未声明的额外文件；target workspace 不能保存第二份独立可编辑稿件："
+                + ", ".join(str(path) for path in blocker.get("paths", []))
+            )
+        elif reason == "communication_target_workspace_unregistered":
+            errors.append(
+                "项目出现 `<journal-code>-release/` 目录但没有登记对应 target journal/workspace："
+                + ", ".join(str(path) for path in blocker.get("paths", []))
+            )
         elif reason == "completed_communication_missing_artifacts":
             errors.append(f"Communication Product {blocker.get('communication')} 已完成但没有登记传播 artifact。")
         elif reason in {"communication_assets_present_without_database", "communication_schema_missing"}:

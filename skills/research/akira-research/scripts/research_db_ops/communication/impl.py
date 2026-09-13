@@ -1,10 +1,20 @@
 from __future__ import annotations
 
 from pathlib import Path
+import subprocess
 from typing import Any
 
 from research_db_support.storage import ResearchDbError, connect
 import research_db_ops.common as common
+from .target import (
+    canonical_source_path,
+    file_content_oid,
+    journal_code,
+    journal_name_key,
+    load_target_manifest,
+    manifest_path,
+    workspace_path,
+)
 
 
 COMMUNICATION_STATUSES = {"draft", "completed", "superseded"}
@@ -53,6 +63,12 @@ def record_communication(project_root: Path, bundle: dict[str, Any]) -> dict[str
     audience = common.text(bundle.get("audience"), required=True, field="audience")
     source_commit = common.text(bundle.get("source_commit"), required=True, field="source_commit")
     status = common.enum_value(bundle.get("status"), COMMUNICATION_STATUSES, default="draft", field="status")
+    canonical_source_requested = bundle.get("canonical_source_path") is not None
+    canonical_source = (
+        canonical_source_path(project_root, slug, bundle.get("canonical_source_path"))
+        if canonical_source_requested
+        else None
+    )
     artifacts = bundle.get("artifacts")
     if not isinstance(artifacts, list) or not artifacts:
         raise ResearchDbError("communication artifacts 必须是非空数组。")
@@ -83,6 +99,18 @@ def record_communication(project_root: Path, bundle: dict[str, Any]) -> dict[str
             }
         )
 
+    if canonical_source is not None:
+        canonical_artifact = next(
+            (item for item in parsed if item["path"] == canonical_source),
+            None,
+        )
+        if canonical_artifact is None:
+            raise ResearchDbError(
+                "canonical_source_path 必须同时登记为当前 Communication Product 的 artifact。"
+            )
+        if canonical_artifact["git_tracking"] != "required":
+            raise ResearchDbError("canonical communication source 必须由 Git 跟踪。")
+
     assert title is not None and purpose is not None and audience is not None and source_commit is not None
     now = common.now()
     with connect(common.db_path(project_root)) as connection:
@@ -95,20 +123,53 @@ def record_communication(project_root: Path, bundle: dict[str, Any]) -> dict[str
                 cursor = connection.execute(
                     """
                     INSERT INTO communication_products(
-                        slug, title, purpose, audience, source_commit, status, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        slug, title, purpose, audience, source_commit, status,
+                        canonical_source_path, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
-                    (slug, title, purpose, audience, source_commit, status, now, now),
+                    (
+                        slug,
+                        title,
+                        purpose,
+                        audience,
+                        source_commit,
+                        status,
+                        canonical_source,
+                        now,
+                        now,
+                    ),
                 )
                 product_id = int(cursor.lastrowid)
+                effective_canonical_source = canonical_source
             else:
                 product_id = int(existing["id"])
+                existing_canonical = (
+                    str(existing["canonical_source_path"])
+                    if existing["canonical_source_path"] is not None
+                    else None
+                )
+                effective_canonical_source = (
+                    canonical_source if canonical_source_requested else existing_canonical
+                )
                 if existing["status"] == "completed":
-                    immutable = ("title", "purpose", "audience", "source_commit")
+                    immutable = (
+                        "title",
+                        "purpose",
+                        "audience",
+                        "source_commit",
+                        "canonical_source_path",
+                    )
+                    values = (
+                        title,
+                        purpose,
+                        audience,
+                        source_commit,
+                        effective_canonical_source,
+                    )
                     changed = [
                         field
-                        for field, value in zip(immutable, (title, purpose, audience, source_commit))
-                        if str(existing[field]) != str(value)
+                        for field, value in zip(immutable, values)
+                        if (existing[field] if existing[field] is not None else None) != value
                     ]
                     if changed:
                         raise ResearchDbError(
@@ -122,10 +183,20 @@ def record_communication(project_root: Path, bundle: dict[str, Any]) -> dict[str
                 connection.execute(
                     """
                     UPDATE communication_products
-                    SET title = ?, purpose = ?, audience = ?, source_commit = ?, status = ?, updated_at = ?
+                    SET title = ?, purpose = ?, audience = ?, source_commit = ?, status = ?,
+                        canonical_source_path = ?, updated_at = ?
                     WHERE id = ?
                     """,
-                    (title, purpose, audience, source_commit, status, now, product_id),
+                    (
+                        title,
+                        purpose,
+                        audience,
+                        source_commit,
+                        status,
+                        effective_canonical_source,
+                        now,
+                        product_id,
+                    ),
                 )
 
             for item in parsed:
@@ -162,7 +233,258 @@ def record_communication(project_root: Path, bundle: dict[str, Any]) -> dict[str
         except Exception:
             connection.rollback()
             raise
-    return {"ok": True, "communication_id": product_id, "slug": slug, "status": status}
+    return {
+        "ok": True,
+        "communication_id": product_id,
+        "slug": slug,
+        "status": status,
+        "canonical_source_path": effective_canonical_source,
+    }
+
+
+def record_journal(project_root: Path, bundle: dict[str, Any]) -> dict[str, Any]:
+    code = journal_code(bundle.get("code"))
+    name = common.text(bundle.get("name"), required=True, field="journal name")
+    official_source = common.text(
+        bundle.get("official_source"), required=True, field="journal official_source"
+    )
+    checked_at = common.parse_timestamp(bundle.get("checked_at"), field="journal checked_at").isoformat()
+    assert name is not None and official_source is not None
+    name_key = journal_name_key(name)
+    if not name_key:
+        raise ResearchDbError("journal name 必须包含可识别字符。")
+
+    now = common.now()
+    with connect(common.db_path(project_root)) as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        try:
+            by_code = connection.execute(
+                "SELECT * FROM communication_journals WHERE code = ? COLLATE NOCASE",
+                (code,),
+            ).fetchone()
+            by_name = connection.execute(
+                "SELECT * FROM communication_journals WHERE name_key = ?",
+                (name_key,),
+            ).fetchone()
+            if by_code is not None and str(by_code["name_key"]) != name_key:
+                raise ResearchDbError(
+                    f"期刊代码 {code} 已经登记给 {by_code['name']}；不能复用为 {name}。"
+                )
+            if by_name is not None and str(by_name["code"]) != code:
+                raise ResearchDbError(
+                    f"期刊 {name} 已经登记为代码 {by_name['code']}；不能再创建别名 {code}。"
+                )
+            if by_code is None:
+                connection.execute(
+                    """
+                    INSERT INTO communication_journals(
+                        code, name, name_key, official_source, checked_at, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (code, name, name_key, official_source, checked_at, now, now),
+                )
+            else:
+                if str(by_code["code"]) != code:
+                    raise ResearchDbError(
+                        f"期刊代码必须沿用已登记拼写 {by_code['code']}，不能改成 {code}。"
+                    )
+                connection.execute(
+                    """
+                    UPDATE communication_journals
+                    SET official_source = ?, checked_at = ?, updated_at = ?
+                    WHERE code = ?
+                    """,
+                    (official_source, checked_at, now, code),
+                )
+            connection.execute(
+                """
+                INSERT INTO change_log(timestamp, action, entity_type, entity_id, reason, summary)
+                VALUES (?, 'communication_journal_recorded', 'communication_journal', ?, ?, ?)
+                """,
+                (
+                    now,
+                    code,
+                    "Stable target journal code recorded or refreshed.",
+                    f"journal={name}; code={code}; checked_at={checked_at}",
+                ),
+            )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+    return {
+        "ok": True,
+        "code": code,
+        "name": name,
+        "official_source": official_source,
+        "checked_at": checked_at,
+    }
+
+
+def _require_git_source_commit(project_root: Path, source_commit: str, canonical_source: str) -> None:
+    commit = subprocess.run(
+        ["git", "-C", str(project_root), "cat-file", "-e", f"{source_commit}^{{commit}}"],
+        capture_output=True,
+        check=False,
+    )
+    if commit.returncode != 0:
+        raise ResearchDbError(f"target source_commit 不是可用 Git commit：{source_commit}")
+    ancestor = subprocess.run(
+        ["git", "-C", str(project_root), "merge-base", "--is-ancestor", source_commit, "HEAD"],
+        capture_output=True,
+        check=False,
+    )
+    if ancestor.returncode != 0:
+        raise ResearchDbError("target source_commit 必须是当前 HEAD 的祖先。")
+    source = subprocess.run(
+        ["git", "-C", str(project_root), "cat-file", "-e", f"{source_commit}:{canonical_source}"],
+        capture_output=True,
+        check=False,
+    )
+    if source.returncode != 0:
+        raise ResearchDbError(
+            f"target source_commit 中不存在 canonical communication source：{canonical_source}"
+        )
+
+
+def record_target_workspace(project_root: Path, bundle: dict[str, Any]) -> dict[str, Any]:
+    slug = common.slug(bundle.get("slug"))
+    requested_code = journal_code(bundle.get("journal_code"))
+    source_commit = common.text(
+        bundle.get("source_commit"), required=True, field="target source_commit"
+    )
+    assert source_commit is not None
+
+    with connect(common.db_path(project_root)) as connection:
+        product = connection.execute(
+            "SELECT * FROM communication_products WHERE slug = ?",
+            (slug,),
+        ).fetchone()
+        if product is None:
+            raise ResearchDbError(f"Communication Product 不存在：{slug}")
+        journal = connection.execute(
+            "SELECT * FROM communication_journals WHERE code = ? COLLATE NOCASE",
+            (requested_code,),
+        ).fetchone()
+        if journal is None:
+            raise ResearchDbError(
+                f"目标期刊代码尚未登记：{requested_code}；先运行 record-journal。"
+            )
+        code = str(journal["code"])
+        if code != requested_code:
+            raise ResearchDbError(
+                f"目标期刊代码必须使用已登记拼写 {code}，不能使用 {requested_code}。"
+            )
+        canonical_source = str(product["canonical_source_path"] or "").strip()
+        if not canonical_source:
+            raise ResearchDbError(
+                "创建 target release workspace 前必须先为 Communication Product 登记 canonical_source_path。"
+            )
+        product_id = int(product["id"])
+
+    _require_git_source_commit(project_root, source_commit, canonical_source)
+    manifest = load_target_manifest(
+        project_root,
+        slug=slug,
+        code=code,
+        expected_canonical_source=canonical_source,
+        expected_source_commit=source_commit,
+    )
+    file_rows = [
+        (kind, path, file_content_oid(project_root, path))
+        for kind, path in manifest["files"]
+    ]
+    expected_workspace = workspace_path(slug, code)
+    expected_manifest = manifest_path(slug, code)
+    now = common.now()
+
+    with connect(common.db_path(project_root)) as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        try:
+            existing = connection.execute(
+                """
+                SELECT * FROM communication_target_workspaces
+                WHERE product_id = ? AND journal_code = ?
+                """,
+                (product_id, code),
+            ).fetchone()
+            if existing is None:
+                cursor = connection.execute(
+                    """
+                    INSERT INTO communication_target_workspaces(
+                        product_id, journal_code, workspace_path, manifest_path,
+                        source_commit, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        product_id,
+                        code,
+                        expected_workspace,
+                        expected_manifest,
+                        source_commit,
+                        now,
+                        now,
+                    ),
+                )
+                target_id = int(cursor.lastrowid)
+            else:
+                target_id = int(existing["id"])
+                if str(existing["workspace_path"]) != expected_workspace:
+                    raise ResearchDbError(
+                        "已登记 target release workspace identity 与 journal code 不一致；不能移动或创建别名目录。"
+                    )
+                if str(existing["manifest_path"]) != expected_manifest:
+                    raise ResearchDbError("target release manifest 固定为 <journal-code>-release/manifest.json。")
+                connection.execute(
+                    """
+                    UPDATE communication_target_workspaces
+                    SET source_commit = ?, updated_at = ?
+                    WHERE id = ?
+                    """,
+                    (source_commit, now, target_id),
+                )
+
+            connection.execute(
+                "DELETE FROM communication_target_files WHERE target_id = ?",
+                (target_id,),
+            )
+            for kind, path, oid in file_rows:
+                connection.execute(
+                    """
+                    INSERT INTO communication_target_files(
+                        target_id, kind, path, content_oid, created_at
+                    ) VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (target_id, kind, path, oid, now),
+                )
+            connection.execute(
+                """
+                INSERT INTO change_log(timestamp, action, entity_type, entity_id, reason, summary)
+                VALUES (?, 'communication_target_recorded', 'communication_target_workspace', ?, ?, ?)
+                """,
+                (
+                    now,
+                    str(target_id),
+                    "Target journal build workspace recorded from canonical communication source.",
+                    f"communication={slug}; journal={code}; source_commit={source_commit}",
+                ),
+            )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+
+    return {
+        "ok": True,
+        "target_id": target_id,
+        "slug": slug,
+        "journal_code": code,
+        "workspace_path": expected_workspace,
+        "manifest_path": expected_manifest,
+        "canonical_source_path": canonical_source,
+        "source_commit": source_commit,
+        "target_files": [path for _, path, _ in file_rows],
+    }
 
 
 def relocate_communication_artifact(project_root: Path, bundle: dict[str, Any]) -> dict[str, Any]:
@@ -280,5 +602,29 @@ def list_communications(project_root: Path, *, limit: int = 100) -> dict[str, An
                     (row["id"],),
                 )
             ]
+            targets: list[dict[str, Any]] = []
+            for target in connection.execute(
+                """
+                SELECT ctw.*, cj.name AS journal_name,
+                       cj.official_source AS journal_official_source,
+                       cj.checked_at AS journal_checked_at
+                FROM communication_target_workspaces AS ctw
+                JOIN communication_journals AS cj ON cj.code = ctw.journal_code
+                WHERE ctw.product_id = ?
+                ORDER BY ctw.id
+                """,
+                (row["id"],),
+            ):
+                target_item = dict(target)
+                target_item["canonical_source_path"] = item.get("canonical_source_path")
+                target_item["files"] = [
+                    dict(x)
+                    for x in connection.execute(
+                        "SELECT * FROM communication_target_files WHERE target_id = ? ORDER BY id",
+                        (target["id"],),
+                    )
+                ]
+                targets.append(target_item)
+            item["target_workspaces"] = targets
             rows.append(item)
     return {"ok": True, "communications": rows}
