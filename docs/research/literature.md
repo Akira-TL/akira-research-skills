@@ -6,7 +6,9 @@
 
 论文机器原始件统一保存到 `.research/artifacts/papers/<paper-id>/`；XML、HTML、补充表格等不出现在人类 `literature/` 阅读区。人类阅读文件稳定放在 `literature/papers/` 根层，只保留按“论文题名 - 第一作者 - 年份”命名的 Markdown 与可选 PDF；主题/状态集合用 `literature/collections/*.md` 建索引。待读、已读、阅读优先级和 Critical Audit 状态都由数据库表达，不再通过 `to-read/read` 目录移动。
 
-人类 Markdown 进入 Git。新生成或由 Agent 实质重写的 sidecar 使用 `akira:literature-note:v1` 固定格式：唯一一级标题写原始论文题名，文件头固定展示中文译题、第一作者、期刊/会议、年份、DOI、PMID/PMCID、Paper ID、论文类型、当前阅读用途和本地全文；正文的固定二级标题及顺序由阅读协议定义，三级及更深层标题可按论文类型展开。顶部与结尾各提供一个“我已阅读并确认当前版本”复选框，任意一个被勾选后由 `research-db sync-user-reading` 同步。文末 `akira:user-notes` 是用户专属区，Agent 只初始化边界，之后不修改、整理、总结或清空其中内容。阅读确认的 Git content OID 会把复选框状态和用户专属笔记都归一化，因此用户继续补写自己的笔记不会让已确认状态失效，而 Agent 更新自己的阅读正文仍会使旧确认自动失效。历史旧格式 sidecar 继续兼容；一旦迁入 v1，就完整遵守固定结构。用户确认与 Agent 的 Reconstruction / Critical Audit 分开，不作为 Literature completion 条件。人类 PDF 只是方便阅读的视图，默认不进入 Git。
+人类 Markdown 进入 Git。`literature/README.md` 是固定总入口，覆盖全部论文 note 与 Collection；Collection 使用固定 Navigation / Purpose / Papers 结构，只链接 `literature/papers/*.md` 的人类阅读入口。新生成或由 Agent 实质重写的 sidecar 使用 `<!-- akira:literature-note -->` 类型标记，不把格式版本号写进文件身份；唯一一级标题、固定书目信息表、二级标题顺序、双确认框、用户笔记边界、文件名与同名 PDF 规则均由 Literature 的 `HUMAN-FORMAT.md` 定义并由 completion 检查。三级及更深层标题按论文真实内容展开，不机械限制字数、实验数或图表数。
+
+顶部与结尾的“我已阅读并确认当前版本”仍由 `research-db sync-user-reading` 同步。`akira:user-notes` 是用户专属区，Agent 只初始化边界，之后不修改、整理、总结或清空其中内容。阅读确认使用规范化的 Git content OID，因此用户继续补写自己的笔记不会让已确认状态失效，而 Agent 更新自己的阅读正文仍会使旧确认失效。旧项目迁移时记录真实 Git baseline；历史版本型 marker 只做确定性类型标记替换，更早的无 marker note 仅在迁移前已存在且迁移后未修改时保留兼容。人类 PDF 只是方便阅读的视图，默认不进入 Git。
 
 阅读前先明确目的，再决定章节顺序：背景知识构建、前沿跟踪、方法学习、研究设计学习、证据核验和写作结构学习可以采用不同入口。研究设计与方法学习会主动追踪基础工作、代表实现、后续改进和边界条件，也允许跨领域寻找可借鉴方案，但必须比较推断单位、数据结构、测量误差、约束条件与关键假设，不能仅因表面相似就迁移方法。发表时间、被引次数、作者或期刊声望、引文网络连接度只作为发现与排序信号，不替代证据质量判断。
 

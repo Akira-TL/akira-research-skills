@@ -1,21 +1,39 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
-from research_db_support.schema import KNOWLEDGE_ENTITY_TABLES
+from research_db_support.schema import (
+    KNOWLEDGE_ENTITY_TABLES,
+    LITERATURE_HUMAN_FORMAT_LEGACY_BASELINE_META_KEY,
+)
 from research_db_support.storage import connect, database_path
 from research_db_ops.acquisition import (
     acquired_main_text_access_blockers,
     acquired_paper_main_text_access_blockers,
 )
 from research_db_ops.candidates import discovery_readiness
-from research_db_ops.completion.human_literature import validate_human_literature_note
+from research_db_ops.completion.human.legacy import (
+    legacy_baseline_commit,
+    path_is_unchanged_since_baseline,
+    validate_legacy_baseline,
+)
+from research_db_ops.completion.human.validation import (
+    human_markdown_blockers,
+    human_markdown_local_targets,
+)
+from research_db_ops.completion.human_literature import (
+    LEGACY_NOTE_FORMAT_MARKER,
+    validate_human_literature_note,
+)
 from research_db_ops.user_reading import parse_confirmation_controls
 from research_db_support.storage import ResearchDbError
 
 HUMAN_LITERATURE_DIRS = {"papers", "collections"}
 HUMAN_READING_SUFFIXES = {".md", ".pdf"}
+LITERATURE_README_H2 = ("Navigation", "Papers", "Collections")
+LITERATURE_COLLECTION_H2 = ("Navigation", "Purpose", "Papers")
 
 
 SCIENTIFIC_RELATION_PREDICATES = {
@@ -61,6 +79,139 @@ def _legacy_registered_literature_paths(project_root: Path) -> set[str]:
     return registered
 
 
+def _note_filename_blocker(
+    project_root: Path, path: Path, metadata: dict[str, str]
+) -> dict[str, Any] | None:
+    parts = path.stem.rsplit(" - ", 2)
+    expected_author = metadata.get("第一作者", "").strip()
+    expected_year = metadata.get("年份", "").strip()
+    if len(parts) != 3 or not parts[0].strip() or parts[1].strip() != expected_author or parts[2].strip() != expected_year:
+        return {
+            "reason": "human_literature_filename_invalid",
+            "path": path.relative_to(project_root).as_posix(),
+            "expected_author": expected_author,
+            "expected_year": expected_year,
+        }
+    return None
+
+
+def _note_pdf_link_blocker(project_root: Path, note_path: Path, metadata: dict[str, str]) -> dict[str, Any] | None:
+    value = metadata.get("本地全文", "")
+    match = re.search(r"\[[^\]]+\]\(([^)]+)\)", value)
+    if match is None:
+        return None
+    target = match.group(1).strip()
+    if target.startswith("<") and target.endswith(">"):
+        target = target[1:-1].strip()
+    if "://" in target or target.startswith("mailto:"):
+        return None
+    resolved = (note_path.parent / target).resolve()
+    try:
+        relative = resolved.relative_to(project_root.resolve()).as_posix()
+    except ValueError:
+        return {
+            "reason": "human_literature_pdf_link_invalid",
+            "path": note_path.relative_to(project_root).as_posix(),
+            "target": target,
+        }
+    if resolved.suffix.casefold() != ".pdf" or resolved.stem != note_path.stem or not resolved.is_file():
+        return {
+            "reason": "human_literature_pdf_link_invalid",
+            "path": note_path.relative_to(project_root).as_posix(),
+            "target": relative,
+        }
+    return None
+
+
+def _validate_collection(project_root: Path, path: Path) -> list[dict[str, Any]]:
+    relative = path.relative_to(project_root).as_posix()
+    _, format_blockers = human_markdown_blockers(
+        project_root,
+        relative,
+        expected_h1_prefix="Collection: ",
+        expected_h2=LITERATURE_COLLECTION_H2,
+    )
+    blockers: list[dict[str, Any]] = []
+    if format_blockers:
+        blockers.append(
+            {
+                "reason": "human_literature_collection_structure_invalid",
+                "path": relative,
+                "detail": format_blockers,
+            }
+        )
+        return blockers
+    navigation = human_markdown_local_targets(project_root, relative, section="Navigation")
+    for target in ("literature/README.md", "RESEARCH.md"):
+        if target not in navigation:
+            blockers.append(
+                {
+                    "reason": "human_literature_collection_navigation_missing",
+                    "path": relative,
+                    "target": target,
+                }
+            )
+    for target in human_markdown_local_targets(project_root, relative, section="Papers"):
+        if not target.startswith("literature/papers/") or not target.endswith(".md"):
+            blockers.append(
+                {
+                    "reason": "human_literature_collection_nonpaper_link",
+                    "path": relative,
+                    "target": target,
+                }
+            )
+    return blockers
+
+
+def _validate_literature_readme(
+    project_root: Path,
+    *,
+    note_paths: list[str],
+    collection_paths: list[str],
+) -> list[dict[str, Any]]:
+    relative = "literature/README.md"
+    path = project_root / relative
+    if not path.is_file():
+        return [{"reason": "human_literature_readme_missing", "path": relative}]
+    _, format_blockers = human_markdown_blockers(
+        project_root,
+        relative,
+        expected_h1="Literature",
+        expected_h2=LITERATURE_README_H2,
+    )
+    blockers: list[dict[str, Any]] = []
+    if format_blockers:
+        blockers.append(
+            {
+                "reason": "human_literature_readme_structure_invalid",
+                "path": relative,
+                "detail": format_blockers,
+            }
+        )
+        return blockers
+    navigation = human_markdown_local_targets(project_root, relative, section="Navigation")
+    if "RESEARCH.md" not in navigation:
+        blockers.append(
+            {
+                "reason": "human_literature_readme_navigation_missing",
+                "path": relative,
+                "target": "RESEARCH.md",
+            }
+        )
+    paper_targets = human_markdown_local_targets(project_root, relative, section="Papers")
+    collection_targets = human_markdown_local_targets(project_root, relative, section="Collections")
+    missing = sorted((set(note_paths) - paper_targets) | (set(collection_paths) - collection_targets))
+    if missing:
+        blockers.append(
+            {
+                "reason": "human_literature_readme_missing_link",
+                "path": relative,
+                "targets": missing,
+            }
+        )
+    return blockers
+
+
 def literature_human_view_readiness(project_root: Path) -> dict[str, Any]:
     root = project_root / "literature"
     if not root.exists():
@@ -68,7 +219,21 @@ def literature_human_view_readiness(project_root: Path) -> dict[str, Any]:
 
     blockers: list[dict[str, Any]] = []
     legacy_paths: list[str] = []
+    note_paths: list[str] = []
+    collection_paths: list[str] = []
     legacy_registered = _legacy_registered_literature_paths(project_root)
+
+    recorded_baseline = legacy_baseline_commit(
+        project_root, LITERATURE_HUMAN_FORMAT_LEGACY_BASELINE_META_KEY
+    )
+    legacy_baseline, baseline_blocker = validate_legacy_baseline(
+        project_root,
+        recorded_baseline,
+        invalid_reason="human_literature_legacy_baseline_invalid",
+        introduced_in_schema=25,
+    )
+    if baseline_blocker is not None:
+        blockers.append(baseline_blocker)
 
     for child in sorted(root.iterdir(), key=lambda path: path.name.casefold()):
         relative = child.relative_to(project_root).as_posix()
@@ -90,6 +255,9 @@ def literature_human_view_readiness(project_root: Path) -> dict[str, Any]:
                     blockers.append({"reason": "human_literature_nested_directory", "path": entry_relative})
                 elif not entry.is_file() or entry.suffix.casefold() != ".md":
                     blockers.append({"reason": "human_literature_non_readable_file", "path": entry_relative})
+                else:
+                    collection_paths.append(entry_relative)
+                    blockers.extend(_validate_collection(project_root, entry))
             continue
 
         stems_with_notes: set[str] = set()
@@ -116,32 +284,67 @@ def literature_human_view_readiness(project_root: Path) -> dict[str, Any]:
             if not entry.is_file() or entry.suffix.casefold() not in HUMAN_READING_SUFFIXES:
                 blockers.append({"reason": "human_literature_non_readable_file", "path": entry_relative})
                 continue
-            if entry.suffix.casefold() == ".md":
-                stems_with_notes.add(entry.stem)
-                note_text = entry.read_text(encoding="utf-8")
-                try:
-                    parse_confirmation_controls(note_text)
-                except ResearchDbError as exc:
-                    blockers.append(
-                        {
-                            "reason": "human_literature_confirmation_controls_missing",
-                            "path": entry_relative,
-                            "detail": str(exc),
-                        }
-                    )
-                    continue
-                try:
-                    validate_human_literature_note(note_text)
-                except ResearchDbError as exc:
-                    blockers.append(
-                        {
-                            "reason": "human_literature_note_structure_invalid",
-                            "path": entry_relative,
-                            "detail": str(exc),
-                        }
-                    )
-            else:
+            if entry.suffix.casefold() == ".pdf":
                 pdf_paths.append(entry)
+                continue
+
+            stems_with_notes.add(entry.stem)
+            note_paths.append(entry_relative)
+            note_text = entry.read_text(encoding="utf-8")
+            try:
+                parse_confirmation_controls(note_text)
+            except ResearchDbError as exc:
+                blockers.append(
+                    {
+                        "reason": "human_literature_confirmation_controls_missing",
+                        "path": entry_relative,
+                        "detail": str(exc),
+                    }
+                )
+                continue
+
+            if LEGACY_NOTE_FORMAT_MARKER in note_text:
+                blockers.append(
+                    {
+                        "reason": "human_literature_versioned_marker",
+                        "path": entry_relative,
+                        "detail": "历史版本型 marker 必须迁移为 akira:literature-note 类型标记。",
+                    }
+                )
+                continue
+
+            try:
+                note_result = validate_human_literature_note(note_text)
+            except ResearchDbError as exc:
+                blockers.append(
+                    {
+                        "reason": "human_literature_note_structure_invalid",
+                        "path": entry_relative,
+                        "detail": str(exc),
+                    }
+                )
+                continue
+
+            if note_result.get("format") == "legacy":
+                if path_is_unchanged_since_baseline(project_root, entry, legacy_baseline):
+                    legacy_paths.append(entry_relative)
+                else:
+                    blockers.append(
+                        {
+                            "reason": "human_literature_note_legacy_format",
+                            "path": entry_relative,
+                            "detail": "未采用当前 Literature note 类型标记和固定结构。",
+                        }
+                    )
+                continue
+
+            metadata = dict(note_result.get("metadata", {}))
+            filename_blocker = _note_filename_blocker(project_root, entry, metadata)
+            if filename_blocker is not None:
+                blockers.append(filename_blocker)
+            pdf_link_blocker = _note_pdf_link_blocker(project_root, entry, metadata)
+            if pdf_link_blocker is not None:
+                blockers.append(pdf_link_blocker)
 
         for pdf_path in pdf_paths:
             if pdf_path.stem not in stems_with_notes:
@@ -152,12 +355,19 @@ def literature_human_view_readiness(project_root: Path) -> dict[str, Any]:
                     }
                 )
 
+    blockers.extend(
+        _validate_literature_readme(
+            project_root,
+            note_paths=note_paths,
+            collection_paths=collection_paths,
+        )
+    )
+
     return {
         "ready": not blockers,
         "blockers": blockers,
-        "legacy_paths": sorted(legacy_paths),
+        "legacy_paths": sorted(set(legacy_paths)),
     }
-
 
 def _entity_paper_id(connection, entity_type: str, entity_id: str) -> str | None:
     if entity_type == "paper":

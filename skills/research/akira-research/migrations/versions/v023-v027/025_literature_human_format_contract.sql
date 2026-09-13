@@ -1,0 +1,3 @@
+-- Activate the unversioned Literature human-format contract.
+-- The CLI records the pre-migration Git baseline and migrates only the historical
+-- Literature note type marker; scientific reading content and user notes are untouched.

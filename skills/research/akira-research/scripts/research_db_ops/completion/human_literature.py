@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import Any
 
 from research_db_ops.user_reading import (
@@ -15,7 +16,8 @@ from research_db_ops.user_reading import (
 from research_db_support.storage import ResearchDbError
 
 
-NOTE_FORMAT_MARKER = "<!-- akira:literature-note:v1 -->"
+NOTE_FORMAT_MARKER = "<!-- akira:literature-note -->"
+LEGACY_NOTE_FORMAT_MARKER = "<!-- akira:literature-note:v1 -->"
 METADATA_FIELDS = (
     "中文译题",
     "第一作者",
@@ -93,42 +95,63 @@ def _metadata_rows(text: str, marker_end: int) -> tuple[dict[str, str], int]:
     return values, marker_end + skipped + consumed
 
 
-def validate_human_literature_note(text: str) -> dict[str, Any]:
-    """Validate one human-facing literature Markdown note.
+def migrate_versioned_human_literature_markers(project_root: Path) -> dict[str, Any]:
+    """Replace the historical versioned note marker without touching note content."""
+    papers = project_root / "literature" / "papers"
+    migrated_paths: list[str] = []
+    if not papers.is_dir():
+        return {"migrated_paths": migrated_paths}
+    for path in sorted(papers.glob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        legacy_count = text.count(LEGACY_NOTE_FORMAT_MARKER)
+        if legacy_count == 0:
+            continue
+        if legacy_count != 1 or NOTE_FORMAT_MARKER in text:
+            raise ResearchDbError(
+                f"旧 Literature note marker 无法安全迁移：{path.relative_to(project_root).as_posix()}。"
+            )
+        path.write_text(text.replace(LEGACY_NOTE_FORMAT_MARKER, NOTE_FORMAT_MARKER, 1), encoding="utf-8")
+        migrated_paths.append(path.relative_to(project_root).as_posix())
+    return {"migrated_paths": migrated_paths}
 
-    Notes created before the versioned human-note contract remain legacy-compatible.
-    Any note using the modern user-notes block must opt into the v1 marker and then
-    satisfy the complete fixed structure.
-    """
+
+def validate_human_literature_note(text: str) -> dict[str, Any]:
+    """Validate one human-facing literature Markdown note."""
     parse_confirmation_controls(text)
+
+    legacy_marker_count = text.count(LEGACY_NOTE_FORMAT_MARKER)
+    if legacy_marker_count:
+        raise ResearchDbError(
+            "检测到历史版本型 Literature note marker；请迁移为 `akira:literature-note` 类型标记。"
+        )
 
     marker_count = text.count(NOTE_FORMAT_MARKER)
     has_user_notes = USER_NOTES_START in text or USER_NOTES_END in text
     if marker_count == 0:
         if has_user_notes:
             raise ResearchDbError(
-                "包含用户专属笔记区的人类阅读 Markdown 必须声明 `akira:literature-note:v1` 格式。"
+                "包含用户专属笔记区的人类阅读 Markdown 必须声明 `akira:literature-note` 类型标记。"
             )
         return {"format": "legacy"}
     if marker_count != 1:
-        raise ResearchDbError("人类阅读 Markdown 格式标记必须且只能出现一次。")
+        raise ResearchDbError("人类阅读 Markdown 类型标记必须且只能出现一次。")
 
     normalized = _strip_user_notes_content(text, required=True)
     h1_matches = list(_H1_RE.finditer(normalized))
     if len(h1_matches) != 1:
-        raise ResearchDbError("v1 人类阅读 Markdown 必须且只能包含一个一级标题作为原始论文题名。")
+        raise ResearchDbError("人类阅读 Markdown 必须且只能包含一个一级标题作为原始论文题名。")
     first_nonblank = next((line.strip() for line in normalized.splitlines() if line.strip()), "")
     if not first_nonblank.startswith("# ") or first_nonblank.startswith("## "):
-        raise ResearchDbError("v1 人类阅读 Markdown 的第一项内容必须是 `# 原始论文题名`。")
+        raise ResearchDbError("人类阅读 Markdown 的第一项内容必须是 `# 原始论文题名`。")
     title = h1_matches[0].group(1).strip()
     if not title:
         raise ResearchDbError("人类阅读 Markdown 的原始论文题名不得为空。")
 
     marker_index = normalized.find(NOTE_FORMAT_MARKER)
     if marker_index <= h1_matches[0].end():
-        raise ResearchDbError("`akira:literature-note:v1` 格式标记必须位于一级标题之后。")
+        raise ResearchDbError("`akira:literature-note` 类型标记必须位于一级标题之后。")
     if normalized[h1_matches[0].end():marker_index].strip():
-        raise ResearchDbError("一级标题与 `akira:literature-note:v1` 格式标记之间不得插入其他内容。")
+        raise ResearchDbError("一级标题与 `akira:literature-note` 类型标记之间不得插入其他内容。")
     metadata, metadata_end = _metadata_rows(normalized, marker_index + len(NOTE_FORMAT_MARKER))
 
     top_index = normalized.find(TOP_START)
@@ -141,7 +164,7 @@ def validate_human_literature_note(text: str) -> dict[str, Any]:
     h2_headings = [match.group(1).strip() for match in _H2_RE.finditer(normalized)]
     if tuple(h2_headings) != REQUIRED_H2_HEADINGS:
         raise ResearchDbError(
-            "v1 人类阅读 Markdown 的二级标题必须固定且按规定顺序出现："
+            "人类阅读 Markdown 的二级标题必须固定且按规定顺序出现："
             + " → ".join(REQUIRED_H2_HEADINGS)
         )
     first_h2_index = normalized.find("## " + REQUIRED_H2_HEADINGS[0])
@@ -158,10 +181,10 @@ def validate_human_literature_note(text: str) -> dict[str, Any]:
         raise ResearchDbError("用户专属笔记区必须位于 `## 我的笔记` 下，并在底部阅读确认框之前。")
     bottom_end_index = normalized.find(BOTTOM_END)
     if bottom_end_index < bottom_index or normalized[bottom_end_index + len(BOTTOM_END):].strip():
-        raise ResearchDbError("底部阅读确认框必须是 v1 人类阅读 Markdown 的最后一个结构块。")
+        raise ResearchDbError("底部阅读确认框必须是人类阅读 Markdown 的最后一个结构块。")
 
     return {
-        "format": "v1",
+        "format": "literature-note",
         "title": title,
         "metadata": metadata,
         "headings": list(REQUIRED_H2_HEADINGS),

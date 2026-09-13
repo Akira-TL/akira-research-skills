@@ -26,6 +26,7 @@ from research_db_ops.candidates import (
     update_candidate,
 )
 from research_db_ops.completion import validate_completion
+from research_db_ops.completion.human_literature import migrate_versioned_human_literature_markers
 from research_db_ops.discovery import list_search_runs, record_search_run
 from research_db_ops.downstream import (
     list_analyses,
@@ -73,6 +74,7 @@ from research_db_cli import (
 from research_db_support.schema import (
     ACADEMIC_LANGUAGE_LEGACY_BASELINE_META_KEY,
     HUMAN_ARTIFACT_LEGACY_BASELINE_META_KEY,
+    LITERATURE_HUMAN_FORMAT_LEGACY_BASELINE_META_KEY,
 )
 from research_db_support.storage import connect
 
@@ -115,6 +117,16 @@ def cmd_migrate(args: argparse.Namespace) -> int:
                     "ON CONFLICT(key) DO NOTHING",
                     (HUMAN_ARTIFACT_LEGACY_BASELINE_META_KEY, legacy_baseline_commit),
                 )
+            if 25 in applied:
+                connection.execute(
+                    "INSERT INTO meta(key, value) VALUES(?, ?) "
+                    "ON CONFLICT(key) DO NOTHING",
+                    (LITERATURE_HUMAN_FORMAT_LEGACY_BASELINE_META_KEY, legacy_baseline_commit),
+                )
+
+    literature_marker_migration = {"migrated_paths": []}
+    if 25 in applied:
+        literature_marker_migration = migrate_versioned_human_literature_markers(project_root)
 
     payload = status(project_root)
     payload["applied_migrations"] = applied
@@ -122,6 +134,10 @@ def cmd_migrate(args: argparse.Namespace) -> int:
         payload["academic_language_legacy_baseline_commit"] = legacy_baseline_commit
         if 24 in applied:
             payload["human_artifact_legacy_baseline_commit"] = legacy_baseline_commit
+        if 25 in applied:
+            payload["literature_human_format_legacy_baseline_commit"] = legacy_baseline_commit
+    if 25 in applied:
+        payload["literature_marker_migration"] = literature_marker_migration
     emit(payload)
     return 0
 

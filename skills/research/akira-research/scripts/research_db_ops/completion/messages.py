@@ -72,6 +72,58 @@ def append_literature_errors(errors: list[str], blockers: list[dict[str, Any]]) 
             errors.append(
                 f"legacy literature/papers/ 中存在未登记到 research.sqlite 的游离文件：{blocker.get('path')}。"
             )
+        elif reason == "human_literature_note_structure_invalid":
+            errors.append(
+                f"人类论文阅读 Markdown 不符合固定 Literature note 结构：{blocker.get('path')}；{blocker.get('detail')}"
+            )
+        elif reason == "human_literature_versioned_marker":
+            errors.append(
+                f"人类论文阅读 Markdown 仍使用历史版本型格式 marker：{blocker.get('path')}；请运行 migration 转换为类型标记。"
+            )
+        elif reason == "human_literature_note_legacy_format":
+            errors.append(
+                f"人类论文阅读 Markdown 仍是未迁移旧格式：{blocker.get('path')}；新建或迁移后修改的 note 必须采用当前固定格式。"
+            )
+        elif reason == "human_literature_filename_invalid":
+            errors.append(
+                f"人类论文文件名不符合“论文题名 - 第一作者 - 年份”并与 metadata 对齐：{blocker.get('path')}。"
+            )
+        elif reason == "human_literature_pdf_link_invalid":
+            errors.append(
+                f"人类论文 Markdown 的本地 PDF 链接必须指向存在的同名 PDF：{blocker.get('path')} → {blocker.get('target')}。"
+            )
+        elif reason == "human_literature_readme_missing":
+            errors.append("存在 literature/ 人类阅读区但缺少固定入口 literature/README.md。")
+        elif reason == "human_literature_readme_structure_invalid":
+            errors.append(
+                f"Literature 总索引不符合固定 Navigation/Papers/Collections 结构：{blocker.get('path')}。"
+            )
+        elif reason == "human_literature_readme_navigation_missing":
+            errors.append(
+                f"Literature 总索引缺少项目 Research 导航：{blocker.get('path')} → {blocker.get('target')}。"
+            )
+        elif reason == "human_literature_readme_missing_link":
+            errors.append(
+                f"Literature 总索引没有覆盖全部论文 note / collection：{blocker.get('path')}；缺少 "
+                + ", ".join(str(value) for value in blocker.get("targets", []))
+            )
+        elif reason == "human_literature_collection_structure_invalid":
+            errors.append(
+                f"Literature collection 不符合固定 Navigation/Purpose/Papers 结构：{blocker.get('path')}。"
+            )
+        elif reason == "human_literature_collection_navigation_missing":
+            errors.append(
+                f"Literature collection 缺少固定人类导航：{blocker.get('path')} → {blocker.get('target')}。"
+            )
+        elif reason == "human_literature_collection_nonpaper_link":
+            errors.append(
+                f"Literature collection 的 Papers 只能链接 human paper note：{blocker.get('path')} → {blocker.get('target')}。"
+            )
+        elif reason == "human_literature_legacy_baseline_invalid":
+            errors.append(
+                "Literature 人类格式迁移基线无效；不能据此豁免旧 note。"
+                f" baseline={blocker.get('baseline_commit')}；{blocker.get('detail')}"
+            )
         elif reason == "database_missing":
             errors.append("research.sqlite 不存在；不能完成 Literature completion gate。")
 

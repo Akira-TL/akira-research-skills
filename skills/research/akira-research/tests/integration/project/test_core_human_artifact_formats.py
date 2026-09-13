@@ -580,7 +580,7 @@ class CoreHumanArtifactFormatTests(unittest.TestCase):
             capture_output=True,
         ).stdout.strip()
 
-        with patch("research_db_ops.completion.human.legacy.latest_version", return_value=25):
+        with patch("research_db_ops.completion.human.legacy.latest_version", return_value=26):
             accepted, blocker = validate_legacy_baseline(
                 self.root,
                 baseline,
@@ -592,7 +592,7 @@ class CoreHumanArtifactFormatTests(unittest.TestCase):
         self.assertIsNotNone(blocker)
         assert blocker is not None
         self.assertEqual(blocker["reason"], "human_artifact_legacy_baseline_invalid")
-        self.assertEqual(blocker["baseline_schema_version"], 24)
+        self.assertEqual(blocker["baseline_schema_version"], 25)
         self.assertEqual(blocker["introduced_in_schema"], 24)
 
     def test_index_must_link_every_registered_object(self) -> None:
@@ -645,7 +645,7 @@ class CoreHumanArtifactFormatTests(unittest.TestCase):
         legacy_path = self.root / "hypotheses" / "main.md"
         legacy_path.write_text("# 旧假设记录\n\n这是迁移前已经冻结的人类记录。\n", encoding="utf-8")
         with sqlite3.connect(database_path(self.root)) as connection:
-            baseline_version = latest_version() - 1
+            baseline_version = 23
             connection.execute(f"PRAGMA user_version = {baseline_version}")
             connection.execute(
                 "UPDATE meta SET value = ? WHERE key = 'schema_version'",

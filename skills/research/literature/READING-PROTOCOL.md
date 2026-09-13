@@ -147,108 +147,12 @@ Candidate 完成 identity resolution 后，先用标题、摘要、关键词、�
 
 Observation、作者 Claim 与 Agent 科研判断始终分开。人类笔记可以把它们组织得更易读，但不得把三个层级压成一句“论文证明了……”。
 
-## 8. 人类 Markdown 的固定文件格式、阅读结构与用户确认
+## 8. 人类阅读输出与格式契约
 
-`literature/papers/<题名> - <第一作者> - <年份>.md` 是稳定的人类阅读文件。新生成或由 Agent 实质重写的 sidecar 使用版本化格式 `<!-- akira:literature-note:v1 -->`；格式标记之前只有唯一的一级标题 `# 原始论文题名`，不使用 YAML frontmatter。历史 sidecar 在没有 v1 标记时继续兼容，但一旦迁入新模板就必须完整满足 v1，不保留半新半旧格式。
+论文读完后，把给人看的高价值综合写入稳定的 `literature/` 阅读区；具体路径、文件命名、`literature/README.md`、Collection、单篇 note、用户确认、用户笔记和历史迁移的**唯一格式 authority** 是 [`references/HUMAN-FORMAT.md`](references/HUMAN-FORMAT.md)。本阅读协议不复制模板，避免阅读方法与排版契约形成两个 source of truth。
 
-v1 文件头固定使用书目信息表，字段和顺序不得自行改名。所有行都保留；没有可靠中文译题、PMID/PMCID、DOI 或本地 PDF 时写 `—`、`无` 或明确说明，不留空。这里只展示用户打开文件时真正有用的稳定信息，不复制 `reading_status`、`critical_status`、内部 artifact ID 或数据库时间戳等机器状态。
+阅读策略与文件格式是两层不同约束：本协议决定如何判断阅读价值、选择章节顺序、重建 Method / Experiment / Observation / Claim、执行 Critical Audit；`HUMAN-FORMAT.md` 决定这些结果如何稳定地给人阅读。无论本次阅读目的是什么，最终正式 note 都保留同一固定人类骨架，科学内容在 H3+ 按论文真实结构展开，不使用字数、实验数、图表数等固定配额制造填充。
 
-正文的 `##` 二级标题固定且顺序固定；即使某节不适用，也保留标题并明确写“不适用”“未报告”或“未发现”，以区分“没有信息”和“Agent 漏写”。`###` 及更深层标题按论文类型自由组织，例如实验论文可按实验拆分，方法论文可按数据集、基线、消融和外部验证拆分。`## 我的笔记` 边界内属于用户，可自由使用任意 Markdown 标题，不参与 Agent 结构门禁。
+单篇 note 继续把 Observation、作者 Claim 与 Agent 证据评估分开。`三句话总结` 只是恢复理解的入口，不替代后续证据层级；`科研启发` 属于 Agent / 项目产生的新判断，值得持续追踪时仍按项目 provenance 写入 Lead、Research Question、Hypothesis Proposal 或 Research Tree。
 
-人类 sidecar 不是逐段摘要、逐句摘抄或缩短版文献综述。它的目的，是让用户以后迅速恢复“这篇论文为什么重要、关键设计是什么、数据真正显示什么、结论能到哪里、下次应该直接跳到哪里”。完整 Method / Experiment / Observation / Claim / Issue 与来源定位继续由 SQLite 保存。sidecar 只保留高价值综合，并优先记录少量真正值得回看的图、表、补充材料或方法位置。固定数量的“1 个思路、2 个图、5 句话”之类压缩法不作为门禁；是否保留取决于它对理解、复现或科研决策是否有用。
-
-v1 固定模板如下：
-
-```text
-# 原始论文题名
-
-<!-- akira:literature-note:v1 -->
-
-| 项目 | 信息 |
-| --- | --- |
-| 中文译题 | — |
-| 第一作者 | Wang |
-| 期刊 / 会议 | Journal Name |
-| 年份 | 2026 |
-| DOI | 10.xxxx/xxxx；无则写 — |
-| PMID / PMCID | 有则填写；无则写 — |
-| Paper ID | P000123 |
-| 论文类型 | 原始研究 / 综述 / 方法论文 / ... |
-| 当前阅读用途 | 证据核验；研究设计学习 |
-| 本地全文 | [PDF](同名.pdf)；没有则写当前无可用 PDF |
-
-<!-- akira:user-read:top -->
-- [ ] **我已阅读并确认当前版本**
-<!-- /akira:user-read:top -->
-
-## 三句话总结
-1. 这篇论文解决什么问题。
-2. 它怎么解决。
-3. 最重要的实验结果及结论边界是什么。
-
-## 为什么值得读
-- 与当前项目 / Active Uncertainty 的关系
-- 为什么被列为当前阅读优先级
-
-## 论文逻辑
-### 研究背景
-### 已有工作与不足
-### 作者的问题
-### 核心思路
-
-## 方法拆解
-### 输入 / 研究对象
-### 核心过程
-### 输出 / 测量
-### 关键参数与假设
-### 复现信息
-
-## 实验逻辑
-### 实验 1：按论文实际内容命名
-
-## 数据直接显示什么
-
-## 作者如何解释
-
-## 我们的证据评估
-### 直接支持什么
-### 间接支持或限定什么
-### 没有建立什么
-### 主要问题与替代解释
-
-## 关键图表与定位
-- 只列以后最值得直接跳转的图、表、补充材料或方法小节
-- 每项说明它回答什么、为什么重要，以及需要回原文核验的定位
-
-## 可复用内容
-- 方法 / protocol
-- 代码 / 数据
-- 参数 / 模型
-
-## 科研启发
-- 这篇论文改变了我们什么认识
-- 产生了什么新 Research Question / Hypothesis / Analysis / Design 线索
-
-## 结论边界
-
-## 我的笔记
-> 以下区域仅供用户手工记录。Agent 只负责初始化边界，不修改、重写、整理、总结或清空其中内容。
-
-<!-- akira:user-notes:start -->
-
-<!-- /akira:user-notes:end -->
-
-<!-- akira:user-read:bottom -->
-- [ ] **我已阅读并确认当前版本**
-<!-- /akira:user-read:bottom -->
-```
-
-固定二级标题各自只有一个职责：`三句话总结` 用最短路径恢复问题、方法和主要结果边界；`为什么值得读` 只解释它与当前项目的关系；`论文逻辑` 重建作者为什么做及论证链；`方法拆解` 回答具体怎么做；`实验逻辑` 按 Why → How → Result 组织关键验证；`数据直接显示什么` 只写 Observation；`作者如何解释` 忠实记录作者 Claim；`我们的证据评估` 承担 Agent Critical Audit；`关键图表与定位` 保存以后值得直接回原文的位置；`可复用内容` 保存当前项目可实际采用的资源；`科研启发` 保存新 Research Question / Hypothesis / Analysis / Design 线索；`结论边界` 给出最窄可辩护结论；`我的笔记` 只属于用户。不要在多个章节重复同一段总结来填模板。
-
-机械门禁只检查结构，不评分内容质量：v1 必须有唯一一级标题、固定书目信息字段、固定且按顺序出现的二级标题、用户笔记边界和顶部/底部确认框；不强制字数、句数、实验数量、图表数量或启发数量。用户笔记区内的标题不参与结构检查。
-
-任意一个复选框被用户勾选后，运行 `research-db sync-user-reading` 即把这次确认记录到 `user_reading_events`，并把上下两个框规范化为 `[x]`。**Agent 不得自行把 `[ ]` 改成 `[x]` 来制造用户确认**；只有用户在文件中实际勾选的状态可以触发新的 `confirmed` 事件。确认版本使用 Git 内容对象 ID（content OID），计算前会把两个复选框归一化为未勾选，并把 `akira:user-notes` 边界内的用户专属内容归一化为空区块。因此单纯点击复选框、或用户继续补写自己的笔记，都不会制造新的“Agent 阅读正文版本”；Agent 生成区域发生变化仍会使旧确认失效。上下两个框同时恢复 `[ ]` 并同步时，可撤销当前版本确认。
-
-用户确认与 Agent 的 Reconstruction / Critical Audit 完全分开：Agent 完成科研阅读不等于用户本人已读，用户未勾选也不阻断 Literature completion。`akira:user-notes` 区块属于用户，Agent 更新 sidecar 时必须逐字保留其既有内容，不得借“整理笔记”“统一格式”或更新论文内容之名改写。若 Markdown 的 Agent 生成正文、证据评估、结论边界等内容发生实质变化，旧用户确认只适用于旧 content OID；Agent 修改这些区域时应主动把两个框重置为 `[ ]`。即使遗漏重置，`sync-user-reading` 发现“Agent 正文版本已变但旧 `[x]` 仍残留”时也必须 fail closed：记录旧确认失效并清空两个框，不得替用户确认新版本。用户重新阅读后再点击任一复选框即可确认当前版本。
-
-“三句话总结”是用户恢复论文的入口，不替代后文证据层级。科研启发属于 Agent/项目产生的新判断，不得伪装成作者结论；值得持续追踪的启发继续按项目 provenance 写入 Lead、Research Question、Hypothesis Proposal 或 Research Tree。
+用户确认与 Agent 的 Reconstruction / Critical Audit 完全分离。Agent 完成科研阅读不等于用户本人已读；用户是否确认当前 note 也不阻断 Literature completion。用户专属笔记内容由 `HUMAN-FORMAT.md` 的固定边界保护，Agent 更新自己的阅读正文时保持用户内容原样，并让旧确认只对应原来的 Git 内容版本。
