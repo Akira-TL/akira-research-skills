@@ -48,15 +48,19 @@ Research family 自己拥有科研决策、evidence boundary 与 provenance。�
 ## 目录
 
 ```text
-docs/                  面向使用者的说明
-skills/                 可安装的 Research Skills
-  akira-research/       research DB、migration、tests、总 Router
-  literature/
-  analysis/
-  ...
+docs/
+  research/             面向使用者的 Research Skill 文档
+skills/
+  research/             稳定 Research Skills
+    akira-research/     research DB、migration、tests、总 Router
+    literature/
+    analysis/
+    ...
+  in-progress/          尚未稳定的 Research Skills
+  deprecated/           已弃用 Skill 的迁移说明
 AGENTS.md               本仓库维护规则
 ```
 
 ## 历史
 
-本仓库由原 `Akira-TL/skills` 中的 `research/` 与 `docs/research/` 通过 history filtering 抽取，并在抽取时分别重定位为 `skills/` 与 `docs/`。因此 Research workflow 的主要演进历史仍可在本仓库 Git history 中追溯。
+本仓库由原 `Akira-TL/skills` 中的 `research/` 与 `docs/research/` 通过 history filtering 抽取，并保留 Research workflow 的主要演进历史。独立仓建立后，稳定 Skill 采用与 Matt 仓一致的 category 结构：`skills/research/` 与 `docs/research/` 镜像维护。
