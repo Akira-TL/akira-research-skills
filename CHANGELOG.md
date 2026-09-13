@@ -12,6 +12,7 @@
 
 ### Changed
 
+- Research 安装协议改为 Akira 机器级 Git + symlink 注册：远端 source 进入 `~/.agents/sources/`，Research suite 与按需外部 Skill 注册到 `~/.agents/skills/`；不再使用 `npx skills`、项目级 `skills-lock.json` 或固定执行器目录，具体 harness 自行负责加载机器级 Skill。
 - Research suite 从通用 Akira Skill 仓拆出，科研项目可以独立安装完整 Research 能力。
 - Hypothesis、Design、Study、Dataset、Analysis 与 Interpretation 的长期人类 Markdown 采用 owner-defined 固定格式、相对导航与目录索引；目录索引固定区分 `Objects` / `Relations` 并机械覆盖已知上/下游关系，completion 同时验证路径、H1/H2、已知上游导航和本地链接完整性。
 - Hypothesis / Design 首次进入 frozen / execution-ready 前先通过严格人类格式 preflight，再执行学术语言检查；格式错误不会先写入冻结状态，避免 completion 阶段才发现必须回写冻结正文。

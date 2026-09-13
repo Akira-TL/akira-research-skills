@@ -1,23 +1,33 @@
-# Canonical install block
+# Akira Research 安装
 
-Akira Research 作为完整科研产品族项目级安装，不作为全局默认 Skill 集。
+Akira Research 是完整科研产品族，只在真实科研任务需要时安装到机器级 Skill 注册表，不属于默认基础安装集。
 
-## 项目级安装整个 Research suite
-
-```bash
-npx skills add Akira-TL/akira-research-skills --skill '*' --agent '*' -y
-```
-
-## 查看当前仓库可安装 Skill
+## 安装完整 Research suite
 
 ```bash
-npx skills add Akira-TL/akira-research-skills --list
+python3 ~/.agents/scripts/skills.py install \
+  https://github.com/Akira-TL/akira-research-skills.git \
+  --all \
+  --root skills/research
 ```
 
-本地维护 checkout 使用：
+安装器从远端 GitHub checkout 到 `~/.agents/sources/`，再把每个 Research Skill 以软链接注册到 `~/.agents/skills/`。Skill 内容不复制。
+
+## 安装前检查远端 Skill
 
 ```bash
-npx skills add . --list
+python3 ~/.agents/scripts/skills.py inspect \
+  https://github.com/Akira-TL/akira-research-skills.git
 ```
 
-README、迁移说明和其他安装文档引用安装方式时，以本文件为准。除非用户明确要求，不加 `-g`；浏览器、DOCX/PPT、OpenAI Plugins、K-Dense 等外部能力不随 Research suite 自动安装。
+`inspect` 只更新共享 source cache 并列出可发现的 `SKILL.md`，不创建机器级注册项。
+
+## 本地维护 checkout
+
+本地 `skills/research` checkout 只用于开发、review、测试与固定 revision，不作为运行时安装 source。开发时使用仓库自己的：
+
+```bash
+./scripts/check.sh
+```
+
+具体 ForgeRelay、Claude Code、Codex 或其他执行器如何发现、链接或加载已注册的 `~/.agents/skills`，由对应执行器自己负责，不属于 Research 产品安装协议。

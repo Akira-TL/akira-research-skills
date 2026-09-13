@@ -6,7 +6,7 @@
 
 任务真正进入 NGS execution 时，先检查当前项目是否已经提供可核验的 OpenAI NGS Skill / runner。若没有，使用 Akira Router 登记的 OpenAI Plugins 来源查看当前 Skill 清单，并只定位与 assay 直接相关的最窄候选。
 
-**不存在可核验 upstream 时只把 NGS execution 标为 optional dependency blocker**：说明需要的 assay / runner 与来源，然后请求用户决定是否项目级安装；不得扫描任意路径、循环尝试安装、从模型记忆重建 runner 参数，或把第三方正文复制进 Research repo。
+**不存在可核验 upstream 时只把 NGS execution 标为 optional dependency blocker**：说明需要的 assay / runner 与来源，然后先检查机器级 `~/.agents/skills/`，缺失时请求用户决定是否安装所需 Skill；不得扫描任意路径、循环尝试安装、从模型记忆重建 runner 参数，或把第三方正文复制进 Research repo。具体执行器如何加载机器级 Skill 由执行器自己负责。
 
 使用用户批准的 upstream 后，记录实际来源、版本 / commit、安装位置与 runner/workflow identity。旧首次接入曾使用 OpenAI `plugins` 中的 `ngs-analysis` 1.0.3；这只是历史基线，不代表当前项目必须使用该版本。
 

@@ -14,9 +14,9 @@
 
 ## 独立安装边界
 
-本仓库必须能够被 `npx skills add <repo> --skill '*'` 独立发现和安装。基础科研流程不得要求 Akira Lattice 或旧 `Akira-TL/skills` checkout 存在。
+本仓库必须保持标准 `SKILL.md` 结构，能够由 Akira 机器级安装器从远端 GitHub source 发现并安装到 `~/.agents/skills/`。基础科研流程不得要求 Lattice 的本地 `skills/research` submodule 或旧 `Akira-TL/skills` checkout 作为运行时 source；真正运行时 source 只能来自远端 checkout cache。
 
-外部浏览器、文档、专业软件、数据库或领域 runner 只在真实任务需要时按对应 Skill 契约发现；缺失时走显式 optional dependency / user approval 路径，不自动安装整套外部仓库，也不从模型记忆重建第三方实现。
+外部浏览器、文档、专业软件、数据库或领域 runner 只在真实任务需要时按对应 Skill 契约发现；缺失时走显式 optional dependency / user approval 路径，不自动安装整套外部仓库，也不从模型记忆重建第三方实现。具体执行器如何加载机器级 Skill 由执行器自己负责。
 
 ## 修改规则
 
@@ -34,6 +34,6 @@
 ./scripts/check.sh
 ```
 
-独立 checkout 还可以用 `npx skills add . --list` 核验 Skill discovery。正式提交继续使用 Akira Guard。
+Skill discovery 通过仓库结构检查与 Akira 安装器的远端 `inspect` 流程核验，不使用第三方 Skill package manager。正式提交继续使用 Akira Guard。
 
 只运行与当前修改有关的更窄测试也是允许的；正式发布前再做完整验证。

@@ -11,7 +11,7 @@
 
 ## Upstream
 
-Akira 不复制第三方 NGS Skill 正文。OpenAI Plugins 中的 NGS 能力是按需外部执行来源，不是安装 Research family 的前置依赖。真正进入 NGS execution 而当前项目缺少对应能力时，Agent 先定位当前官方候选，再报告所需 Skill / runner 并请求用户决定是否项目级安装；不自行扫描路径、反复安装或猜测 runner 参数。
+Akira 不复制第三方 NGS Skill 正文。OpenAI Plugins 中的 NGS 能力是按需外部执行来源，不是安装 Research family 的前置依赖。真正进入 NGS execution 而当前会话缺少对应能力时，Agent 先定位当前官方候选，再检查机器级 `~/.agents/skills/` 是否已有所需 Skill；缺失时报告所需 Skill / runner 并请求用户决定是否安装到机器级注册表。具体执行器如何加载由执行器自己负责；不自行扫描路径、反复安装或猜测 runner 参数。
 
 upstream 的自动方法选择、软件 fallback 和方便性默认不拥有科研决策权。确认性分析的方法、design formula、contrast、normalization、covariate、multiple-testing 与 sensitivity 必须先由 Akira `analysis` 依据 Research Design 和 estimand 决定，再交给 NGS runner 执行。
 

@@ -26,16 +26,20 @@ Research Question / Active Uncertainty
 ## Installation
 
 ```bash
-npx skills add Akira-TL/akira-research-skills --skill '*' --agent '*' -y
+python3 ~/.agents/scripts/skills.py install \
+  https://github.com/Akira-TL/akira-research-skills.git \
+  --all \
+  --root skills/research
 ```
 
-查看可安装 Skill：
+查看远端可发现 Skill：
 
 ```bash
-npx skills add Akira-TL/akira-research-skills --list
+python3 ~/.agents/scripts/skills.py inspect \
+  https://github.com/Akira-TL/akira-research-skills.git
 ```
 
-本地维护 checkout 使用 `npx skills add . --list`。安装约定见 [`.agents/install-block.md`](.agents/install-block.md)。
+运行时 Skill 只从远端 GitHub checkout 安装到机器级 `~/.agents/skills/`；本地维护 checkout 不作为安装 source。安装约定见 [`.agents/install-block.md`](.agents/install-block.md)。
 
 ## Optional capabilities
 

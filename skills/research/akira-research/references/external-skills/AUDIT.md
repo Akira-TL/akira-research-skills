@@ -168,7 +168,7 @@ Akira 的实现继续由 Analysis Attempt、Git commit、config、output、decis
 - 不加入全局 `install.sh`；
 - 不批量安装；
 - 当前任务需要某一专业能力时，只审计那个具体 Skill；
-- 确认它只补执行知识、不接管 Akira scientific decision / provenance 后，再向用户请求项目级安装许可；
+- 确认它只补执行知识、不接管 Akira scientific decision / provenance 后，再向用户请求机器级 Skill 安装许可；
 - 安装命令与权限边界见 [`POLICY.md`](POLICY.md)。
 
 ## 6. 当前 Akira owner 对照

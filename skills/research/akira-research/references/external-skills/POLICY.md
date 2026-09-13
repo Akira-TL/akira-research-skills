@@ -4,7 +4,7 @@ Akira Research 的科研决策、Research Tree、provenance、evidence boundary 
 
 ## 1. 默认不安装
 
-外部 Skill 不进入 Akira Lattice 的默认 `install.sh`，不因为“可能有用”而预装到全局运行时，也不以 Git submodule 的方式挂入 Akira 自研 Skill 源码。
+外部 Skill 不进入 Akira Lattice 的默认基础安装集，不因为“可能有用”而预装到机器级 `~/.agents/skills/`，也不以 Git submodule 的方式挂入 Akira 自研 Skill 源码。
 
 当前允许作为**按需发现源**的科研 Skill 仓库为：
 
@@ -20,9 +20,9 @@ K-Dense-AI/scientific-agent-skills
 
 1. 当前已经有明确科研任务，不是为了扩充能力而浏览 Skill；
 2. Akira 自身规则已经确定“为什么要做”，缺的是具体专业工具、数据库或软件实现知识；
-3. 当前项目没有已经可用且足够的同类 Skill；
+3. 当前会话与机器级注册表都没有已经可用且足够的同类 Skill；
 4. 候选第三方 Skill 能显著降低 API/软件误用、领域实现错误或重复查文档成本；
-5. 安装范围可以限制在当前项目。
+5. 安装范围可以限制为所需的具体机器级 Skill，而不是整仓预装。
 
 例如：Analysis 已经根据科研问题决定需要 PyMC 实现层级模型，此时可以推荐 PyMC 专门 Skill；不能因为发现 PyMC Skill 就反过来决定科研问题应该使用贝叶斯模型。
 
@@ -41,32 +41,22 @@ K-Dense-AI/scientific-agent-skills
 
 带脚本、hook、网络调用、凭据或数据上传能力的 Skill 不能只凭仓库 allowlist 自动获得执行许可。
 
-## 4. 用户确认后只做项目级安装
+## 4. 用户确认后只安装所需机器级 Skill
 
-当前 `skills` CLI 已验证：不使用 `-g` 时，Skill 安装到当前项目的：
-
-```text
-./.agents/skills/<skill-name>/
-```
-
-并生成 / 更新项目级：
-
-```text
-skills-lock.json
-```
-
-因此用户明确同意后，在**科研项目根目录**使用最窄安装：
+用户明确同意后，先用 Akira 安装器检查远端 source，再只安装真实需要的 Skill：
 
 ```bash
-npx skills add K-Dense-AI/scientific-agent-skills \
-  --skill <skill-name> \
-  --agent '*' \
-  -y
+python3 ~/.agents/scripts/skills.py inspect \
+  https://github.com/K-Dense-AI/scientific-agent-skills.git
+
+python3 ~/.agents/scripts/skills.py install \
+  https://github.com/K-Dense-AI/scientific-agent-skills.git \
+  --skill <skill-name>
 ```
 
-不得添加 `-g`，不得把整个 K-Dense 仓库全部安装，也不得由 Akira 全局安装脚本代替用户决定。
+不得把整个 K-Dense 仓库全部安装，也不得因为来源已登记就绕过用户决定。安装器只把远端 checkout 登记到机器级 `~/.agents/skills/`；ForgeRelay、Claude Code、Codex 或其他执行器如何加载该 Skill 由执行器自己负责。
 
-`skills-lock.json` 作为项目级 Skill 安装身份与内容哈希的工程记录；不再另造一套重复 lockfile。第三方 Skill 本身不是科研事实源。如果它实际影响 Analysis / Study 的执行，真正的科研 provenance 仍记录具体软件、方法、参数、数据和执行版本，而不是只记录“用了某个 Skill”。
+机器级 `~/.agents/akira-skills.json` 只记录 Skill source identity、revision 与路径，不替代科研 provenance。第三方 Skill 本身不是科研事实源。如果它实际影响 Analysis / Study 的执行，真正的科研 provenance 仍记录具体软件、方法、参数、数据和执行版本，而不是只记录“用了某个 Skill”。
 
 ## 5. 用户拒绝安装时
 
