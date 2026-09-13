@@ -38,6 +38,10 @@ class HypothesisEvaluationTests(unittest.TestCase):
 
 比较两个随机处理的平均结局差异。
 
+## Applicable Standards
+
+不适用：当前没有额外正式规范。
+
 ## Current Loop
 
 QUESTION
@@ -61,6 +65,10 @@ A 相对 B 的平均处理效应属于哪个预定义效应区域？
 ## Key Decisions
 
 保持结果前冻结与结果后评价分离。
+
+## Navigation
+
+不适用：当前没有其他人类可读科研入口。
 
 ## References
 

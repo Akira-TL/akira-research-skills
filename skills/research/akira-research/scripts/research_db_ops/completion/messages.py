@@ -397,7 +397,33 @@ def append_communication_errors(errors: list[str], blockers: list[dict[str, Any]
 def append_project_state_errors(errors: list[str], blockers: list[dict[str, Any]]) -> None:
     for blocker in blockers:
         reason = str(blocker.get("reason", "unknown"))
-        if reason == "research_state_missing_file":
+        if reason == "human_markdown_versioned_marker":
+            errors.append(
+                "RESEARCH.md 的人类格式类型标记不得携带 v1/v2 等格式版本身份："
+                + ", ".join(str(marker) for marker in blocker.get("markers", []))
+            )
+        elif reason == "human_markdown_h1_invalid":
+            errors.append("RESEARCH.md 必须且只能有一个 `# Research` 一级标题。")
+        elif reason == "human_markdown_section_order_invalid":
+            errors.append("RESEARCH.md 的二级章节集合或顺序不符合固定人类可读格式。")
+        elif reason == "human_markdown_empty_sections":
+            errors.append(
+                "RESEARCH.md 的必需章节不能为空；未知、不适用或待确认必须显式写明："
+                + ", ".join(str(name) for name in blocker.get("sections", []))
+            )
+        elif reason == "human_markdown_link_missing":
+            errors.append(
+                f"RESEARCH.md 的人类导航链接目标不存在：{blocker.get('target')}。"
+            )
+        elif reason == "human_markdown_link_internal":
+            errors.append(
+                f"RESEARCH.md 的普通人类导航不能把 .research/ 机器内部状态作为入口：{blocker.get('target')}。"
+            )
+        elif reason in {"human_markdown_link_absolute", "human_markdown_link_outside_project"}:
+            errors.append(
+                f"RESEARCH.md 的本地导航必须使用项目内相对路径：{blocker.get('target')}。"
+            )
+        elif reason == "research_state_missing_file":
             errors.append("项目根目录缺少 RESEARCH.md，不能完成 current research state gate。")
         elif reason == "research_state_missing_sections":
             errors.append(

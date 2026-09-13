@@ -32,6 +32,10 @@ class CommunicationProvenanceTests(unittest.TestCase):
 
 验证传播产物与冻结科学证据之间的溯源关系。
 
+## Applicable Standards
+
+不适用：当前没有额外正式规范。
+
 ## Current Loop
 
 COMMUNICATION
@@ -55,6 +59,10 @@ COMMUNICATION
 ## Key Decisions
 
 传播产物不得升级 canonical scientific evidence。
+
+## Navigation
+
+不适用：当前没有其他人类可读科研入口。
 
 ## References
 

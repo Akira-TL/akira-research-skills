@@ -11,11 +11,13 @@
 
 ## 使用方式
 
-这是一个用户显式启动的 Skill。通常只需要调用 `akira-research` 并给出项目路径与研究目标；后续子工作流由 Router 自主选择。项目用 `RESEARCH.md` 保存短小的当前状态，用 `.research/research.sqlite` 保存结构化科研 provenance。
+这是一个用户显式启动的 Skill。通常只需要调用 `akira-research` 并给出项目路径与研究目标；后续子工作流由 Router 自主选择。项目用 `RESEARCH.md` 保存短小的当前状态并作为人类科研首页，用 `.research/research.sqlite` 保存结构化科研 provenance。长期人类科研文件采用稳定格式和项目内相对 Markdown 导航；普通历史由 Git 保存，不通过复制 `v1`、`final`、`latest` 等文件维护版本。
 
 ## 关键边界
 
 它不是固定阶段流水线，也不要求每个项目都经过 Hypothesis、Study 或全部子 Skill。只有存在真正的科学需要时才进入对应工作流；当下一条判别性证据必须依赖新样品、新实验、新权限或其他外部现实输入时，应在真实停止边界结束当前循环。
+
+`RESEARCH.md` 的一级标题、二级章节集合与顺序是固定的人类界面；没有内容的必需章节必须明确写不适用、未记录、未知或待确认，而不是删除或留空。导航只指向真实存在的人类可读 artifact；`.research/` 保留为机器 provenance 与内部支持区。冻结的 Hypothesis / Design 等对象不会仅为了后来补导航而改写，后续关系由下游 artifact、可更新索引和 Research Tree 表达。
 
 高通量测序（Next-Generation Sequencing, NGS）作为领域执行能力接入现有分层，不新增科研阶段：真实建库和测序实施属于 `study`，测序数据处理属于 `data → ngs`，测序统计/生物信息推断属于 `analysis → ngs`，结果的科学解释仍属于 `interpretation`。
 

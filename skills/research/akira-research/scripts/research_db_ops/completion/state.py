@@ -4,15 +4,19 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .human.validation import human_markdown_blockers
+
 
 REQUIRED_RESEARCH_SECTIONS = (
     "Objective",
+    "Applicable Standards",
     "Current Loop",
     "Active Uncertainty",
     "Current State",
     "Active Work",
     "Open Threads",
     "Key Decisions",
+    "Navigation",
     "References",
 )
 
@@ -53,16 +57,6 @@ _EVIDENCE_STATUS_EXPLANATION_MARKERS = (
 )
 
 
-def _sections(text: str) -> dict[str, str]:
-    headings = list(re.finditer(r"(?m)^##\s+(.+?)\s*$", text))
-    sections: dict[str, str] = {}
-    for index, match in enumerate(headings):
-        start = match.end()
-        end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
-        sections[match.group(1).strip()] = text[start:end].strip()
-    return sections
-
-
 def _evidence_status_competing_explanations(active_uncertainty: str) -> list[dict[str, Any]]:
     match = re.search(
         r"(?ims)^Competing explanations:\s*(.*?)(?=^\s*(?:Discriminating gap|Best next evidence|Question):|\Z)",
@@ -95,8 +89,12 @@ def project_state_readiness(project_root: Path) -> dict[str, Any]:
             "blockers": [{"reason": "research_state_missing_file"}],
         }
 
-    sections = _sections(path.read_text(encoding="utf-8", errors="ignore"))
-    blockers: list[dict[str, Any]] = []
+    sections, blockers = human_markdown_blockers(
+        project_root,
+        "RESEARCH.md",
+        expected_h1="Research",
+        expected_h2=REQUIRED_RESEARCH_SECTIONS,
+    )
     missing = [name for name in REQUIRED_RESEARCH_SECTIONS if name not in sections]
     if missing:
         blockers.append({"reason": "research_state_missing_sections", "sections": missing})

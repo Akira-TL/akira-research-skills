@@ -1,12 +1,12 @@
 # Research State
 
-`RESEARCH.md` 是科研项目当前状态的 canonical source。它回答“这个项目现在在研究什么、卡在哪里、正在做什么”，不保存详细历史、论文抽取结果或数据库内容。
+`RESEARCH.md` 是科研项目当前状态的 canonical source，也是项目的人类科研首页。它回答“这个项目现在在研究什么、卡在哪里、正在做什么”，并提供到当前人类科研对象的阅读入口；不保存详细历史、论文抽取结果或数据库内容。所有长期人类科研文件的共同结构、导航、版本与 editable source 边界见 [`references/human/CONTRACT.md`](references/human/CONTRACT.md)。
 
 ## Bootstrap
 
 新的科研项目首先确认 Git 仓库；若当前目录尚不是 Git repository，则以 `main` 作为 canonical branch 初始化（等价于 `git init -b main`）。Bootstrap 只强制创建 `RESEARCH.md`，其他科研内容目录按真实需求出现，不预生成空的 `literature/`、`hypotheses/`、`analysis/` 等目录。`research-db init` 同时维护一段项目级 `.gitignore`：默认排除 `.research/artifacts/`、cache/tmp、Attempt 可重建 outputs/logs、人类 convenience PDF 和常见可重建分析图；不使用全局 `*.pdf` / `*.png` 之类规则误伤需要审阅的显式 artifact。初始化 Git 不等于完成 provenance：最迟在第一个可独立解释的科研状态形成时必须提交一次，不能让整个科研项目长期停留在“有 `.git` 但没有任何 commit”的状态。
 
-最小结构：
+固定结构如下；完整可复制模板、导航写法与错误示例见 [`references/human/RESEARCH-STATE.md`](references/human/RESEARCH-STATE.md)：
 
 ```markdown
 # Research
@@ -27,20 +27,23 @@
 
 ## Key Decisions
 
+## Navigation
+
 ## References
 ```
 
 ## 字段语义
 
 - `Objective`：当前研究试图理解、解释或解决什么；尚未形成具体问题时允许保持宽泛。
-- `Applicable Standards`：可选；只列当前真正约束研究的 design/conduct、reporting、metadata、provenance、domain 或其他正式规范及其 pointer。完整核验按 `research-standards` 执行，不复制 checklist。
+- `Applicable Standards`：固定章节；只列当前真正约束研究的 design/conduct、reporting、metadata、provenance、domain 或其他正式规范及其 pointer。没有额外规范时明确写 `不适用`，不删除或留空。完整核验按 `research-standards` 执行，不复制 checklist。
 - `Current Loop`：只用于定位当前主要研究区域，取 `EXPLORE`、`QUESTION`、`HYPOTHESIS`、`DESIGN`、`STUDY`、`DATA`、`ANALYSIS`、`INTERPRETATION`、`COMMUNICATION` 之一；它不规定下一步。
 - `Active Uncertainty`：当前最值得解决、且真实阻塞研究推进的一项 primary uncertainty。它必须能作为一个独立问题被回答；其选择、competing explanations、discriminating gap 与 next evidence 按 [`research-tree` 的 Active Uncertainty 契约](../research-tree/references/ACTIVE-UNCERTAINTY.md) 执行。若多个问题需要不同下一动作，只保留信息增益最高的一个，其余移入 `Open Threads`。
 - `Current State`：让新的 Agent 在较短文本内理解“目前已经知道什么、还不知道什么”的 current synthesis。
 - `Active Work`：现在正在做什么，以及它为什么能降低 Active Uncertainty；与 uncertainty 本身分开记录。
 - `Open Threads`：已经发现但当前不追的其他问题，避免研究被每个新线索带走。
 - `Key Decisions`：仍然影响当前路线的有效决定；旧版本由 Git history 保存，不把演化日志堆进正文。
-- `References`：只保存指向详细 artifacts、数据库视图或其他研究资产的 pointer。
+- `Navigation`：只放当前真实存在的人类可读科研入口，并使用项目内相对 Markdown 链接；不得把 `.research/` 机器内部状态作为普通阅读入口。
+- `References`：保存 provenance、数据库、外部规范或其他精确 pointer；机器内部路径以普通文本或内联代码记录，不伪装成人类导航。
 
 ## 接管已有项目
 
@@ -69,7 +72,7 @@
 
 一次科研动作结束后，只把仍然影响当前路线的内容写回 `RESEARCH.md`：新的 Active Uncertainty、Current State、Active Work、Open Threads、仍然有效的 Key Decisions，以及必要 pointer。准备声明本轮工作流完成前，必须在所有分析、解释、数据库写入和提交动作结束后**最后再读一次 `RESEARCH.md`**：`Active Work` 应描述下一条真实尚未完成的动作、明确的等待/blocker 或当前有边界的停止状态，不能继续写“正在提交结果”“正在运行 validation”等事实上已经完成的操作。
 
-`validate --completion` 对这一 current-state contract 只做保守的机械检查：`Objective`、`Current Loop`、`Active Uncertainty`、`Current State`、`Active Work`、`Open Threads`、`Key Decisions`、`References` 八个二级 section 必须存在；`Current Loop` 必须是本文件定义的九个定位词之一；`Active Work` 不能为空，也不能仍把项目 `bootstrap`、`git commit`、`research-db validate --completion`、`clean-tree` 等已经完成的基础设施/收尾动作写成当前工作。若 `Active Uncertainty` 明确采用 `Competing explanations:` 列表，门禁还会保守拦截把“证据不足”“当前无法判断”“不足以区分”“无法识别”等证据/工作状态直接写成 competing explanation 的明显违规；完整科学语义仍按 [`research-tree` 的 Active Uncertainty 契约](../research-tree/references/ACTIVE-UNCERTAINTY.md) 由主模型判断。这个检查用于捕获“最终提交后状态地图仍停留在收尾过程”或把知识状态伪装成科学替代状态的低歧义错误，不替代主模型判断 Objective、Active Uncertainty、Current State 或下一条 evidence 在科学上是否准确。
+`validate --completion` 对这一 current-state contract 只做保守的机械检查：`RESEARCH.md` 必须只有一个 `# Research` 一级标题；`Objective`、`Applicable Standards`、`Current Loop`、`Active Uncertainty`、`Current State`、`Active Work`、`Open Threads`、`Key Decisions`、`Navigation`、`References` 十个二级 section 必须全部存在、非空且保持固定顺序；本地 Markdown 导航必须解析到项目内真实人类入口，不能以 `.research/` 机器状态作为普通导航目标。`Current Loop` 必须是本文件定义的九个定位词之一；`Active Work` 也不能仍把项目 `bootstrap`、`git commit`、`research-db validate --completion`、`clean-tree` 等已经完成的基础设施/收尾动作写成当前工作。若 `Active Uncertainty` 明确采用 `Competing explanations:` 列表，门禁还会保守拦截把“证据不足”“当前无法判断”“不足以区分”“无法识别”等证据/工作状态直接写成 competing explanation 的明显违规；完整科学语义仍按 [`research-tree` 的 Active Uncertainty 契约](../research-tree/references/ACTIVE-UNCERTAINTY.md) 由主模型判断。这个检查用于捕获“最终提交后状态地图仍停留在收尾过程”或把知识状态伪装成科学替代状态的低歧义错误，不替代主模型判断 Objective、Active Uncertainty、Current State 或下一条 evidence 在科学上是否准确。
 
 详细文献知识、检索历史、方法、实验、观察、声明、批判问题和关系进入项目级 SQLite；原始 PDF/XML、supplement、大型数据、可重建图片和临时计算产物保持为独立/ignored artifact。Git 默认保存科研代码与配置、`RESEARCH.md`、Hypothesis/Design/Analysis/Literature 等人类 Markdown、`research.sqlite` 以及需要长期审计的小型 canonical result；因此不额外维护重复的 research log，也不把 Git 当成大型二进制 artifact store。每个可独立解释的科研事件完成后提交本轮 owned changes；用户已有、与本轮无关的工作区修改不触碰、不暂存、不重置。
 

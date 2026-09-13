@@ -30,7 +30,11 @@ VALID_RESEARCH_MD = """# Research
 
 ## Objective
 
-验证科研完成门禁。
+验证科研完成门禁与人类可读格式。
+
+## Applicable Standards
+
+不适用：当前没有额外正式规范。
 
 ## Current Loop
 
@@ -55,6 +59,10 @@ QUESTION
 ## Key Decisions
 
 保持当前证据边界。
+
+## Navigation
+
+暂无其他科研入口。
 
 ## References
 
@@ -118,6 +126,18 @@ class ResearchCompletionTests(unittest.TestCase):
 
         self.assertIn("dirty_canonical_paths", result["git"])
         self.assertNotIn("dirtycanonical_paths", result["git"])
+
+    def test_project_state_requires_unique_h1(self) -> None:
+        invalid = VALID_RESEARCH_MD + "\n# Duplicate Research\n"
+        (self.root / "RESEARCH.md").write_text(invalid, encoding="utf-8")
+
+        result = project_state_readiness(self.root)
+
+        self.assertFalse(result["ready"])
+        blocker = next(
+            item for item in result["blockers"] if item["reason"] == "human_markdown_h1_invalid"
+        )
+        self.assertEqual(blocker["count"], 2)
 
     def test_project_state_requires_required_sections(self) -> None:
         (self.root / "RESEARCH.md").write_text(

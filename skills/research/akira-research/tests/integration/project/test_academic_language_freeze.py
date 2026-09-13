@@ -22,6 +22,10 @@ RESEARCH_MD = """# Research
 
 验证冻结前学术语言门禁不会把外部软件文档误判成人类科研正文。
 
+## Applicable Standards
+
+不适用：当前没有额外正式规范。
+
 ## Current Loop
 
 ANALYSIS
@@ -45,6 +49,10 @@ ANALYSIS
 ## Key Decisions
 
 人类科研正文使用规范中文，外部软件文档保留原文。
+
+## Navigation
+
+不适用：当前没有其他人类可读科研入口。
 
 ## References
 

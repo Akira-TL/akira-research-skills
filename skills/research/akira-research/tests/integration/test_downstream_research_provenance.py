@@ -30,6 +30,10 @@ class DownstreamResearchProvenanceTests(unittest.TestCase):
 
 验证项目数据、确认性分析与结果溯源的完成门禁。
 
+## Applicable Standards
+
+不适用：当前没有额外正式规范。
+
 ## Current Loop
 
 ANALYSIS
@@ -53,6 +57,10 @@ ANALYSIS
 ## Key Decisions
 
 结果前计划与输入保持冻结，结果后信息只追加溯源记录。
+
+## Navigation
+
+不适用：当前没有其他人类可读科研入口。
 
 ## References
 

@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 ## 1. 进入或接管项目
 
-先读取 `RESEARCH.md`；不存在时按 [`PROJECT-STATE.md`](PROJECT-STATE.md) bootstrap。接管已有项目时同时运行 `research-db status`，用数据库对象、canonical artifacts 与 Git history 恢复 Objective、Active Uncertainty、冻结点、结果边界、当前分支和下一条真实工作。
+先读取 `RESEARCH.md`；它既是当前科研状态，也是项目的人类科研首页。不存在时按 [`PROJECT-STATE.md`](PROJECT-STATE.md) bootstrap；创建或修改长期人类科研文件时遵守 [`references/human/CONTRACT.md`](references/human/CONTRACT.md)，具体 artifact 再服从其 owner Skill 的 human format reference。接管已有项目时同时运行 `research-db status`，用数据库对象、canonical artifacts 与 Git history 恢复 Objective、Active Uncertainty、冻结点、结果边界、当前分支和下一条真实工作。
 
 数据库 schema / validator 兼容性是基础设施状态，不等于科学状态。需要迁移时按 [`RESEARCH-DB.md`](RESEARCH-DB.md) 的正式契约处理，不为了让 validator 通过而重写历史科研事实。
 
@@ -78,7 +78,7 @@ Research Question、Active Uncertainty、分支和跨对象关系由 [`research-
 
 ## 7. 项目状态与 provenance
 
-`RESEARCH.md` 只保存仍影响路线的 Objective、Current Loop、Active Uncertainty、Current State、Active Work、Open Threads、Key Decisions 与重要 pointers，不变成日志或数据库 dump。
+`RESEARCH.md` 只保存仍影响路线的 Objective、适用规范、Current Loop、Active Uncertainty、Current State、Active Work、Open Threads、Key Decisions，以及面向人的 Navigation 与必要 provenance References，不变成日志或数据库 dump。人类导航使用项目内相对链接；冻结科研 artifact 不为了补后来出现的下游链接而回写，新的下游 artifact、可更新索引与 Research Tree 承担后续反向发现。
 
 详细 paper knowledge、Research Tree、Hypothesis/Design provenance、Study、Dataset、Analysis、Observation、Evaluation、Communication Product 等使用项目 `research.sqlite` 的结构化能力；具体 schema、CLI 与 completion gate 统一由 [`RESEARCH-DB.md`](RESEARCH-DB.md) 维护，不用散写 SQL 临时创造非正式 schema。
 
