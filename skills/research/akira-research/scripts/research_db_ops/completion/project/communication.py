@@ -4,18 +4,81 @@ from pathlib import Path
 from typing import Any
 
 from research_db_support.storage import connect, database_path
-from ..git import run_git, commit_has_path, first_path_change_after, path_changed_after
+from ..git import commit_has_path, run_git
 from ..language import canonical_paths
 
-def communication_completion_readiness(project_root: Path) -> dict[str, Any]:
+
+HUMAN_COMMUNICATION_ROOT = "communication"
+INTERNAL_COMMUNICATION_ROOT = ".research/communication"
+
+
+def _workspace_files(project_root: Path) -> tuple[set[str], list[dict[str, Any]]]:
+    actual_paths: set[str] = set()
     blockers: list[dict[str, Any]] = []
+
+    human_root = project_root / HUMAN_COMMUNICATION_ROOT
+    if human_root.exists():
+        for child in sorted(human_root.iterdir(), key=lambda path: path.name.casefold()):
+            relative = child.relative_to(project_root).as_posix()
+            if child.is_file():
+                if child.name == "README.md":
+                    continue
+                actual_paths.add(relative)
+                blockers.append(
+                    {
+                        "reason": "communication_human_view_unexpected_top_level",
+                        "path": relative,
+                    }
+                )
+                continue
+            if child.is_dir():
+                actual_paths.update(
+                    path.relative_to(project_root).as_posix()
+                    for path in child.rglob("*")
+                    if path.is_file()
+                )
+
+    internal_root = project_root / INTERNAL_COMMUNICATION_ROOT
+    if internal_root.exists():
+        for child in sorted(internal_root.iterdir(), key=lambda path: path.name.casefold()):
+            relative = child.relative_to(project_root).as_posix()
+            if child.is_file():
+                actual_paths.add(relative)
+                blockers.append(
+                    {
+                        "reason": "communication_internal_support_unexpected_top_level",
+                        "path": relative,
+                    }
+                )
+                continue
+            if child.is_dir():
+                actual_paths.update(
+                    path.relative_to(project_root).as_posix()
+                    for path in child.rglob("*")
+                    if path.is_file()
+                )
+
+    return actual_paths, blockers
+
+
+def _artifact_matches_product_workspace(path: str, slug: str) -> bool:
+    return path.startswith(f"{HUMAN_COMMUNICATION_ROOT}/{slug}/") or path.startswith(
+        f"{INTERNAL_COMMUNICATION_ROOT}/{slug}/"
+    )
+
+
+def communication_completion_readiness(project_root: Path) -> dict[str, Any]:
+    actual_paths, blockers = _workspace_files(project_root)
+    has_assets = bool(actual_paths)
     db_path = database_path(project_root)
-    communication_dir = project_root / "communication"
-    has_assets = communication_dir.exists() and any(path.is_file() for path in communication_dir.rglob("*"))
     if not db_path.exists():
         return {
-            "ready": not has_assets,
-            "blockers": ([{"reason": "communication_assets_present_without_database"}] if has_assets else []),
+            "ready": not has_assets and not blockers,
+            "blockers": (
+                blockers + [{"reason": "communication_assets_present_without_database"}]
+                if has_assets
+                else blockers
+            ),
             "product_count": 0,
             "completed_product_count": 0,
         }
@@ -31,8 +94,12 @@ def communication_completion_readiness(project_root: Path) -> dict[str, Any]:
         missing = sorted(required - tables)
         if missing:
             return {
-                "ready": not has_assets,
-                "blockers": ([{"reason": "communication_schema_missing", "tables": missing}] if has_assets else []),
+                "ready": not has_assets and not blockers,
+                "blockers": (
+                    blockers + [{"reason": "communication_schema_missing", "tables": missing}]
+                    if has_assets
+                    else blockers
+                ),
                 "product_count": 0,
                 "completed_product_count": 0,
             }
@@ -41,26 +108,60 @@ def communication_completion_readiness(project_root: Path) -> dict[str, Any]:
         completed_product_count = int(
             connection.execute("SELECT COUNT(*) FROM communication_products WHERE status = 'completed'").fetchone()[0]
         )
-        actual_paths = {
-            path.relative_to(project_root).as_posix()
-            for path in communication_dir.rglob("*")
-            if path.is_file()
-        } if communication_dir.exists() else set()
-        registered_paths = {
-            str(row["path"])
-            for row in connection.execute("SELECT path FROM communication_artifacts ORDER BY id")
-        }
+        artifact_rows = connection.execute(
+            """
+            SELECT ca.*, cp.slug AS product_slug
+            FROM communication_artifacts AS ca
+            JOIN communication_products AS cp ON cp.id = ca.product_id
+            ORDER BY ca.id
+            """
+        ).fetchall()
+        registered_paths = {str(row["path"]) for row in artifact_rows}
         orphaned = sorted(actual_paths - registered_paths)
         if orphaned:
             blockers.append({"reason": "communication_artifacts_unregistered", "paths": orphaned})
         if has_assets and product_count == 0:
             blockers.append({"reason": "communication_assets_present_without_product_record"})
 
+        for artifact in artifact_rows:
+            path = str(artifact["path"])
+            slug = str(artifact["product_slug"])
+            in_communication_workspace = path.startswith(
+                f"{HUMAN_COMMUNICATION_ROOT}/"
+            ) or path.startswith(f"{INTERNAL_COMMUNICATION_ROOT}/")
+            if in_communication_workspace and not _artifact_matches_product_workspace(path, slug):
+                blockers.append(
+                    {
+                        "reason": "communication_artifact_product_mismatch",
+                        "communication": slug,
+                        "path": path,
+                    }
+                )
+            if (
+                artifact["timing_role"] == "derived_output"
+                and artifact["role"] != "generator"
+                and not _artifact_matches_product_workspace(path, slug)
+            ):
+                blockers.append(
+                    {
+                        "reason": "communication_derived_output_outside_workspace",
+                        "communication": slug,
+                        "path": path,
+                    }
+                )
+
+        derived_communication_paths = {
+            str(row["path"])
+            for row in artifact_rows
+            if row["timing_role"] == "derived_output"
+        }
         scientific_paths = [
             path
             for path in canonical_paths(project_root)
             if path not in {"RESEARCH.md", ".research/research.sqlite"}
-            and not path.startswith("communication/")
+            and not path.startswith(f"{HUMAN_COMMUNICATION_ROOT}/")
+            and not path.startswith(f"{INTERNAL_COMMUNICATION_ROOT}/")
+            and path not in derived_communication_paths
         ]
         for product in connection.execute(
             "SELECT * FROM communication_products WHERE status = 'completed' ORDER BY id"
@@ -80,12 +181,20 @@ def communication_completion_readiness(project_root: Path) -> dict[str, Any]:
                 continue
             if run_git(project_root, "cat-file", "-e", f"{source_commit}^{{commit}}").returncode != 0:
                 blockers.append(
-                    {"reason": "communication_source_commit_not_found", "communication": slug, "source_commit": source_commit}
+                    {
+                        "reason": "communication_source_commit_not_found",
+                        "communication": slug,
+                        "source_commit": source_commit,
+                    }
                 )
                 continue
             if run_git(project_root, "merge-base", "--is-ancestor", source_commit, "HEAD").returncode != 0:
                 blockers.append(
-                    {"reason": "communication_source_commit_not_ancestor", "communication": slug, "source_commit": source_commit}
+                    {
+                        "reason": "communication_source_commit_not_ancestor",
+                        "communication": slug,
+                        "source_commit": source_commit,
+                    }
                 )
                 continue
 

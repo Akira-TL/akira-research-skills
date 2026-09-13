@@ -76,7 +76,7 @@ COMMUNICATION
         ).stdout.strip()
 
     def _write_communication(self, text: str = "三组均值存在统计学差异，因果解释仍受研究设计信息限制。") -> None:
-        path = self.root / "communication" / "RESULTS.md"
+        path = self.root / "communication" / "main-results" / "RESULTS.md"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("# 结果\n\n" + text + "\n", encoding="utf-8")
 
@@ -93,7 +93,7 @@ COMMUNICATION
                 "artifacts": [
                     {
                         "role": "results",
-                        "path": "communication/RESULTS.md",
+                        "path": "communication/main-results/RESULTS.md",
                         "timing_role": "derived_output",
                     }
                 ],
@@ -122,7 +122,7 @@ COMMUNICATION
         self.assertTrue(result["completion_checked"])
         self.assertTrue(result["completion"])
         self.assertTrue(result["communication"]["ready"])
-        self.assertIn("communication/RESULTS.md", result["git"]["canonical_paths"])
+        self.assertIn("communication/main-results/RESULTS.md", result["git"]["canonical_paths"])
 
     def test_completion_flag_is_false_when_schema_is_outdated(self) -> None:
         source_commit = self._commit("RESEARCH: freeze scientific source")
@@ -178,6 +178,110 @@ COMMUNICATION
         self.assertFalse(result["ok"])
         blockers = result["academic_language"]["blockers"]
         self.assertTrue(any(item["reason"] == "bare_english_term_in_chinese_communication" for item in blockers))
+
+    def test_completion_rejects_flat_human_communication_artifact(self) -> None:
+        source_commit = self._commit("RESEARCH: freeze scientific source")
+        path = self.root / "communication" / "RESULTS.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("# 结果\n\n传播结果保持当前证据边界。\n", encoding="utf-8")
+        record_communication(
+            self.root,
+            {
+                "slug": "main-results",
+                "title": "主要结果传播稿",
+                "purpose": "形成面向科研读者的结果传播稿",
+                "audience": "科研读者",
+                "source_commit": source_commit,
+                "status": "completed",
+                "artifacts": [
+                    {
+                        "role": "results",
+                        "path": "communication/RESULTS.md",
+                        "timing_role": "derived_output",
+                    }
+                ],
+            },
+        )
+        self._commit("DOCS: add flat communication")
+
+        result = validate_completion(self.root)
+
+        reasons = {item["reason"] for item in result["communication"]["blockers"]}
+        self.assertIn("communication_human_view_unexpected_top_level", reasons)
+
+    def test_completion_rejects_unregistered_internal_communication_support(self) -> None:
+        source_commit = self._commit("RESEARCH: freeze scientific source")
+        self._write_communication()
+        self._record_completed(source_commit)
+        support = self.root / ".research" / "communication" / "main-results" / "audit" / "citation.md"
+        support.parent.mkdir(parents=True, exist_ok=True)
+        support.write_text("# 引用审计\n\n当前引用均需逐条核验。\n", encoding="utf-8")
+        self._commit("DOCS: add unregistered communication audit")
+
+        result = validate_completion(self.root)
+
+        reasons = {item["reason"] for item in result["communication"]["blockers"]}
+        self.assertIn("communication_artifacts_unregistered", reasons)
+
+    def test_completion_rejects_artifact_under_different_product_directory(self) -> None:
+        source_commit = self._commit("RESEARCH: freeze scientific source")
+        path = self.root / "communication" / "other-product" / "RESULTS.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("# 结果\n\n传播结果保持当前证据边界。\n", encoding="utf-8")
+        record_communication(
+            self.root,
+            {
+                "slug": "main-results",
+                "title": "主要结果传播稿",
+                "purpose": "形成面向科研读者的结果传播稿",
+                "audience": "科研读者",
+                "source_commit": source_commit,
+                "status": "completed",
+                "artifacts": [
+                    {
+                        "role": "results",
+                        "path": "communication/other-product/RESULTS.md",
+                        "timing_role": "derived_output",
+                    }
+                ],
+            },
+        )
+        self._commit("DOCS: misplace communication artifact")
+
+        result = validate_completion(self.root)
+
+        reasons = {item["reason"] for item in result["communication"]["blockers"]}
+        self.assertIn("communication_artifact_product_mismatch", reasons)
+
+    def test_completion_rejects_non_generator_derived_output_outside_communication_workspace(self) -> None:
+        source_commit = self._commit("RESEARCH: freeze scientific source")
+        path = self.root / "manuscript" / "main-results" / "RESULTS.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("# 结果\n\n传播结果保持当前证据边界。\n", encoding="utf-8")
+        record_communication(
+            self.root,
+            {
+                "slug": "main-results",
+                "title": "主要结果传播稿",
+                "purpose": "形成面向科研读者的结果传播稿",
+                "audience": "科研读者",
+                "source_commit": source_commit,
+                "status": "completed",
+                "artifacts": [
+                    {
+                        "role": "results",
+                        "path": "manuscript/main-results/RESULTS.md",
+                        "timing_role": "derived_output",
+                    }
+                ],
+            },
+        )
+        self._commit("DOCS: place communication outside workspace")
+
+        result = validate_completion(self.root)
+
+        reasons = {item["reason"] for item in result["communication"]["blockers"]}
+        self.assertIn("communication_derived_output_outside_workspace", reasons)
 
 
 if __name__ == "__main__":

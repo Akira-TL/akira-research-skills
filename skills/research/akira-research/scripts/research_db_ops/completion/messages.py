@@ -347,11 +347,29 @@ def append_communication_errors(errors: list[str], blockers: list[dict[str, Any]
         reason = str(blocker.get("reason", "unknown"))
         if reason == "communication_artifacts_unregistered":
             errors.append(
-                "communication/ 下存在未登记到 research.sqlite 的传播 artifact："
+                "communication/ 或 .research/communication/ 下存在未登记到 research.sqlite 的传播 artifact："
                 + ", ".join(str(path) for path in blocker.get("paths", []))
             )
+        elif reason == "communication_human_view_unexpected_top_level":
+            errors.append(
+                f"communication/ 是人类传播入口，除可选 README.md 外顶层只放 Communication Product 目录：{blocker.get('path')}。"
+            )
+        elif reason == "communication_internal_support_unexpected_top_level":
+            errors.append(
+                f".research/communication/ 顶层只放 Communication Product 目录，内部支持文件应进入对应 product slug：{blocker.get('path')}。"
+            )
+        elif reason == "communication_artifact_product_mismatch":
+            errors.append(
+                f"Communication Product {blocker.get('communication')} 的 artifact 位于其他 product workspace：{blocker.get('path')}。"
+            )
+        elif reason == "communication_derived_output_outside_workspace":
+            errors.append(
+                f"Communication Product {blocker.get('communication')} 的非 generator 派生传播 artifact 不在 communication/<product-slug>/ 或 .research/communication/<product-slug>/：{blocker.get('path')}。"
+            )
         elif reason == "communication_assets_present_without_product_record":
-            errors.append("项目存在 communication/ 传播产物，但 research.sqlite 尚未登记 Communication Product。")
+            errors.append(
+                "项目存在 communication/ 或 .research/communication/ 传播产物，但 research.sqlite 尚未登记 Communication Product。"
+            )
         elif reason in {"communication_source_commit_missing", "communication_source_commit_not_found"}:
             errors.append(
                 f"Communication Product {blocker.get('communication')} 缺少有效的 pre-communication source commit。"
