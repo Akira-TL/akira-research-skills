@@ -30,4 +30,4 @@ python3 ~/.agents/scripts/skills.py inspect \
 ./scripts/check.sh
 ```
 
-具体 ForgeRelay、Claude Code、Codex 或其他执行器如何发现、链接或加载已注册的 `~/.agents/skills`，由对应执行器自己负责，不属于 Research 产品安装协议。
+具体执行器如何发现、链接或加载已注册的 `~/.agents/skills`，由对应执行器自己负责，不属于 Research 产品安装协议。

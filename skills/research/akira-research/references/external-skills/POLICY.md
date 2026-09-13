@@ -54,7 +54,7 @@ python3 ~/.agents/scripts/skills.py install \
   --skill <skill-name>
 ```
 
-不得把整个 K-Dense 仓库全部安装，也不得因为来源已登记就绕过用户决定。安装器只把远端 checkout 登记到机器级 `~/.agents/skills/`；ForgeRelay、Claude Code、Codex 或其他执行器如何加载该 Skill 由执行器自己负责。
+不得把整个 K-Dense 仓库全部安装，也不得因为来源已登记就绕过用户决定。安装器只把远端 checkout 登记到机器级 `~/.agents/skills/`；具体执行器如何加载该 Skill 由执行器自己负责。
 
 机器级 `~/.agents/akira-skills.json` 只记录 Skill source identity、revision 与路径，不替代科研 provenance。第三方 Skill 本身不是科研事实源。如果它实际影响 Analysis / Study 的执行，真正的科研 provenance 仍记录具体软件、方法、参数、数据和执行版本，而不是只记录“用了某个 Skill”。
 
