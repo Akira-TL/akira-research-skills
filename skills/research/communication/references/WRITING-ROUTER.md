@@ -1,6 +1,6 @@
 # 科研写作类型路由
 
-进入 `communication` 后、正式起草长篇 prose 前，先判定**整篇传播产物是在报告既有研究、综合既有文献，还是提出未来研究计划**，再选择写作流程。不能因为当前正在写 Introduction、文献回顾段落或某一节分析，就改变整篇文稿类型。
+进入 `communication` 后、正式起草长篇 prose 前，先读取 [`SCIENTIFIC-WRITING-CONTRACT.md`](writing/SCIENTIFIC-WRITING-CONTRACT.md)，再判定**整篇传播产物是在报告既有研究、综合既有文献，还是提出未来研究计划**，并选择对应 workflow。共同写作契约先固定稿件术语表、贡献类型与“读者问题 → evidence → 最窄结论”的段落生成习惯；Document Type workflow 再决定整篇结构。不能因为当前正在写 Introduction、文献回顾段落或某一节分析，就改变整篇文稿类型。
 
 ## 1. 先判定整篇文稿类型
 
@@ -75,12 +75,13 @@ Proposal 写作不授权 Communication 临时创造 Design。若 Research Questi
 
 ## 4. 文稿类型确定后，再处理学科与 Venue
 
-本文件只解决“这是什么文稿”。完成类型路由后，再按 [`context/DISCIPLINE-VENUE.md`](context/DISCIPLINE-VENUE.md) 判断目标 discipline / audience / venue 的表达与审查惯例，并让 `research-standards` 核验当前官方要求。不要把“原始研究 vs 综述 vs Proposal”和“生物医学 vs ML vs 人文社科”“期刊 A vs 会议 B”混成同一维度。
+本文件只解决“这是什么文稿”。完成类型路由后，再按 [`context/DISCIPLINE-VENUE.md`](context/DISCIPLINE-VENUE.md) 判断目标 discipline / audience / venue 的表达与审查惯例；生物学 / 实验生命科学读取 [`context/BIOLOGY-WRITING.md`](context/BIOLOGY-WRITING.md)，生物信息学 / 计算生物学读取 [`context/BIOINFORMATICS-WRITING.md`](context/BIOINFORMATICS-WRITING.md)。重要新稿或写作习惯需要重新校准时，再按 [`context/WRITING-EXEMPLARS.md`](context/WRITING-EXEMPLARS.md) 选择已核验发表论文学习组织方式。目标 Venue 已知时让 `research-standards` 核验当前官方要求。不要把“原始研究 vs 综述 vs Proposal”和“生物学 vs 生物信息学 / ML”“期刊 A vs 会议 B”混成同一维度。
 
 ## 5. 共同底线
 
 不论选择哪条写作流程，都继续遵守：
 
+- [`SCIENTIFIC-WRITING-CONTRACT.md`](writing/SCIENTIFIC-WRITING-CONTRACT.md) 的稿件术语表、贡献类型、段落任务与新术语门槛；
 - [`CONTRACT.md`](CONTRACT.md) 的 canonical source、Claim traceability、citation、evidence boundary 与 communication provenance；
 - [`WRITING-EXPRESSION.md`](WRITING-EXPRESSION.md) 的大/小逻辑表达、连接词与结论强度约束；
 - 当前适用的 reporting guideline 与学术语言规范。

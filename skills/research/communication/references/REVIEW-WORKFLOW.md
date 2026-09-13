@@ -1,6 +1,6 @@
 # 普通文献综述写作流程
 
-本文件约束叙述性文献综述（Narrative Review）及其他以既有文献的组织、比较、批判和综合为主要贡献的普通综述。系统综述（Systematic Review）、范围综述（Scoping Review）与荟萃分析（Meta-analysis）不得直接使用本流程替代其正式科研方法；类型边界见 [`WRITING-ROUTER.md`](WRITING-ROUTER.md)。
+本文件约束叙述性文献综述（Narrative Review）及其他以既有文献的组织、比较、批判和综合为主要贡献的普通综述。正式起草前先按 [`SCIENTIFIC-WRITING-CONTRACT.md`](writing/SCIENTIFIC-WRITING-CONTRACT.md) 建立稿件术语表与贡献类型；生物学与生物信息学分别叠加 [`context/BIOLOGY-WRITING.md`](context/BIOLOGY-WRITING.md) 或 [`context/BIOINFORMATICS-WRITING.md`](context/BIOINFORMATICS-WRITING.md)。系统综述（Systematic Review）、范围综述（Scoping Review）与荟萃分析（Meta-analysis）不得直接使用本流程替代其正式科研方法；类型边界见 [`WRITING-ROUTER.md`](WRITING-ROUTER.md)。
 
 普通综述的价值不在于“引用很多论文”，而在于让读者看清：这个问题已经知道什么、不同研究路线如何关联、为什么出现一致或冲突结果、哪些边界仍未解决，以及下一步真正值得研究什么。
 
@@ -42,11 +42,11 @@
 
 综述和学位论文中的综述章节可以用于建立领域地图、术语和引用链；关键科学判断尽量回到原始研究核验。Agent sidecar、搜索摘要和二手转述不能替代正式 citation source。
 
-## 3. 先建立分类框架，禁止默认按作者流水账
+## 3. 先建立问题导向的组织骨架
 
-综述正文的基本单位应是**问题、主题或证据类别**，不是“Paper A / Paper B / Paper C”。除非写作目的本身是历史发展史，否则不要按作者或年份逐篇罗列。
+综述正文的基本单位应是**问题、主题或证据类别**，不是“Paper A / Paper B / Paper C”。除非写作目的本身是历史发展史，否则不按作者或年份逐篇罗列。这里的“组织骨架”只是对已有领域对象和问题做排序，不要求创造新的 taxonomy、层级名称或 framework。
 
-可根据研究对象选择一个或多个分类维度：
+可根据研究对象选择一个或多个已有学术维度：
 
 - Research Question；
 - mechanism / pathway；
@@ -58,7 +58,7 @@
 - controversy / unresolved issue；
 - historical stage。
 
-分类框架必须帮助回答 Review Question，而不是为了让目录显得复杂而制造分类。
+组织维度必须帮助回答 Review Question。若现有领域术语已经足够，直接使用它们；不要为了让目录显得复杂或体现“综述贡献”而重新命名已有类别。
 
 写完整 prose 前，默认维护 `REVIEW-OUTLINE.md` 或等价提纲，例如：
 
@@ -102,27 +102,18 @@ C 又发现……
 
 引用簇必须承担明确综合任务。不要用一个长 citation list 代替比较；若多篇论文实际上支持不同条件下的不同结论，应在句子中明确拆开。
 
-## 5. 构建理论 / 概念框架
+## 5. 先做跨主题综合，框架只是可选产物
 
-完成各主题综合后，主动检查是否能够形成：
+完成各主题后，先用普通领域语言回答：
 
-- conceptual framework；
-- theoretical framework；
-- mechanism map；
-- taxonomy；
-- evidence map；
-- timeline / development map。
+- 哪些结论跨研究相对稳定；
+- 哪些差异可以由 population、design、measurement、analysis 或 context 解释；
+- 哪些冲突仍未解决；
+- 不同主题之间真正共享什么机制、条件或 uncertainty。
 
-框架的作用是解释**不同研究之间的关系**，而不是把论文重新画成一张漂亮图。
+只有当这些关系已经由 literature evidence 建立，而且图示或框架能明显降低读者理解成本时，才考虑 mechanism map、evidence map、timeline 或 conceptual model。已有文献存在成熟理论 / 分类时优先沿用并正确引用；需要提出作者自己的 conceptual synthesis 时，必须明确它是 synthesis，而不是领域既有术语。
 
-必须区分：
-
-- 已有文献明确提出的理论；
-- 多篇 evidence 共同支持的综合关系；
-- 作者/Agent 基于现有证据提出的 conceptual synthesis；
-- 尚未验证的 hypothesis。
-
-后两类不能伪装成领域共识。若框架中的连接只能得到间接支持，应保留相应不确定性。
+若还需要为这个 synthesis **新命名**，返回 [`SCIENTIFIC-WRITING-CONTRACT.md`](writing/SCIENTIFIC-WRITING-CONTRACT.md) 的新术语四道门槛；Communication 不能因为“综述应该有框架”而自行创造名称。
 
 ## 6. 从综合结果推出真正的研究缺口
 
@@ -141,27 +132,19 @@ Future direction 必须对应前面已经论证的 gap，不得在结尾突然�
 
 在已有文献综合之后，再说明这篇综述额外提供了什么。可能包括：
 
-- 建立更清楚的领域分类；
+- 用已有领域维度更清楚地组织复杂 evidence；
 - 揭示不同理论或方法真正的分歧点；
 - 解释表面冲突由哪些研究条件造成；
 - 区分已经较稳定的知识与仍未解决的问题；
 - 发现不同研究之间缺失的关键连接；
-- 形成新的 conceptual synthesis；
+- 在 evidence 足够时形成明确标注的 conceptual synthesis；
 - 给出针对真实 uncertainty 的 future research priorities。
 
 综述贡献必须从前面的材料和综合推出，不能因为需要“创新点”而临时创造一个概念。
 
 ## 8. 图表优先表达跨论文关系
 
-普通综述尤其适合使用能够压缩跨论文关系的 Figure / Table，例如：
-
-- evidence matrix；
-- comparison table；
-- taxonomy table；
-- timeline；
-- conceptual framework；
-- mechanism diagram；
-- controversy / gap map。
+普通综述尤其适合使用能够压缩跨论文关系的 Figure / Table，例如 evidence matrix、comparison table、timeline、mechanism diagram 或 controversy / gap map。只有现有领域分类或当前 evidence 真正需要时才使用 taxonomy table / conceptual model；不要为了形成一张“综述框架图”而新造分类名称。
 
 表格和图示应帮助读者比较研究，而不是重复正文。每一个重要图表都应能回到具体 Paper / Observation / relation，不能画出比已有 evidence 更确定的机制链。
 
@@ -172,9 +155,9 @@ Future direction 必须对应前面已经论证的 gap，不得在结尾突然�
 ```text
 Review Question / Scope
 → 完整材料盘点
-→ 分类框架
+→ 问题导向的组织骨架
 → 各主题跨论文综合
-→ 理论 / 概念框架
+→ 跨主题综合（必要时形成可选 conceptual model）
 → gap / unresolved question
 → future direction / review contribution
 → 搭正文 outline 与主要 Figure / Table
@@ -189,11 +172,11 @@ Introduction 最后写，是为了让它准确建立正文实际处理的范围�
 全文完成后至少检查：
 
 - Review Question 与 Scope 是否清楚；
-- 分类框架是否真的服务核心问题；
+- 问题导向的组织骨架是否真的服务核心问题；
 - 各主题是在综合还是仍然逐篇罗列；
 - 主题顺序是否有知识或推理上的推进关系；
 - 是否同时处理了一致、冲突和限定 evidence；
-- 理论 / 概念框架是否忠实于已有 evidence；
+- 若使用 theoretical / conceptual model，它是否确有必要并忠实于已有 evidence；
 - gap 是否由前文分析真正推出；
 - future direction 是否对应真实 gap；
 - Conclusion 是否概括跨论文 synthesis，而不是再次罗列作者；

@@ -9,9 +9,9 @@ description: 把已经建立的 scientific state、方法、证据边界与 prov
 
 ## 1. 先判定传播类型，再叠加学科 / Venue 约束
 
-明确产物类型、受众与用途后，**正式起草长篇 prose 前先按 [`references/WRITING-ROUTER.md`](references/WRITING-ROUTER.md) 判定整篇文稿的主要科学贡献属于原始研究论文、普通文献综述，还是系统综述 / 范围综述 / 荟萃分析（Meta-analysis）等正式证据综合研究（evidence synthesis research）**。不得因为当前正在写 Introduction、文献回顾段落或某个分析章节，就混用整篇文稿的写作流程。
+明确产物类型、受众与用途后，**正式起草长篇 prose 前先读取 [`references/writing/SCIENTIFIC-WRITING-CONTRACT.md`](references/writing/SCIENTIFIC-WRITING-CONTRACT.md)，再按 [`references/WRITING-ROUTER.md`](references/WRITING-ROUTER.md) 判定整篇文稿的主要科学贡献属于原始研究论文、普通文献综述，还是系统综述 / 范围综述 / 荟萃分析（Meta-analysis）等正式证据综合研究（evidence synthesis research）**。共同写作契约负责生成习惯：每个 section / paragraph 先明确读者问题、证据和最窄结论；长篇正文开始前固定稿件术语表，新术语只有在命名本身属于已批准的核心科研贡献时才允许进入 manuscript。不得因为当前正在写 Introduction、文献回顾段落或某个分析章节，就混用整篇文稿的写作流程。
 
-Document Type 确定后，再按 [`references/context/DISCIPLINE-VENUE.md`](references/context/DISCIPLINE-VENUE.md) 判断目标学科共同体。**普通草稿默认保持中立，不要求用户先选期刊，也不因某个潜在 Venue 提前改变整篇结构。** 只有用户真正进入投稿、终稿转换或其他明确目标期刊准备时，才调用 `research-standards` 核验当前官方 Author Instructions，并按 [`references/workspace/TARGET-RELEASE.md`](references/workspace/TARGET-RELEASE.md) 登记稳定期刊代码和 `<journal-code>-release/` target workspace。Document Type 决定科学写作流程；discipline / venue 只能改变同一 evidence 的目标表示，不能反过来改变 canonical scientific state。
+Document Type 确定后，再按 [`references/context/DISCIPLINE-VENUE.md`](references/context/DISCIPLINE-VENUE.md) 判断目标学科共同体。生物学 / 实验生命科学加载 [`references/context/BIOLOGY-WRITING.md`](references/context/BIOLOGY-WRITING.md)；生物信息学 / 计算生物学 / 统计基因组学 / 微生物组计算方法加载 [`references/context/BIOINFORMATICS-WRITING.md`](references/context/BIOINFORMATICS-WRITING.md)。当稿件是重要新稿、用户反馈文字像 Agent / codebook、或不确定段落推进方式时，再按 [`references/context/WRITING-EXEMPLARS.md`](references/context/WRITING-EXEMPLARS.md) 选 2–4 篇已核验发表论文校准组织方式。**普通草稿默认保持中立，不要求用户先选期刊，也不因某个潜在 Venue 提前改变整篇结构。** 只有用户真正进入投稿、终稿转换或其他明确目标期刊准备时，才调用 `research-standards` 核验当前官方 Author Instructions，并按 [`references/workspace/TARGET-RELEASE.md`](references/workspace/TARGET-RELEASE.md) 登记稳定期刊代码和 `<journal-code>-release/` target workspace。Document Type 决定科学写作流程；discipline / venue 只能改变同一 evidence 的目标表示，不能反过来改变 canonical scientific state。
 
 若目标属于系统综述、范围综述或荟萃分析，而正式检索、筛选、质量评价、数据提取或综合 provenance 尚未完成，退出 Communication 返回 `akira-research` 补齐科研流程，不能用普通综述写作替代方法学过程。
 

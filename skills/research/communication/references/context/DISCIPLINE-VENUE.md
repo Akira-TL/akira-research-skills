@@ -40,6 +40,12 @@
 - biological / clinical significance 与 statistical evidence 的区分；
 - ethics、registration、reporting guideline、Data / Code / Source Data。
 
+若核心稿件属于生物学、微生物学、生态学、分子 / 细胞生物学、组学实验等生命科学研究，同时读取 [`BIOLOGY-WRITING.md`](BIOLOGY-WRITING.md)，用 biological question、experiment / observation 与 biological inference 组织 Results / review synthesis，而不是让 assay 或内部证据标签成为全文骨架。
+
+### 生物信息学 / 计算生物学
+
+若主要贡献是 algorithm、statistical model、software、pipeline、benchmark、database / resource 或 computational biological discovery，同时读取 [`BIOINFORMATICS-WRITING.md`](BIOINFORMATICS-WRITING.md)。除下面通用计算机科学审查重点外，还必须把 computational performance 与 biological inference 分开：benchmark improvement、feature importance 或 model interpretation 不能自动升级为 biological mechanism / causality。
+
 ### 计算机科学 / AI / 机器学习
 
 通常重点检查：
@@ -62,7 +68,7 @@
 
 ### 跨学科研究
 
-不能把多个领域的惯例简单相加。先确定每个主要 Claim 的 home discipline、measurement / inference tradition 和目标受众，再决定术语、方法说明深度和证据展示方式。若两个框架不可直接通约，按 Literature / Interpretation 的 framework boundary 并列保留，而不是为了“跨学科”强行统一。
+不能把多个领域的惯例简单相加。先确定每个主要 Claim 的 home discipline、measurement / inference tradition 和目标受众，再决定术语、方法说明深度和证据展示方式。例如 bioinformatics method paper 的算法性能 Claim 可按计算研究习惯验证，而真实生物机制 Claim 仍按生物学 evidence boundary 判断。若两个框架不可直接通约，按 Literature / Interpretation 的 framework boundary 并列保留，而不是为了“跨学科”强行统一。
 
 ## 4. 不维护无限学科模板库
 

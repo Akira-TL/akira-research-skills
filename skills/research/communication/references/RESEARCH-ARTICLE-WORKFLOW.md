@@ -1,6 +1,6 @@
 # 原始研究论文写作流程
 
-本文件只约束**以本项目新产生的 Study / Data / Analysis / Observation / Interpretation 为主要科学贡献**的原始研究论文，以及同类 research thesis / research report。它规定的是写作顺序、材料组织和逻辑审查，不创造新的科研事实。所有主要结论仍必须来自已经稳定的 Analysis / Interpretation 与 canonical evidence；写作阶段只能组织和表达已有科学状态。文献综述不得套用本流程，进入 Communication 后应先按 [`WRITING-ROUTER.md`](WRITING-ROUTER.md) 判定文稿类型。
+本文件只约束**以本项目新产生的 Study / Data / Analysis / Observation / Interpretation 为主要科学贡献**的原始研究论文，以及同类 research thesis / research report。它规定的是写作顺序、材料组织和逻辑审查，不创造新的科研事实。所有主要结论仍必须来自已经稳定的 Analysis / Interpretation 与 canonical evidence；写作阶段只能组织和表达已有科学状态。文献综述不得套用本流程，进入 Communication 后应先按 [`SCIENTIFIC-WRITING-CONTRACT.md`](writing/SCIENTIFIC-WRITING-CONTRACT.md) 建立稿件术语表与贡献类型，再按 [`WRITING-ROUTER.md`](WRITING-ROUTER.md) 判定文稿类型；生物学与生物信息学分别叠加 [`context/BIOLOGY-WRITING.md`](context/BIOLOGY-WRITING.md) 或 [`context/BIOINFORMATICS-WRITING.md`](context/BIOINFORMATICS-WRITING.md)。
 
 ## 1. 先完整盘点写作材料
 
@@ -75,12 +75,14 @@ Canonical support only
 根据主要结论决定 Results 需要呈现哪些结果、以什么顺序呈现。写长 prose 前，先用**小标题 + Figure/Table + 简要内容**搭出 Results 骨架。每个结果小节至少写清：
 
 ```text
-本节回答什么问题
-Figure / Table 是什么
-关键 Observation 是什么
+本节回答什么读者问题
+关键 Observation / estimate / comparison 是什么
+Figure / Table 承担哪部分 evidence
 本节最窄结论是什么
 为什么这个结果自然引出下一节
 ```
+
+完整 prose 默认用“headline finding → 关键 evidence / estimate / comparison → 必要 validation → 最窄 inference”的顺序。技术名称只有在它本身是当前 scientific question 时才承担小节组织作用。
 
 小标题应表达该小节解决的科学问题或得到的主要信息，而不是机械写成“Figure 2 结果”“实验三结果”。标题本身仍受 evidence boundary 约束。
 
