@@ -9,6 +9,7 @@ from research_db_support.academic_language import (
 )
 from research_db_support.schema import ACADEMIC_LANGUAGE_LEGACY_BASELINE_META_KEY
 from research_db_support.storage import connect, database_path
+from .human import human_navigation_index_paths
 from .human.legacy import (
     legacy_baseline_commit,
     path_is_unchanged_since_baseline,
@@ -18,17 +19,7 @@ from .state import CURRENT_LOOPS
 
 def canonical_paths(project_root: Path) -> list[str]:
     paths = {"RESEARCH.md", ".research/research.sqlite"}
-    for relative in (
-        "research-tree/README.md",
-        "hypotheses/README.md",
-        "designs/README.md",
-        "study/README.md",
-        "data/README.md",
-        "analysis/README.md",
-        "interpretation/README.md",
-    ):
-        if (project_root / relative).is_file():
-            paths.add(relative)
+    paths.update(human_navigation_index_paths(project_root))
     interpretation_dir = project_root / "interpretation"
     if interpretation_dir.is_dir():
         for path in interpretation_dir.glob("*.md"):
@@ -169,9 +160,12 @@ def _academic_language_paths(project_root: Path) -> list[Path]:
         if "communication_artifacts" in tables:
             for row in connection.execute(
                 """
-                SELECT path FROM communication_artifacts
-                WHERE role IN ('title_abstract', 'methods', 'results', 'discussion', 'figure_legend', 'lay_summary', 'traceability', 'other')
-                ORDER BY id
+                SELECT ca.path
+                FROM communication_artifacts AS ca
+                JOIN communication_products AS cp ON cp.id = ca.product_id
+                WHERE cp.status <> 'superseded'
+                  AND ca.role IN ('title_abstract', 'methods', 'results', 'discussion', 'figure_legend', 'lay_summary', 'traceability', 'other')
+                ORDER BY ca.id
                 """
             ):
                 path = Path(str(row["path"]))
@@ -226,7 +220,7 @@ def academic_language_readiness(project_root: Path) -> dict[str, Any]:
             academic_language_blockers_for_path(
                 project_root,
                 path,
-                communication=relative_path.startswith("communication/"),
+                communication=relative_path.startswith(("communication/", ".research/communication/")),
                 ignored_paragraphs=CURRENT_LOOPS,
             )
         )

@@ -17,7 +17,9 @@
 
 它不是固定阶段流水线，也不要求每个项目都经过 Hypothesis、Study 或全部子 Skill。只有存在真正的科学需要时才进入对应工作流；当下一条判别性证据必须依赖新样品、新实验、新权限或其他外部现实输入时，应在真实停止边界结束当前循环。
 
-`RESEARCH.md` 的一级标题、二级章节集合与顺序是固定的人类界面；没有内容的必需章节必须明确写不适用、未记录、未知或待确认，而不是删除或留空。导航只指向真实存在的人类可读 artifact；`.research/` 保留为机器 provenance 与内部支持区。冻结的 Hypothesis / Design 等对象不会仅为了后来补导航而改写，后续关系由下游 artifact、可更新索引和 Research Tree 表达。
+`RESEARCH.md` 的一级标题、二级章节集合与顺序是固定的人类界面；没有内容的必需章节必须明确写不适用、未记录、未知或待确认，而不是删除或留空。导航只指向真实存在的人类可读 artifact；`.research/` 保留为机器 provenance 与内部支持区。冻结的 Hypothesis / Design 等对象不会仅为了后来补导航而改写，后续关系由下游 artifact、可更新索引和 Research Tree 表达。目录级 Objects / Relations 导航索引只承担人类反向发现，不被 Communication completion 当作新的 scientific source；真实科研对象自己的 canonical artifact 仍正常进入科学来源漂移检查。
+
+Communication Product 可以从 `completed` 终止为 `superseded`，用于保留已被新稿替代的历史产品；该 transition 不允许同时改写产品定义或科学 `source_commit`，且 superseded 后不能重新激活。历史传播 artifact 继续保留 provenance，但不再参与当前 completed-product 的科学源漂移检查或当前传播文本的学术语言门禁。中文科研项目仍可合法维护纯英文期刊稿；只有包含中文叙述的传播段落继续执行中文成熟术语检查。
 
 高通量测序（Next-Generation Sequencing, NGS）作为领域执行能力接入现有分层，不新增科研阶段：真实建库和测序实施属于 `study`，测序数据处理属于 `data → ngs`，测序统计/生物信息推断属于 `analysis → ngs`，结果的科学解释仍属于 `interpretation`。
 

@@ -64,6 +64,13 @@ def academic_language_blockers_for_path(
         prose = re.sub(r"https?://\S+", "", prose)
         cjk_count = len(re.findall(r"[\u3400-\u9fff]", prose))
         english_words = re.findall(r"\b[A-Za-z][A-Za-z'-]{1,}\b", prose)
+        # Communication may legitimately target an English-language venue even when
+        # RESEARCH.md and the project's internal research record are Chinese.  The
+        # Chinese terminology rule therefore applies only to communication
+        # paragraphs that actually contain Chinese prose; pure-English submission
+        # prose is not a mixed-language violation.
+        if communication and cjk_count < 5:
+            continue
         if len(english_words) >= 30 and cjk_count < 5:
             blockers.append(
                 {

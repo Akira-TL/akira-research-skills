@@ -95,6 +95,24 @@ INTERPRETATION_H2 = (
     "Most Discriminating Next Evidence",
 )
 
+HUMAN_NAVIGATION_INDEX_PATHS = (
+    "research-tree/README.md",
+    "hypotheses/README.md",
+    "designs/README.md",
+    "study/README.md",
+    "data/README.md",
+    "analysis/README.md",
+    "interpretation/README.md",
+)
+
+
+def human_navigation_index_paths(project_root: Path) -> set[str]:
+    return {
+        relative
+        for relative in HUMAN_NAVIGATION_INDEX_PATHS
+        if (project_root / relative).is_file()
+    }
+
 
 def _strict_artifact_blockers(
     project_root: Path,

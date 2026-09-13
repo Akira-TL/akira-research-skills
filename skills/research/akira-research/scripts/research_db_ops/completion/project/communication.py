@@ -18,6 +18,7 @@ from research_db_ops.communication.target import (
     workspace_path,
 )
 from ..git import commit_has_path, run_git
+from ..human import human_navigation_index_paths
 from ..language import canonical_paths
 
 
@@ -681,10 +682,12 @@ def communication_completion_readiness(project_root: Path) -> dict[str, Any]:
             for row in artifact_rows
             if row["timing_role"] == "derived_output"
         }
+        navigation_index_paths = human_navigation_index_paths(project_root)
         scientific_paths = [
             path
             for path in canonical_paths(project_root)
             if path not in {"RESEARCH.md", ".research/research.sqlite"}
+            and path not in navigation_index_paths
             and not path.startswith(f"{HUMAN_COMMUNICATION_ROOT}/")
             and not path.startswith(f"{INTERNAL_COMMUNICATION_ROOT}/")
             and path not in derived_communication_paths

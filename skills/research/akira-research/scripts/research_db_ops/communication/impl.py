@@ -176,8 +176,10 @@ def record_communication(project_root: Path, bundle: dict[str, Any]) -> dict[str
                             "completed Communication Product 不能静默修改来源或定义字段："
                             + ", ".join(changed)
                         )
-                    if status != "completed":
-                        raise ResearchDbError("completed Communication Product 不能回退状态。")
+                    if status not in {"completed", "superseded"}:
+                        raise ResearchDbError(
+                            "completed Communication Product 只能保持 completed 或转为 superseded。"
+                        )
                 if existing["status"] == "superseded":
                     raise ResearchDbError("superseded Communication Product 不能重新激活。")
                 connection.execute(

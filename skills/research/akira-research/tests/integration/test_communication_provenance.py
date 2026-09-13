@@ -182,6 +182,165 @@ COMMUNICATION
         reasons = {item["reason"] for item in result["communication"]["blockers"]}
         self.assertIn("scientific_source_changed_after_communication_freeze", reasons)
 
+    def test_completed_communication_can_be_superseded_without_mutating_identity(self) -> None:
+        source_commit = self._commit("RESEARCH: freeze scientific source")
+        self._write_communication()
+        self._record_completed(source_commit)
+
+        with self.assertRaisesRegex(ResearchDbError, "title"):
+            record_communication(
+                self.root,
+                {
+                    "slug": "main-results",
+                    "title": "被改写的历史标题",
+                    "purpose": "形成面向科研读者的结果传播稿",
+                    "audience": "科研读者",
+                    "source_commit": source_commit,
+                    "status": "superseded",
+                    "artifacts": [
+                        {
+                            "role": "results",
+                            "path": "communication/main-results/RESULTS.md",
+                            "timing_role": "derived_output",
+                        }
+                    ],
+                },
+            )
+
+        result = record_communication(
+            self.root,
+            {
+                "slug": "main-results",
+                "title": "主要结果传播稿",
+                "purpose": "形成面向科研读者的结果传播稿",
+                "audience": "科研读者",
+                "source_commit": source_commit,
+                "status": "superseded",
+                "artifacts": [
+                    {
+                        "role": "results",
+                        "path": "communication/main-results/RESULTS.md",
+                        "timing_role": "derived_output",
+                    }
+                ],
+            },
+        )
+        self.assertEqual(result["status"], "superseded")
+        product = list_communications(self.root)["communications"][0]
+        self.assertEqual(product["status"], "superseded")
+        self.assertEqual(product["title"], "主要结果传播稿")
+        self.assertEqual(product["source_commit"], source_commit)
+
+        with self.assertRaisesRegex(ResearchDbError, "不能重新激活"):
+            self._record_completed(source_commit)
+
+    def test_superseded_communication_is_excluded_from_active_language_gate(self) -> None:
+        source_commit = self._commit("RESEARCH: freeze scientific source")
+        self._write_communication("当前 treatment 的 outcome analysis 仍属于 exploratory 结果。")
+        self._record_completed(source_commit)
+        self._commit("DOCS: add mixed-language communication")
+        before = validate_completion(self.root)
+        self.assertTrue(before["academic_language"]["blockers"])
+
+        record_communication(
+            self.root,
+            {
+                "slug": "main-results",
+                "title": "主要结果传播稿",
+                "purpose": "形成面向科研读者的结果传播稿",
+                "audience": "科研读者",
+                "source_commit": source_commit,
+                "status": "superseded",
+                "artifacts": [
+                    {
+                        "role": "results",
+                        "path": "communication/main-results/RESULTS.md",
+                        "timing_role": "derived_output",
+                    }
+                ],
+            },
+        )
+        self._commit("CHORE: supersede legacy communication")
+        after = validate_completion(self.root)
+        self.assertTrue(after["academic_language"]["ready"], after["academic_language"]["blockers"])
+
+    def test_navigation_index_change_does_not_count_as_scientific_source_drift(self) -> None:
+        data_dir = self.root / "data" / "example"
+        data_dir.mkdir(parents=True)
+        (data_dir / "README.md").write_text("# 数据\n\n每一行为一个分析记录。\n", encoding="utf-8")
+        raw = data_dir / "raw.csv"
+        raw.write_text("id,y\n1,1\n", encoding="utf-8")
+        record_dataset(
+            self.root,
+            {
+                "slug": "example-data",
+                "title": "示例数据",
+                "source": "测试来源",
+                "received_at": "2026-08-28T00:00:00+00:00",
+                "unit_of_inference": "分析记录",
+                "provenance_path": "data/example/README.md",
+                "artifacts": [{"role": "raw", "location": "data/example/raw.csv"}],
+            },
+        )
+        source_commit = self._commit("RESEARCH: freeze scientific source")
+        (self.root / "data" / "README.md").write_text(
+            "# Data\n\n## Objects\n\n- [示例数据](example/README.md)\n\n## Relations\n\n暂无额外关系。\n",
+            encoding="utf-8",
+        )
+        self._write_communication()
+        self._record_completed(source_commit)
+        self._commit("DOCS: add human navigation index")
+
+        result = validate_completion(self.root)
+        reasons = {item["reason"] for item in result["communication"]["blockers"]}
+        self.assertNotIn("scientific_source_changed_after_communication_freeze", reasons)
+
+    def test_superseded_communication_no_longer_checks_active_scientific_source_drift(self) -> None:
+        data_dir = self.root / "data" / "example"
+        data_dir.mkdir(parents=True)
+        (data_dir / "README.md").write_text("# 数据\n\n每一行为一个分析记录。\n", encoding="utf-8")
+        raw = data_dir / "raw.csv"
+        raw.write_text("id,y\n1,1\n", encoding="utf-8")
+        record_dataset(
+            self.root,
+            {
+                "slug": "example-data",
+                "title": "示例数据",
+                "source": "测试来源",
+                "received_at": "2026-08-28T00:00:00+00:00",
+                "unit_of_inference": "分析记录",
+                "provenance_path": "data/example/README.md",
+                "artifacts": [{"role": "raw", "location": "data/example/raw.csv"}],
+            },
+        )
+        source_commit = self._commit("RESEARCH: freeze scientific source")
+        raw.write_text("id,y\n1,2\n", encoding="utf-8")
+        self._write_communication()
+        self._record_completed(source_commit)
+        record_communication(
+            self.root,
+            {
+                "slug": "main-results",
+                "title": "主要结果传播稿",
+                "purpose": "形成面向科研读者的结果传播稿",
+                "audience": "科研读者",
+                "source_commit": source_commit,
+                "status": "superseded",
+                "artifacts": [
+                    {
+                        "role": "results",
+                        "path": "communication/main-results/RESULTS.md",
+                        "timing_role": "derived_output",
+                    }
+                ],
+            },
+        )
+        self._commit("DOCS: archive communication after science changed")
+
+        result = validate_completion(self.root)
+        reasons = {item["reason"] for item in result["communication"]["blockers"]}
+        self.assertNotIn("scientific_source_changed_after_communication_freeze", reasons)
+
     def test_chinese_communication_rejects_bare_mature_english_terms(self) -> None:
         source_commit = self._commit("RESEARCH: freeze scientific source")
         self._write_communication("当前 treatment 的 outcome analysis 仍属于 exploratory 结果。")
@@ -191,6 +350,20 @@ COMMUNICATION
         self.assertFalse(result["ok"])
         blockers = result["academic_language"]["blockers"]
         self.assertTrue(any(item["reason"] == "bare_english_term_in_chinese_communication" for item in blockers))
+
+    def test_english_communication_is_allowed_in_chinese_project(self) -> None:
+        source_commit = self._commit("RESEARCH: freeze scientific source")
+        self._write_communication(
+            "This English-language journal manuscript reports the treatment outcome and "
+            "exploratory analysis without changing the underlying scientific evidence. "
+            "The paragraph is intentionally long enough to represent ordinary submission "
+            "prose rather than a title, identifier, abbreviation, or terminology note, "
+            "because an English target venue must remain a valid communication audience."
+        )
+        self._record_completed(source_commit)
+        self._commit("DOCS: add English journal communication")
+        result = validate_completion(self.root)
+        self.assertTrue(result["academic_language"]["ready"], result["academic_language"]["blockers"])
 
     def test_completion_rejects_flat_human_communication_artifact(self) -> None:
         source_commit = self._commit("RESEARCH: freeze scientific source")
