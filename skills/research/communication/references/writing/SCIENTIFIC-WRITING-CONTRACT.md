@@ -78,26 +78,21 @@
 
 **命名不是抽象化的奖励。** 如果 sampling、sample processing、reference database、RNA、protein、metabolite、prediction、association、mediation 已经准确，就继续使用这些词。
 
-## 5. 用已发表论文校准“写法”，不用它们提供本项目事实
+## 5. 正文起草前先读已发表论文
 
-当以下任一情况出现时，起草长篇 manuscript 前加载 [`context/WRITING-EXEMPLARS.md`](../context/WRITING-EXEMPLARS.md)：
+每次开始或重新开始长篇 manuscript 的正文起草前，必须按 [`../context/REFERENCE.md`](../context/REFERENCE.md) 实际打开 **3 篇**已核验发表论文：1 篇通用结构参考 + 2 篇与当前文稿类型最接近的参考。局部修 typo、单句改写、补 citation 或执行边界明确的 reviewer comment 不重复这一流程。
 
-- 新开一篇重要论文或综述；
-- 用户明确反馈当前文字“像 Agent”“像 codebook”“不像发表论文”；
-- 当前项目跨越生物学与计算方法两个共同体；
-- 不确定 Results / Discussion / Review body 应怎样推进。
-
-从最接近当前文稿的 2–4 篇已发表论文中只提取：
+阅读时直接观察原论文，而不是依赖 Akira 对“文风”的二手总结。至少检查：
 
 - Abstract 的信息顺序；
 - Introduction 如何从领域问题进入 gap；
 - section heading 的粒度；
-- Results / review body 的段落任务；
-- Discussion 如何连接 prior art；
-- 术语密度与定义位置；
-- limitation / reproducibility 放在哪里。
+- Results / review body 的小节首句和段落任务；
+- Methods 如何直接命名研究对象、变量、比较和方法；
+- Discussion 如何连接 prior art、解释与 limitation；
+- 领域标准术语在真实正文中的密度与定义位置。
 
-**不模仿原句、不做句式拼贴，也不把 writing reference 当成 scientific evidence。** 当前论文的事实与引用仍回到本项目 canonical evidence 和 Literature source。
+读完只形成当前写作 session 的短临时 note，不长期复制原文，也不建立“金句库”。**不模仿原句、不做句式拼贴，也不把 writing reference 当成 scientific evidence。** 当前论文的事实与引用仍回到本项目 canonical evidence 和 Literature source。
 
 ## 6. 各章节的共同职责
 

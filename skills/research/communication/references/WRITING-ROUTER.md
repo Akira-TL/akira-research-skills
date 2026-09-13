@@ -75,7 +75,7 @@ Proposal 写作不授权 Communication 临时创造 Design。若 Research Questi
 
 ## 4. 文稿类型确定后，再处理学科与 Venue
 
-本文件只解决“这是什么文稿”。完成类型路由后，再按 [`context/DISCIPLINE-VENUE.md`](context/DISCIPLINE-VENUE.md) 判断目标 discipline / audience / venue 的表达与审查惯例；生物学 / 实验生命科学读取 [`context/BIOLOGY-WRITING.md`](context/BIOLOGY-WRITING.md)，生物信息学 / 计算生物学读取 [`context/BIOINFORMATICS-WRITING.md`](context/BIOINFORMATICS-WRITING.md)。重要新稿或写作习惯需要重新校准时，再按 [`context/WRITING-EXEMPLARS.md`](context/WRITING-EXEMPLARS.md) 选择已核验发表论文学习组织方式。目标 Venue 已知时让 `research-standards` 核验当前官方要求。不要把“原始研究 vs 综述 vs Proposal”和“生物学 vs 生物信息学 / ML”“期刊 A vs 会议 B”混成同一维度。
+本文件只解决“这是什么文稿”。完成类型路由后，再按 [`context/DISCIPLINE-VENUE.md`](context/DISCIPLINE-VENUE.md) 判断目标 discipline / audience / venue 的表达与审查惯例；生物学 / 实验生命科学读取 [`context/BIOLOGY-WRITING.md`](context/BIOLOGY-WRITING.md)，生物信息学 / 计算生物学读取 [`context/BIOINFORMATICS-WRITING.md`](context/BIOINFORMATICS-WRITING.md)。每次开始或重新开始长篇正文起草前，按 [`context/REFERENCE.md`](context/REFERENCE.md) 实际打开 3 篇已发表参考论文，先观察真实 section / paragraph 的用语和推进方式，再起草当前稿件。目标 Venue 已知时让 `research-standards` 核验当前官方要求。不要把“原始研究 vs 综述 vs Proposal”和“生物学 vs 生物信息学 / ML”“期刊 A vs 会议 B”混成同一维度。
 
 ## 5. 共同底线
 
