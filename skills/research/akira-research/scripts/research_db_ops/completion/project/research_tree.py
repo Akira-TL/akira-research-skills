@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
 
+from research_db_ops.project.research_tree_view import VIEW_PATH
 from research_db_support.storage import connect, database_path
+
+from ..human import human_markdown_blockers
 
 
 def _git(project_root: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -55,6 +59,25 @@ def _is_merge_commit(project_root: Path, commit: str) -> bool:
     return len(_merge_parents(project_root, commit)) >= 2
 
 
+def _research_tree_view_edges(text: str) -> tuple[set[int], set[tuple[int, int]], set[tuple[int, str, int]]]:
+    node_ids = {
+        int(match.group(1))
+        for match in re.finditer(r"(?m)^\s*N(\d+)[\[\{(]", text)
+    }
+    parent_edges = {
+        (int(match.group(1)), int(match.group(2)))
+        for match in re.finditer(r"(?m)^\s*N(\d+)\s*-->\s*N(\d+)\s*$", text)
+    }
+    semantic_edges = {
+        (int(match.group(1)), match.group(2), int(match.group(3)))
+        for match in re.finditer(
+            r"(?m)^\s*N(\d+)\s*-\.\s*([A-Za-z_][A-Za-z0-9_]*)\s*\.->\s*N(\d+)\s*$",
+            text,
+        )
+    }
+    return node_ids, parent_edges, semantic_edges
+
+
 def research_tree_completion_readiness(project_root: Path) -> dict[str, Any]:
     db_path = database_path(project_root)
     if not db_path.exists():
@@ -87,8 +110,24 @@ def research_tree_completion_readiness(project_root: Path) -> dict[str, Any]:
                 "state_present": False,
             }
 
-        node_count = int(connection.execute("SELECT COUNT(*) FROM research_nodes").fetchone()[0])
-        edge_count = int(connection.execute("SELECT COUNT(*) FROM research_edges").fetchone()[0])
+        node_rows = list(connection.execute("SELECT id, parent_node_id FROM research_nodes ORDER BY id"))
+        node_count = len(node_rows)
+        expected_node_ids = {int(row["id"]) for row in node_rows}
+        expected_parent_edges = {
+            (int(row["parent_node_id"]), int(row["id"]))
+            for row in node_rows
+            if row["parent_node_id"] is not None
+        }
+        semantic_rows = list(
+            connection.execute(
+                "SELECT source_node_id, relation, target_node_id FROM research_edges ORDER BY id"
+            )
+        )
+        edge_count = len(semantic_rows)
+        expected_semantic_edges = {
+            (int(row["source_node_id"]), str(row["relation"]), int(row["target_node_id"]))
+            for row in semantic_rows
+        }
         state = connection.execute(
             """
             SELECT st.root_node_id, st.active_node_id,
@@ -263,6 +302,70 @@ def research_tree_completion_readiness(project_root: Path) -> dict[str, Any]:
                             "tag": expected_tag,
                         }
                     )
+
+    if node_count:
+        view_path = project_root / VIEW_PATH
+        if not view_path.exists():
+            blockers.append({"reason": "research_tree_view_missing", "path": VIEW_PATH})
+        else:
+            _, format_blockers = human_markdown_blockers(
+                project_root,
+                VIEW_PATH,
+                expected_h1="Research Tree",
+                expected_h2=("Graph", "Node Index"),
+            )
+            blockers.extend(format_blockers)
+            text = view_path.read_text(encoding="utf-8", errors="ignore")
+            mermaid_blocks = re.findall(r"```mermaid\s*\n(.*?)```", text, flags=re.DOTALL)
+            if len(mermaid_blocks) != 1:
+                blockers.append(
+                    {
+                        "reason": "research_tree_view_mermaid_block_invalid",
+                        "count": len(mermaid_blocks),
+                    }
+                )
+            graph_text = mermaid_blocks[0] if mermaid_blocks else ""
+            actual_node_ids, actual_parent_edges, actual_semantic_edges = _research_tree_view_edges(
+                graph_text
+            )
+            missing_nodes = sorted(expected_node_ids - actual_node_ids)
+            extra_nodes = sorted(actual_node_ids - expected_node_ids)
+            if missing_nodes:
+                blockers.append(
+                    {
+                        "reason": "research_tree_view_missing_node",
+                        "nodes": missing_nodes,
+                    }
+                )
+            if extra_nodes:
+                blockers.append(
+                    {
+                        "reason": "research_tree_view_extra_node",
+                        "nodes": extra_nodes,
+                    }
+                )
+
+            missing_parent = sorted(expected_parent_edges - actual_parent_edges)
+            missing_semantic = sorted(expected_semantic_edges - actual_semantic_edges)
+            if missing_parent or missing_semantic:
+                blockers.append(
+                    {
+                        "reason": "research_tree_view_missing_edge",
+                        "parent_edges": missing_parent,
+                        "semantic_edges": missing_semantic,
+                    }
+                )
+
+            extra_parent = sorted(actual_parent_edges - expected_parent_edges)
+            extra_semantic = sorted(actual_semantic_edges - expected_semantic_edges)
+            if extra_parent or extra_semantic:
+                blockers.append(
+                    {
+                        "reason": "research_tree_view_extra_edge",
+                        "parent_edges": extra_parent,
+                        "semantic_edges": extra_semantic,
+                    }
+                )
 
     return {
         "ready": not blockers,

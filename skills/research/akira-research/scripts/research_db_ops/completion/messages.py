@@ -277,6 +277,18 @@ def append_research_tree_errors(errors: list[str], blockers: list[dict[str, Any]
             )
         elif reason == "research_tree_closed_without_reason":
             errors.append(f"Research Node {blocker.get('node')} 已关闭但缺少 closure_reason。")
+        elif reason == "research_tree_view_missing":
+            errors.append("Research Tree 已有科研节点，但缺少 research-tree/README.md 人类总图。")
+        elif reason == "research_tree_view_missing_node":
+            errors.append("Research Tree 人类总图缺少 canonical Node。")
+        elif reason == "research_tree_view_extra_node":
+            errors.append("Research Tree 人类总图出现数据库中不存在的 Node。")
+        elif reason == "research_tree_view_missing_edge":
+            errors.append("Research Tree 人类总图缺少 canonical parent/scientific edge。")
+        elif reason == "research_tree_view_extra_edge":
+            errors.append("Research Tree 人类总图出现无 canonical relation 支持的 edge。")
+        elif reason == "research_tree_view_mermaid_block_invalid":
+            errors.append("Research Tree 人类视图必须且只能包含一张 Mermaid 总图。")
         elif reason == "research_git_branch_name_invalid":
             errors.append(
                 f"Research Node {blocker.get('node')} 的 Git branch 命名不符合科研分支规范："

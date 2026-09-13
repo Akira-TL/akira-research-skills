@@ -24,6 +24,7 @@ from research_db_ops.project import (  # noqa: E402
     record_research_edge,
     record_research_node,
     record_study,
+    render_research_tree_view,
     set_research_tree_state,
 )
 from research_db_support.storage import ResearchDbError  # noqa: E402
@@ -131,6 +132,7 @@ class ResearchTreeStudyTests(unittest.TestCase):
             ["objective-root", "question-main"],
         )
         self.assertEqual(tree["edges"][0]["relation"], "supports")
+        render_research_tree_view(self.root)
         self.assertTrue(research_tree_completion_readiness(self.root)["ready"])
 
         with self.assertRaisesRegex(ResearchDbError, "note 不可静默改写"):

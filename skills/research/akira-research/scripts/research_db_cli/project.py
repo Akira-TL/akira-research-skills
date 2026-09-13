@@ -11,6 +11,7 @@ from research_db_ops.project import (
     record_research_edge,
     record_research_node,
     record_study,
+    render_research_tree_view,
     set_research_tree_state,
 )
 
@@ -65,6 +66,11 @@ def register_project_commands(
         emit(get_research_tree(project_root, limit=args.limit))
         return 0
 
+    def cmd_render_research_tree_view(args: Any) -> int:
+        project_root = discover_project_root(args.project)
+        emit(render_research_tree_view(project_root))
+        return 0
+
     def cmd_research_branches(args: Any) -> int:
         project_root = discover_project_root(args.project)
         emit(list_research_branches(project_root, limit=args.limit))
@@ -103,6 +109,12 @@ def register_project_commands(
         parser = subparsers.add_parser(name, help=help_text)
         parser.add_argument("--limit", type=int, default=100)
         parser.set_defaults(handler=handler)
+
+    render_parser = subparsers.add_parser(
+        "render-research-tree-view",
+        help="从 canonical Research Tree 生成完整 research-tree/README.md 人类视图。",
+    )
+    render_parser.set_defaults(handler=cmd_render_research_tree_view)
 
     for name, help_text, bundle_help, handler in (
         (

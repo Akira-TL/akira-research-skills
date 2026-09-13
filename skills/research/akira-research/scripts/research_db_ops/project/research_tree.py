@@ -334,12 +334,13 @@ def set_research_tree_state(project_root: Path, bundle: dict[str, Any]) -> dict[
     return {"ok": True, "root_slug": root_slug, "active_slug": active_slug}
 
 
-def get_research_tree(project_root: Path, *, limit: int = 500) -> dict[str, Any]:
+def get_research_tree(project_root: Path, *, limit: int | None = 500) -> dict[str, Any]:
+    query_limit = -1 if limit is None else limit
     with connect(common.db_path(project_root)) as connection:
         nodes = [
             dict(row)
             for row in connection.execute(
-                "SELECT * FROM research_nodes ORDER BY id LIMIT ?", (limit,)
+                "SELECT * FROM research_nodes ORDER BY id LIMIT ?", (query_limit,)
             )
         ]
         edges = [
@@ -352,7 +353,7 @@ def get_research_tree(project_root: Path, *, limit: int = 500) -> dict[str, Any]
                 JOIN research_nodes t ON t.id = e.target_node_id
                 ORDER BY e.id LIMIT ?
                 """,
-                (limit,),
+                (query_limit,),
             )
         ]
         state_row = connection.execute(
@@ -381,7 +382,7 @@ def get_research_tree(project_root: Path, *, limit: int = 500) -> dict[str, Any]
                     id
                 LIMIT ?
                 """,
-                (limit,),
+                (query_limit,),
             )
         ]
     return {

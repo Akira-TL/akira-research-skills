@@ -592,6 +592,7 @@ research-db record-research-node [bundle]
 research-db record-research-edge [bundle]
 research-db set-research-tree-state [bundle]
 research-db research-tree
+research-db render-research-tree-view
 research-db record-study [bundle]
 research-db studies
 research-db record-hypothesis-proposal [bundle]

@@ -10,4 +10,6 @@
 
 Research Tree 的 workflow state 与 Git branch disposition 分开保存，分支名不编码 `active/blocked/closed`。已进入科研 provenance 的 Git commit/branch 历史不再通过 rebase/reset/amend 等方式重写。
 
+项目的人类 Research Tree 固定投影到 `research-tree/README.md`。它保持一张完整 Mermaid 总图，并在下方提供可点击 Node Index；同一父节点下的 competing Hypothesis 保持 sibling。图中的实线 parent edge 与带 relation label 的科学 edge 必须来自 `research.sqlite`，`subgraph`、方向和位置只做视觉归组。Node 或关系改变后运行 `research-db render-research-tree-view` 刷新，人类图中的额外/缺失 edge 会被 completion gate 阻断。
+
 通常不需要用户单独调用；`akira-research` 会在需要建立、更新或切换研究分支时使用它。

@@ -11,7 +11,7 @@ description: 维护科研项目的 Research Question、Active Uncertainty、研�
 
 进入项目时恢复 Root Objective、当前 Research Question / Active Uncertainty、active path、open / blocked / resolved branches，以及与当前分支直接相关的科学关系。没有树时，只从现有 `RESEARCH.md` 和 canonical research artifacts 建立最小结构，不机械把历史文件全部转成节点。
 
-Research Question 与 Active Uncertainty 的写法按需读取 [`references/ACTIVE-UNCERTAINTY.md`](references/ACTIVE-UNCERTAINTY.md)；对象与关系模型见 [`references/MODEL.md`](references/MODEL.md)。若用户只有宽泛主题、现象描述或模糊 Idea，尚不足以形成可判别问题，先按 [`references/IDEA-FRAMING.md`](references/IDEA-FRAMING.md) 用最少的 decision-relevant 追问与必要 Literature Discovery 收敛问题；不要直接把宽泛主题润色成 Research Question，也不要用大问卷替代科研判断。
+Research Question 与 Active Uncertainty 的写法按需读取 [`references/ACTIVE-UNCERTAINTY.md`](references/ACTIVE-UNCERTAINTY.md)；对象与关系模型见 [`references/MODEL.md`](references/MODEL.md)。需要生成、审阅或修复 `research-tree/README.md` 人类总图时读取 [`references/HUMAN-VIEW.md`](references/HUMAN-VIEW.md)。若用户只有宽泛主题、现象描述或模糊 Idea，尚不足以形成可判别问题，先按 [`references/IDEA-FRAMING.md`](references/IDEA-FRAMING.md) 用最少的 decision-relevant 追问与必要 Literature Discovery 收敛问题；不要直接把宽泛主题润色成 Research Question，也不要用大问卷替代科研判断。
 
 完成标准：能明确回答当前问题是什么、它从哪里产生、哪些已有证据或研究对象与它直接相关、哪些其他分支仍开放。
 
@@ -71,6 +71,6 @@ Evidence 默认表现为“有来源依据的科学关系”，不为了结构�
 
 ## 6. Artifact 与 provenance
 
-树保存科研语义和 pointer，不要求大型 Dataset、模型、中间矩阵或图片进入 Git。Research Node、Edge、root/active path 与已登记 Research branch provenance 进入项目 `research.sqlite`；数据库契约由 [`akira-research/RESEARCH-DB.md`](../akira-research/RESEARCH-DB.md) 统一维护。Git branch 名不承担 workflow state：`main` 是当前接受的 canonical research state，开放科研路线使用 `research/<kind>/<slug>`。文件、数据、代码、模型等 provenance 仍由 `study` / `data` / `analysis` 按项目约束记录；树只连接它们与对应科研对象。需要外部 artifact 边界时读取 [`references/ARTIFACTS.md`](references/ARTIFACTS.md)。
+树保存科研语义和 pointer，不要求大型 Dataset、模型、中间矩阵或图片进入 Git。Research Node、Edge、root/active path 与已登记 Research branch provenance 进入项目 `research.sqlite`；数据库契约由 [`akira-research/RESEARCH-DB.md`](../akira-research/RESEARCH-DB.md) 统一维护。`research-tree/README.md` 只是 canonical 数据的可校验人类投影：Node/parent/Edge 更新后使用 `research-db render-research-tree-view` 刷新；Mermaid `subgraph` 与布局只做视觉归组，不能创造科研关系。Git branch 名不承担 workflow state：`main` 是当前接受的 canonical research state，开放科研路线使用 `research/<kind>/<slug>`。文件、数据、代码、模型等 provenance 仍由 `study` / `data` / `analysis` 按项目约束记录；树只连接它们与对应科研对象。需要外部 artifact 边界时读取 [`references/ARTIFACTS.md`](references/ARTIFACTS.md)。
 
 完成标准：新的科学分叉、关系、状态和 active path 已可恢复，且总 Router 能据此选择下一条实际科研动作。

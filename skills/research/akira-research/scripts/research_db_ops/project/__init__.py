@@ -5,6 +5,7 @@ from .research_tree import (
     record_research_node,
     set_research_tree_state,
 )
+from .research_tree_view import render_research_tree_view
 from .study import list_studies, record_study
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "record_research_edge",
     "record_research_node",
     "record_study",
+    "render_research_tree_view",
     "set_research_tree_state",
 ]
