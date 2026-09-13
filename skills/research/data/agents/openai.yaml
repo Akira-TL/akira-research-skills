@@ -1,0 +1,3 @@
+interface:
+  display_name: "Research Data"
+  short_description: "Manage dataset identity, QC and freeze"

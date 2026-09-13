@@ -1,0 +1,3 @@
+interface:
+  display_name: "Research Design"
+  short_description: "Design estimands, sampling and protocols"

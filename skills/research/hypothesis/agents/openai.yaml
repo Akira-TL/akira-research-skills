@@ -1,0 +1,3 @@
+interface:
+  display_name: "Hypothesis"
+  short_description: "Manage competing hypotheses and predictions"

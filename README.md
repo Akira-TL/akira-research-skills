@@ -1,66 +1,72 @@
 # Akira Research Skills
 
-Akira 的完整科研 Agent Skills 产品仓库。它从原 `Akira-TL/skills` 的 Research family 抽离并保留相关 Git 历史，使科研项目可以只安装科研能力，而不同时安装知识管理、工程或其他 Akira 产品族。
+Akira Research 是完整的科研 Agent Skills 产品仓。它围绕 Research Question、证据、Research Tree、研究设计、真实实施、数据、分析、解释与科学传播工作，而不是把科研压成固定线性步骤。
 
-## 包含的 Skills
+## Workflow
 
 ```text
-akira-research       科研总 Router 与项目状态 / research.sqlite
-research-tree        Research Question、Active Uncertainty 与科研分支
-research-standards   当前适用科研规范与权威来源核验
-literature           文献发现、深读、Critical Audit、综合与长期监测
-literature-access    正文 / Supplement / artifact 获取与验收
-hypothesis           competing hypotheses 与结果前 prediction
-design               estimand、sampling、measurement、controls 与 protocol
-study                真实研究实施、Sample / Assay / deviation provenance
-data                  Dataset identity、QC、curation、freeze
-analysis              统计 / 生信 / 机器学习分析与 Analysis Attempt
-interpretation        Observation → Claim、Hypothesis 更新与 evidence boundary
-communication         论文、综述、Proposal、Figure、revision 与 submission
-ngs                   可选的 NGS 领域执行适配层
+Research Question / Active Uncertainty
+→ Research Tree
+→ Literature / Hypothesis / Design
+→ Study / Data / Analysis
+→ Interpretation
+→ Communication
 ```
 
-这些 Skill 共享同一套 Research Tree、`RESEARCH.md`、`research.sqlite` 和 Git provenance；它们作为一个产品族一起版本化，避免跨仓拆散 schema、migration 与科研对象语义。
+`akira-research` 是顶层 Router，根据当前 scientific state 选择下一条真实工作。
 
-## 安装
+## Skills
 
-上传到 GitHub 后，科研项目可以直接项目级安装整个产品族：
+稳定 Skill 位于 [`skills/research/`](skills/research/README.md)，包括 `akira-research`、`research-tree`、`research-standards`、`literature`、`literature-access`、`hypothesis`、`design`、`study`、`data`、`analysis`、`interpretation`、`communication` 与 `ngs`。
+
+## Project state
+
+科研项目使用 `RESEARCH.md` 保存当前状态，`.research/research.sqlite` 保存结构化 provenance，Git 固定代码与文档版本，论文、Dataset、分析结果和 Figure 等继续作为独立 canonical artifacts 保存。
+
+## Installation
 
 ```bash
 npx skills add Akira-TL/akira-research-skills --skill '*' --agent '*' -y
 ```
 
-本地开发可直接使用 checkout：
+查看可安装 Skill：
 
 ```bash
-npx skills add . --list
-npx skills add . --skill '*' --agent '*' -y
+npx skills add Akira-TL/akira-research-skills --list
 ```
 
-不加 `-g` 时由 `skills` CLI 安装到当前项目。项目只需要科研能力时无需安装 Akira 的其他产品仓库。
+本地维护 checkout 使用 `npx skills add . --list`。安装约定见 [`.agents/install-block.md`](.agents/install-block.md)。
 
-## 外部能力
+## Optional capabilities
 
-Research family 自己拥有科研决策、evidence boundary 与 provenance。浏览器控制、DOCX/PPT 等通用生产力能力，以及 PyMC、RDKit、NGS runner 等专业工具能力均视为可选执行依赖；只有当前任务真实需要且本项目缺少时才按契约提示用户安装或提供。
+浏览器、DOCX/PPT、软件工程方法和第三方专业执行能力不随 Research suite 自动安装。只有当前科研任务真实需要时才补充，它们也不能替代本仓对科研状态和证据边界的管理。
 
-`ngs` 是适配层，本仓库不会 vendoring OpenAI `ngs-analysis` 正文。若任务实际进入 NGS execution，而对应 upstream source / runner 尚不可用，Agent 必须明确报告并请求最窄外部能力，不得把缺失 runner 当成本仓库安装失败，也不得自行猜测第三方 CLI。
-
-## 目录
+## Repository layout
 
 ```text
-docs/
-  research/             面向使用者的 Research Skill 文档
-skills/
-  research/             稳定 Research Skills
-    akira-research/     research DB、migration、tests、总 Router
-    literature/
-    analysis/
-    ...
-  in-progress/          尚未稳定的 Research Skills
-  deprecated/           已弃用 Skill 的迁移说明
-AGENTS.md               本仓库维护规则
+akira-research-skills/
+├── .agents/                 # invocation、文档约定与 ADR
+├── docs/research/           # 人类可读 Skill 文档
+├── scripts/                 # 仓库检查入口
+├── skills/
+│   ├── research/            # 稳定 Research Skills
+│   ├── in-progress/         # 尚未稳定
+│   └── deprecated/          # 弃用与迁移说明
+├── AGENTS.md
+├── CONTEXT.md
+├── CHANGELOG.md
+└── README.md
 ```
 
-## 历史
+## Development
 
-本仓库由原 `Akira-TL/skills` 中的 `research/` 与 `docs/research/` 通过 history filtering 抽取，并保留 Research workflow 的主要演进历史。独立仓建立后，稳定 Skill 采用与 Matt 仓一致的 category 结构：`skills/research/` 与 `docs/research/` 镜像维护。
+```bash
+./scripts/list-skills.sh
+./scripts/check.sh
+```
+
+修改稳定 Skill 时同步 `docs/research/<skill-name>.md`。调用边界见 [`.agents/invocation.md`](.agents/invocation.md)。
+
+## History
+
+本仓由原 `Akira-TL/skills` 的 Research family 通过 history filtering 抽取，主要科研工作流演进仍可在 Git history 中追溯。独立后采用 category / lifecycle / docs mirror 结构维护。

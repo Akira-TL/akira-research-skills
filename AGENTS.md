@@ -10,6 +10,7 @@
 - 长流程、低频分支和详细契约放在 Skill 自己的 sibling `references/`；脚本和测试跟随拥有它们的 Skill，不再依赖旧 Akira 总仓相对路径。
 - 本仓库内部可以互相调用 Research family 的 Skill；仓库外能力只能按 Skill / capability 名称作为可选依赖，不通过跨仓相对路径读取正文。
 - 第三方执行能力保持独立来源；不要把第三方 Skill 正文复制进本仓库。
+- 仓库级术语与边界见 `CONTEXT.md`；长期架构决定放 `.agents/adr/`；调用边界见 `.agents/invocation.md`。
 
 ## 独立安装边界
 
@@ -19,19 +20,20 @@
 
 ## 修改规则
 
-- 修改稳定 Skill 时同步修改对应 `docs/` 文档。
+- 修改稳定 Skill 时同步修改对应 `docs/research/<skill-name>.md` 文档。
+- 新增或改变调用方式时同步 Skill frontmatter、`agents/openai.yaml` 与 `skills/research/README.md`。
 - 同一规则只保留一个 source of truth；Research database/schema、Git provenance 与 completion gate 的契约继续由 `skills/research/akira-research/` 统一维护。
 - 人类可读科研表述继续使用现有学术术语规范，不因拆仓创造新的科研术语。
 - Git 提交保持原子；脚本或 schema 修改运行相关 targeted tests，重大科研工作流修改再运行完整 Research test suite。
 
 ## 检查
 
-若维护环境已安装 Akira Guard，使用其通用 Skill-repository 检查与 guarded commit；独立 checkout 至少执行：
+主要检查入口：
 
 ```bash
-npx skills add . --list
-python -m unittest discover -s skills/research/akira-research/tests
-python -m unittest discover -s skills/research/literature/tests
+./scripts/check.sh
 ```
+
+独立 checkout 还可以用 `npx skills add . --list` 核验 Skill discovery。正式提交继续使用 Akira Guard。
 
 只运行与当前修改有关的更窄测试也是允许的；正式发布前再做完整验证。

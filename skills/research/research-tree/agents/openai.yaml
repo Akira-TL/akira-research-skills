@@ -1,0 +1,3 @@
+interface:
+  display_name: "Research Tree"
+  short_description: "Manage research questions and active uncertainty"

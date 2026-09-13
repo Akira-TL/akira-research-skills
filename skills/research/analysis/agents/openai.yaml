@@ -1,0 +1,3 @@
+interface:
+  display_name: "Research Analysis"
+  short_description: "Run auditable scientific analysis attempts"

@@ -1,0 +1,3 @@
+interface:
+  display_name: "Study"
+  short_description: "Track real study execution and deviations"

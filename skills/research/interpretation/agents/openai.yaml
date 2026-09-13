@@ -1,0 +1,3 @@
+interface:
+  display_name: "Interpretation"
+  short_description: "Turn observations into bounded scientific claims"
