@@ -23,4 +23,6 @@ Communication Product 可以从 `completed` 终止为 `superseded`，用于保�
 
 高通量测序（Next-Generation Sequencing, NGS）作为领域执行能力接入现有分层，不新增科研阶段：真实建库和测序实施属于 `study`，测序数据处理属于 `data → ngs`，测序统计/生物信息推断属于 `analysis → ngs`，结果的科学解释仍属于 `interpretation`。
 
+Research 需要认证/动态网页访问、DOCX 或科研演示文稿等仓库外 first-party 通用能力时，只声明能力需求，不复制浏览器、Word 或 PPT 实现。优先复用当前会话能力；当前会话不可用时检查机器级注册表；机器级也缺失时交给 `akira` Router，按 first-party Catalog 向用户说明来源、用途与最小安装范围并取得明确同意后按需安装。用户拒绝安装或当前执行器仍无法加载时，保留 canonical scientific content，并明确说明对应访问、格式生成或渲染验收没有完成，而不是在 Research 内临时建立第二套执行层。
+
 当科研问题和方法已经由 Akira 确定，但缺少某个专业软件、数据库或领域工具的可靠执行知识时，可以按需推荐第三方 Skill。当前 K-Dense Scientific Agent Skills 只作为**按需发现源**：Agent 必须先核验具体 Skill 的来源、revision、license、脚本/网络/凭据和职责重叠，再向用户说明用途并请求许可；用户同意后通过 `akira` Router 自带安装器把所需 Skill 安装到机器级 `~/.agents/skills/`；Lattice 根安装器不会预装这些外部能力。具体执行器如何加载该机器级 Skill 由执行器自己负责。外部 Skill 只负责工具实现，不能反过来决定 Research Question、Design、Analysis scientific intent 或 scientific Claim。

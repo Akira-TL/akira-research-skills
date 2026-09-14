@@ -121,6 +121,8 @@
 - PDF / LaTeX / 其他 page-layout artifact 使用当前可用的 PDF / document / typesetting 工具，并遵守目标 venue 真实模板；
 - Figure 自身使用 [`../FIGURE-WORKFLOW.md`](../FIGURE-WORKFLOW.md)。
 
+需要的 first-party 格式 Skill 当前会话不可用时，先检查机器级 `~/.agents/skills/<name>`；机器级也缺失时，把能力缺口交给 `akira` Router，由 Router 按 Catalog 说明用途并取得用户明确同意后按需安装最小 Skill。用户拒绝安装或当前执行器仍无法加载时，可以继续维护 canonical scientific source，但对应目标格式的生成与 rendered QA 保持明确未完成；不得由 Communication 临时实现第二套 DOCX / PPTX 引擎后宣称已经通过格式验收。
+
 Communication 只负责确保这些最终 artifact 仍忠于 scientific source 和 submission package，不替代各格式工具。
 
 ## 8. 阻断级 defect

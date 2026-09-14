@@ -43,6 +43,8 @@ Research Question、Active Uncertainty、分支和跨对象关系由 [`research-
 
 需要判断 Agent proposal、用户主动判断或用户对科学猜想的决定来源时，读取 [`references/collaboration/RESEARCH-COLLABORATION.md`](references/collaboration/RESEARCH-COLLABORATION.md)。
 
+当科研流程需要仓库外的 first-party 通用能力，例如认证/动态网页访问 `browser-access`、DOCX 生成 `general-word-document-generation` 或科研演示文稿 `scientific-presentation-authoring` 时，Research 只声明能力需求，不自行实现第二套浏览器、Word 或 PPT 执行层。先复用当前会话能力；当前会话不可用时检查机器级注册表。机器级也缺失时，把能力缺口交给 `akira` Router，由它按 first-party Catalog 说明来源、用途与最小安装范围并取得用户明确同意后按需安装。用户拒绝安装或当前环境仍无法加载时，保留 canonical scientific content，明确记录对应访问、生成或渲染验收尚未完成，不把缺失的表示层能力伪装成科研结论 blocker。
+
 当当前科研动作已经明确、但缺少某个专业软件 / 数据库 / 领域工具的可靠使用知识，而且现有 Akira / 已安装 Skill 不足时，读取 [`references/external-skills/POLICY.md`](references/external-skills/POLICY.md)。第三方科研 Skill 只补执行知识，不接管 Research Question、Design、Analysis scientific intent、Research Tree、evidence boundary 或 Communication 路由。当前允许按需发现的 K-Dense Scientific Agent Skills 只能在核验具体 Skill 的来源、版本、license、脚本/网络/凭据风险与职责重叠后，向用户请求**当前项目级**安装许可；未获明确同意不得安装，且永远不进入 Akira 全局 `install.sh`。前三个已审计参考源及吸收边界见 [`references/external-skills/AUDIT.md`](references/external-skills/AUDIT.md)。
 
 ## 4. 子 Skill 返回后重新路由

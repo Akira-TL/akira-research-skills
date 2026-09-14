@@ -1,6 +1,8 @@
 # 用户授权访问
 
-当网页抓取、HTTP 请求或围绕目标论文的精确解析检索（exact-work resolution search）已定位目标页面，但全文需要用户已有的机构、订阅或出版社权限时，优先调用当前环境已经安装或提供的 `browser-access` / 等价可控浏览器能力，并遵循该能力自己的授权、持久浏览器配置和人工登录边界。当前项目只安装 Research family 且没有可控浏览器能力时，返回 `MANUAL_ACQUISITION_REQUIRED` 并告诉用户缺少的是可选浏览器能力；不要沿旧 Akira 总仓相对路径寻找 Skill，也不要为了继续自动化自行安装或反复尝试其他浏览器方案。
+当网页抓取、HTTP 请求或围绕目标论文的精确解析检索（exact-work resolution search）已定位目标页面，但全文需要用户已有的机构、订阅或出版社权限时，优先调用当前环境已经安装或提供的 `browser-access` / 等价可控浏览器能力，并遵循该能力自己的授权、持久浏览器配置和人工登录边界。
+
+若当前会话没有可控浏览器能力，先检查机器级 `~/.agents/skills/browser-access`；机器级也缺失时，把能力缺口交给 `akira` Router，由 Router 按 first-party Catalog 向用户说明用途并取得明确同意后按需安装 `browser-access`。Research 本身不得自行安装、复制浏览器 Skill 正文或沿 Lattice 本地 submodule 查找实现。只有用户拒绝安装、Router 不可用、当前执行器无法加载已经存在的机器级 Skill，或浏览器能力本身仍无法满足目标访问时，才返回 `MANUAL_ACQUISITION_REQUIRED` 并说明具体缺失条件。
 
 交接目标只有两个：
 

@@ -12,6 +12,7 @@
 
 ### Changed
 
+- 补齐跨产品 first-party 可选能力路由：Research 需要 `browser-access`、`general-word-document-generation`、`scientific-presentation-authoring` 等通用能力而当前会话与机器级注册表均缺失时，将能力缺口交给 `akira` Router 按 Catalog 请求用户授权并按需安装；Research 不复制浏览器、Word 或 PPT 执行层，用户拒绝或执行器无法加载时保留明确的人工/格式未完成状态。
 - Research 安装协议改为 Akira 机器级 Git + symlink 注册：远端 source 进入 `~/.agents/sources/`，Research suite 与按需外部 Skill 注册到 `~/.agents/skills/`；不再使用 `npx skills`、项目级 `skills-lock.json` 或固定执行器目录，具体 harness 自行负责加载机器级 Skill。
 - Research suite 从通用 Akira Skill 仓拆出，科研项目可以独立安装完整 Research 能力。
 - Hypothesis、Design、Study、Dataset、Analysis 与 Interpretation 的长期人类 Markdown 采用 owner-defined 固定格式、相对导航与目录索引；目录索引固定区分 `Objects` / `Relations` 并机械覆盖已知上/下游关系，completion 同时验证路径、H1/H2、已知上游导航和本地链接完整性。
