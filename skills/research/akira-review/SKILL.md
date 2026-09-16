@@ -60,3 +60,7 @@ Reviewer 默认不输出最终编辑决定。只有用户明确要求、真实 t
 Review 的默认终点是判断与 Concern，不自动进入 revision、Analysis、Study 或 Communication。
 
 完成标准：输出与 Review Mode 一致，能够把“稿件当前讲的故事”和“当前材料最强能够支持的故事”区分开，并把每个重大问题连接到明确的科学后果和解决条件。
+
+## 7. 只通过显式 Handoff 返回 Research
+
+若 Concern 需要新增 Literature、Analysis、Interpretation、Design / Study / Data 或纯表达修改，按 [`references/HANDOFF.md`](references/HANDOFF.md) 返回 resolution criterion 与建议 route，然后停止。只有用户决定采纳后，才交给 `akira-research` 改变 canonical scientific state 或交给 `communication` 修改稿件；Reviewer 本身不直接修改这些作者侧事实源。

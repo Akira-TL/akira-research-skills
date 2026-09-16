@@ -15,7 +15,7 @@ scripts/communication/
 三者职责不同：
 
 - `communication/<product-slug>/`：人类传播视图。保存作者、合作者、审稿人或目标受众需要直接阅读、检查或提交的传播产物；
-- `.research/communication/<product-slug>/`：内部传播支持区。保存材料盘点、引用/方法/一致性审计、追溯表、验证报告、reviewer-style stress test 等主要供 Agent 或科研审计使用的支持 artifact；
+- `.research/communication/<product-slug>/`：内部传播支持区。保存材料盘点、引用/方法/完整性/一致性审计、追溯表与验证报告等主要供 Agent 或科研审计使用的支持 artifact；
 - `scripts/communication/`：跨目标复用的可重放生成器、转换器与 validator。代码保持在正常工程代码区；仅某一目标期刊需要的 entrypoint、配置、模板 source、manifest 与 QA 依据按 [`TARGET-RELEASE.md`](TARGET-RELEASE.md) 放入对应 `<journal-code>-release/`。
 
 `<product-slug>` 是当前 Communication Product 的稳定技术标识，不代表某个固定研究方向、论文类型或领域名称。每个真实传播产品根据自身目的选择 slug；不得把示例 slug 当作目录规范。

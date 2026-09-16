@@ -142,7 +142,7 @@ Communication Product 是工程审计对象，不是新的学术概念或科研�
 
 ## 12. 完成条件
 
-Communication artifact 完成前先确认已经按 [`WRITING-ROUTER.md`](WRITING-ROUTER.md) 选择正确 workflow。原始研究论文同时完成 [`RESEARCH-ARTICLE-WORKFLOW.md`](RESEARCH-ARTICLE-WORKFLOW.md)；普通叙述性综述同时完成 [`REVIEW-WORKFLOW.md`](REVIEW-WORKFLOW.md)；研究计划书 / 开题 / grant proposal 同时完成 [`PROPOSAL-WORKFLOW.md`](PROPOSAL-WORKFLOW.md)；系统综述、范围综述或荟萃分析只有在对应正式科研方法流程已经完成并形成稳定 source commit 后，才能在 Communication 宣告成稿。长篇科研稿在进入 reviewer-style review 前完成一次 [`audit/INTEGRITY-AUDIT.md`](audit/INTEGRITY-AUDIT.md) 初稿审计；经过实质 revision 后，在最终交付前再完成最终审计。Reviewer response / revision package 同时完成 [`REVISION-WORKFLOW.md`](REVISION-WORKFLOW.md) 的意见—动作—证据闭环。
+Communication artifact 完成前先确认已经按 [`WRITING-ROUTER.md`](WRITING-ROUTER.md) 选择正确 workflow。原始研究论文同时完成 [`RESEARCH-ARTICLE-WORKFLOW.md`](RESEARCH-ARTICLE-WORKFLOW.md)；普通叙述性综述同时完成 [`REVIEW-WORKFLOW.md`](REVIEW-WORKFLOW.md)；研究计划书 / 开题 / grant proposal 同时完成 [`PROPOSAL-WORKFLOW.md`](PROPOSAL-WORKFLOW.md)；系统综述、范围综述或荟萃分析只有在对应正式科研方法流程已经完成并形成稳定 source commit 后，才能在 Communication 宣告成稿。长篇科研稿在请求独立学术评议或进入正式交付前完成一次 [`audit/INTEGRITY-AUDIT.md`](audit/INTEGRITY-AUDIT.md) 初稿审计；经过实质 revision 后，在最终交付前再完成最终审计。Reviewer response / revision package 同时完成 [`REVISION-WORKFLOW.md`](REVISION-WORKFLOW.md) 的意见—动作—证据闭环。
 
 共同检查：
 
@@ -170,6 +170,6 @@ Communication artifact 完成前先确认已经按 [`WRITING-ROUTER.md`](WRITING
 22. 进入正式投稿时，已按 [`submission/SUBMISSION-PACKAGE.md`](submission/SUBMISSION-PACKAGE.md) 从目标 venue 当前官方规则建立 deliverable matrix；author order / affiliation、funding、COI、ethics / registration、permission、reviewer conflict 等事实均有真实来源，anonymous / identified manuscript、cover letter、declarations、Figure / Supplement 与 submission metadata 之间无未解释冲突；
 23. 长篇 manuscript / thesis chapter / report 在适用时已按 [`audit/CONSISTENCY-AUDIT.md`](audit/CONSISTENCY-AUDIT.md) 检查术语、acronym、headline count、重复出现的数值/统计量及其 precision、单位与 statistical terminology、Abstract–Results–Discussion–Conclusion summary、Figure/Table/Supplement 与 section cross-reference 的内部一致性，未用自动字符串统一替代科学语义判断；
 24. 若正式交付物已经生成 PDF、DOCX 或其他页面型 artifact，已按 [`submission/RENDERED-OUTPUT-QA.md`](submission/RENDERED-OUTPUT-QA.md) 使用实际目标格式完成 build / conversion、日志检查、页面渲染与视觉验收；最后一次影响布局的修改后已重新渲染，关键文字、Figure、Table、equation、citation / cross-reference 无 blocking 裁切、重叠、缺失或不可读问题；
-25. 若使用多个 reviewer-style 审查视角，已按 [`audit/REVIEWER-STYLE-AUDIT.md`](audit/REVIEWER-STYLE-AUDIT.md) 固定共同 Review Packet、在审查前定义 review lens，并在个体报告冻结后再综合；只有真实上下文隔离时才使用“独立 / 互盲”表述，同一上下文的多轮审查不冒充独立同行评议。
+25. 若用户明确请求独立学术评议，Communication 只准备明确版本的稿件与用户允许的候选 Review Packet，并交给 `akira-review`；Review Result 不自动修改 manuscript 或 canonical scientific state，是否采纳及如何修订由用户决定后再返回作者侧流程。
 
 发现写作需要新的科学判断时，回到 Interpretation / Evidence Synthesis，而不是在 Communication 层临时创造结论。

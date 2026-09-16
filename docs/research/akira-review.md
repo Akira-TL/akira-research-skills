@@ -20,4 +20,4 @@ Review 先选择模式并固定 Review Packet。**Independent review** 只读取
 
 多视角 Review 先冻结共同 Review Packet 和各自 review lens。只有真实相互隔离的 context 才称 independent / blinded review；同一 context 的多轮只能称 multi-lens review。个体报告先冻结再综合，consensus 不作为科学真值或投票结论。
 
-`akira-review` 默认停在学术判断与 Concern，不直接修改作者的 canonical scientific state、分析或稿件。
+`akira-review` 默认停在学术判断与 Concern，不直接修改作者的 canonical scientific state、分析或稿件。若 Concern 需要新的 Literature、Analysis、Interpretation、Design / Study / Data 或纯表达修改，Review 只返回 resolution criterion 与建议 hand-back route；只有用户决定采纳后，才交回 `akira-research` 或 Communication 执行真实修改。

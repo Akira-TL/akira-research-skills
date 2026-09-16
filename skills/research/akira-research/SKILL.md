@@ -26,7 +26,9 @@ Research Question、Active Uncertainty、分支和跨对象关系由 [`research-
 
 ## 3. 路由到专业 Skill
 
-`Current Loop` 只用于定位当前主要研究区域，可取：`EXPLORE`、`QUESTION`、`HYPOTHESIS`、`DESIGN`、`STUDY`、`DATA`、`ANALYSIS`、`INTERPRETATION`、`COMMUNICATION`。它不规定下一步。
+`Current Loop` 只用于定位当前主要研究区域，可取：`EXPLORE`、`QUESTION`、`HYPOTHESIS`、`DESIGN`、`STUDY`、`DATA`、`ANALYSIS`、`INTERPRETATION`、`COMMUNICATION`。它不规定下一步，也不增加 `REVIEW`：学术评议是平级 Review series 的角色切换，不是 Research 生命周期阶段。
+
+用户明确要求导师式看稿、独立同行评议、创新性核验或修回再审时，把当前允许评议的材料交给 `akira-review`，而不是把它写成新的 Current Loop。Review Result 返回后先由用户决定是否采纳；只有用户决定处理具体 Concern 后，`akira-research` 才根据真实 resolution criterion 路由 Literature、Design、Study、Data、Analysis、Interpretation 或 Communication，并在这些作者侧流程中修改 canonical scientific state。
 
 每轮根据当前 primary branch 选择信息增益最高、当前可执行且最可能改变核心科学判断的动作：
 

@@ -92,6 +92,37 @@ class ReviewSeriesContractTests(unittest.TestCase):
         self.assertIn("部分解决", rereview)
         self.assertIn("合理降低 Claim", rereview)
 
+    def test_communication_routes_independent_review_without_owning_reviewer_rules(self) -> None:
+        communication = read(SKILLS / "communication" / "SKILL.md")
+        integrity = read(SKILLS / "communication" / "references" / "audit" / "INTEGRITY-AUDIT.md")
+        revision = read(SKILLS / "communication" / "references" / "REVISION-WORKFLOW.md")
+
+        self.assertIn("akira-review", communication)
+        self.assertIn("review-revision", revision)
+        self.assertNotIn("## 5. Reviewer-style 风险审查", integrity)
+        self.assertNotIn("## 4. Re-review 使用 evidence-before-persuasion", revision)
+        self.assertFalse(
+            (SKILLS / "communication" / "references" / "audit" / "REVIEWER-STYLE-AUDIT.md").exists()
+        )
+
+    def test_review_handoff_returns_to_research_only_after_user_decision(self) -> None:
+        handoff = read(SKILLS / "akira-review" / "references" / "HANDOFF.md")
+        router = read(SKILLS / "akira-review" / "SKILL.md")
+        research_router = read(SKILLS / "akira-research" / "SKILL.md")
+
+        self.assertIn("用户决定", handoff)
+        self.assertIn("literature", handoff)
+        self.assertIn("analysis", handoff)
+        self.assertIn("interpretation", handoff)
+        self.assertIn("communication", handoff)
+        self.assertIn("HANDOFF.md", router)
+        self.assertIn("akira-review", research_router)
+        current_loop_line = next(
+            line for line in research_router.splitlines() if "Current Loop" in line and "可取" in line
+        )
+        self.assertNotIn("`REVIEW`", current_loop_line.split("它不规定下一步", 1)[0])
+        self.assertIn("不增加 `REVIEW`", research_router)
+
     def test_repository_declares_two_primary_routers(self) -> None:
         invocation = read(REPO / ".agents" / "invocation.md")
         self.assertIn("`akira-research`", invocation)

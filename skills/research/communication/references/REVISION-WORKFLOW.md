@@ -68,47 +68,13 @@ Decision type（例如 Major Revision、Minor Revision、revise-and-resubmit）�
 
 不得为了尽快写 rebuttal，在 Communication 中虚构“新增实验”“新增分析”或未真实产生的结果。
 
-## 4. Re-review 使用 evidence-before-persuasion
+## 4. 独立再审交给 Review series
 
-修订是否真的解决 reviewer concern，不能先被作者 response letter 的说服性叙事锚定。默认顺序：
+本工作流负责作者侧 revision：解析 comment、确定作者准备采取的 action、真实修改 manuscript / analysis / figure / citation、编写 response letter，并维护 clean / marked / response package 的一致性。
 
-```text
-原 reviewer comment / editor decision
-→ 固定验收标准
-→ 查看 original manuscript（需要时）
-→ 独立检查 revised manuscript / analysis / figure 等真实 artifact
-→ 先得出“实际解决到什么程度”的判断
-→ 最后再读取 response letter
-→ 检查 response letter 是否准确描述真实修改
-```
+如果目标变成“作为 Reviewer 判断修订是否真正达到原 concern 的 resolution criterion”，退出 Communication，调用 `review-revision`。`review-revision` 拥有 evidence-before-persuasion 再审顺序和 concern resolution status；Communication 不维护第二份 Reviewer 判定规则。
 
-### 4.1 验收标准先固定
-
-在阅读修订稿的辩解文字前，先把 reviewer comment 转成可检查问题。例如：
-
-```text
-Reviewer: 需要证明结果不依赖某个阈值。
-
-验收标准：
-- 至少包含预先说明的合理替代阈值；
-- 相同 Dataset / estimand 下报告 sensitivity；
-- 若结论改变，正文必须更新边界。
-```
-
-不能看到修订稿后再偷偷降低或提高验收标准。
-
-### 4.2 先看实际证据，再看作者回复
-
-先检查：
-
-- revised text 是否真的改了；
-- reviewer 指出的结果 / 方法 / figure 是否真实存在；
-- 新 Analysis / Experiment 是否有 canonical artifact；
-- 变化是否满足刚才固定的验收标准。
-
-之后才看 response letter。response letter 可以帮助定位修改，也可以提供 rebuttal reasoning，但它不能凭“作者说已经解决”改变 manuscript-side evidence。
-
-如果 reply 指向一个之前遗漏的真实位置，可以据此重新检查；最终依据仍然是稿件 / evidence 本身。
+作者侧仍必须保证 response letter 中每个“已完成”陈述都能指向真实 artifact，但这种 package integrity 检查不等于 Reviewer 已认定原 concern closed。
 
 ## 5. 对 reviewer 的不同意也必须有证据
 

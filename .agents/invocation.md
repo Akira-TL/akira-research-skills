@@ -12,6 +12,8 @@
 
 其余稳定 Skill 默认 model-invoked，由所属 Router 或相邻科研 Skill 按当前任务调用。Research series 的共享状态以 `RESEARCH.md`、`.research/research.sqlite`、Git 与 canonical artifacts 为事实来源；Review series 不因同仓而自动获得这些作者内部状态的读取权，其输入边界由 `akira-review` 明确固定。
 
+Research 与 Review 之间没有自动生命周期跳转：Communication 完成不自动进入 Review，Review Result 也不自动改写 Research。用户明确进入评议角色时切换到 `akira-review`；用户决定采纳 Review Result 后，才回到 `akira-research` 路由真实科研修改。
+
 Skill 之间用名称和科研对象契约协作，不通过跨 Skill 相对路径复制对方规则。
 
 新增或改变 Skill 调用方式时，同时更新：

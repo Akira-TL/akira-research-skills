@@ -8,7 +8,7 @@
 
 以下场景应运行：
 
-- 完整长篇 draft 已形成，准备进入 reviewer-style self-review；
+- 完整长篇 draft 已形成，准备请求独立学术评议；
 - manuscript 经历多轮 revision / 多人编辑；
 - Abstract、Results、Discussion、Conclusion 或 Supplement 被分阶段改写；
 - 最终投稿前；

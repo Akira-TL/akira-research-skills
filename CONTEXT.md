@@ -24,9 +24,13 @@
 
 **Human literature note**：给人阅读的论文 Markdown；与机器 artifact、Agent 阅读状态和用户阅读确认分离。
 
+**Review Packet**：一次 Review 被明确允许读取的材料集合；independent review 不因与 Research project 同仓而自动包含作者内部 canonical scientific state。
+
 **Assessment Boundary**：一次学术评议实际可见的材料、缺失材料、可判断维度与 Not Assessable 维度；它限定 Reviewer 能够诚实作出的判断。
 
 **Concern**：Reviewer 对具体 Claim / section / evidence 的可定位学术问题，带有科学后果、严重度、confidence 与 resolution criterion。
+
+**Review Result**：Review 输出的学术判断、Concern、resolution criterion 与建议 hand-back route；它本身不修改 Research canonical scientific state 或 manuscript，是否采纳由用户决定。
 
 ## Repository boundary
 

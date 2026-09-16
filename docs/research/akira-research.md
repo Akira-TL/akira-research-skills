@@ -15,7 +15,9 @@
 
 ## 关键边界
 
-它不是固定阶段流水线，也不要求每个项目都经过 Hypothesis、Study 或全部子 Skill。只有存在真正的科学需要时才进入对应工作流；当下一条判别性证据必须依赖新样品、新实验、新权限或其他外部现实输入时，应在真实停止边界结束当前循环。
+它不是固定阶段流水线，也不要求每个项目都经过 Hypothesis、Study 或全部子 Skill。`REVIEW` 不进入 Research Current Loop：用户明确需要导师式学术评议、独立同行评议、创新性核验或修回再审时，切换到平级 `akira-review`，由 Review 自己固定信息边界。Review Result 返回后先由用户决定是否采纳；只有用户决定处理具体 Concern 后，`akira-research` 才把实际工作路由到 Literature、Design、Study、Data、Analysis、Interpretation 或 Communication，并由这些作者侧流程更新 canonical scientific state。
+
+只有存在真正的科学需要时才进入对应 Research 工作流；当下一条判别性证据必须依赖新样品、新实验、新权限或其他外部现实输入时，应在真实停止边界结束当前循环。
 
 `RESEARCH.md` 的一级标题、二级章节集合与顺序是固定的人类界面；没有内容的必需章节必须明确写不适用、未记录、未知或待确认，而不是删除或留空。导航只指向真实存在的人类可读 artifact；`.research/` 保留为机器 provenance 与内部支持区。冻结的 Hypothesis / Design 等对象不会仅为了后来补导航而改写，后续关系由下游 artifact、可更新索引和 Research Tree 表达。目录级 Objects / Relations 导航索引只承担人类反向发现，不被 Communication completion 当作新的 scientific source；真实科研对象自己的 canonical artifact 仍正常进入科学来源漂移检查。
 
