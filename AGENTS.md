@@ -37,3 +37,17 @@
 Skill discovery 通过仓库结构检查与 `akira` Router 自带安装器的远端 `inspect` 流程核验，不使用第三方 Skill package manager。正式提交继续使用 Akira Guard。
 
 只运行与当前修改有关的更窄测试也是允许的；正式发布前再做完整验证。
+
+## Agent skills
+
+### Issue tracker
+
+本仓库使用 GitHub Issues 作为 Spec、Ticket 与工程工作项的 canonical tracker。具体操作约定见 `docs/agents/issue-tracker.md`。
+
+### Workflow roles
+
+Matt 工程流程使用 canonical workflow role 名称映射到同名 GitHub labels。具体映射见 `docs/agents/triage-labels.md`。
+
+### Domain docs
+
+本仓库使用 single-context domain documentation：根目录 `CONTEXT.md` 为领域词汇与边界入口，长期架构决定继续保存在 `.agents/adr/`。具体消费规则见 `docs/agents/domain.md`。
