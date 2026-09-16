@@ -1,17 +1,23 @@
-# Research
+# Akira Research Skills
 
-稳定 Research Skills。顶层由 `akira-research` 统一路由，其余 Skill 按当前科研对象与 Active Uncertainty 被调用。
+本仓稳定科研能力分为平级的 **Research series** 与 **Review series**。前者负责产生和维护 canonical scientific state，后者负责对当前提供的科研材料进行学术评议；两者共享窄科研能力，但不默认共享作者内部状态。
 
 ## User-invoked
 
-- [`akira-research`](./akira-research/SKILL.md) — 科研总 Router，恢复项目状态并选择下一条真实科研工作。
+### Research series
+
+- [`akira-research`](./akira-research/SKILL.md) — Research series Router，恢复项目状态并选择下一条真实科研工作。
+
+### Review series
+
+- [`akira-review`](./akira-review/SKILL.md) — Review series Router，固定评议边界、重建手稿科学主张并组织学术评议。
 
 ## Model-invoked
 
+### Research series
+
 - [`research-tree`](./research-tree/SKILL.md) — Research Question、Active Uncertainty 与科研路线。
-- [`research-standards`](./research-standards/SKILL.md) — 当前适用规范、权威来源与合规边界。
 - [`literature`](./literature/SKILL.md) — 文献发现、深读、证据审计、综合与长期监测。
-- [`literature-access`](./literature-access/SKILL.md) — 正文、Supplement 与论文 artifact 获取验收。
 - [`hypothesis`](./hypothesis/SKILL.md) — competing hypotheses 与结果前 prediction。
 - [`design`](./design/SKILL.md) — estimand、sampling、measurement、controls 与 protocol。
 - [`study`](./study/SKILL.md) — 真实研究实施、Sample / Assay / deviation provenance。
@@ -20,3 +26,12 @@
 - [`interpretation`](./interpretation/SKILL.md) — Observation → Claim、Hypothesis 更新与证据边界。
 - [`communication`](./communication/SKILL.md) — 论文、综述、Proposal、Figure、revision 与 submission。
 - [`ngs`](./ngs/SKILL.md) — NGS 领域执行适配，不接管科研决策。
+
+### Review series
+
+- [`review-science`](./review-science/SKILL.md) — Claim-driven scientific assessment、推断边界与 Concern contract。
+
+### Shared scientific capabilities
+
+- [`research-standards`](./research-standards/SKILL.md) — Research / Review 均可复用的当前规范与权威来源核验。
+- [`literature-access`](./literature-access/SKILL.md) — Research / Review 均可复用的论文正文、Supplement 与 artifact 获取能力。

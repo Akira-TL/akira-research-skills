@@ -1,0 +1,5 @@
+interface:
+  display_name: "Akira Review"
+  short_description: "Route bounded academic review of research materials"
+policy:
+  allow_implicit_invocation: false

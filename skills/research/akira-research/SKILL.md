@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Akira Research
 
-`akira-research` 是科研系列 Skills 的总 Router。它管理项目级 Scientific Objective、当前科研状态、research-tree、适用规范、子 Skill 路由与停止边界；具体文献、假设、设计、实施、数据、分析、解释和传播规则由对应子 Skill 负责。
+`akira-research` 是 **Research series** 的顶层 Router。它管理项目级 Scientific Objective、当前科研状态、research-tree、适用规范、子 Skill 路由与停止边界；具体文献、假设、设计、实施、数据、分析、解释和传播规则由对应子 Skill 负责。学术评议属于平级的 Review series，由用户显式进入 `akira-review`，不作为 Research Current Loop 的自动阶段。
 
 科研项目以 Git repository 承载；`RESEARCH.md` 保存短小的当前科研状态，`.research/research.sqlite` 保存已有结构化科研 provenance 与知识对象，原始论文、Dataset、代码、模型、图片等仍作为独立 artifact 保存并通过 pointer / provenance 关联。
 

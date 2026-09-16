@@ -1,6 +1,6 @@
 # Repository instructions
 
-本仓库是 Akira Research Skills 的 canonical source。它只维护完整科研产品族：科研总 Router、Research Tree、科研规范、文献、假设、设计、实施、数据、分析、解释、传播及其紧密领域适配层。
+本仓库是 Akira Research Skills 的 canonical source。它维护一个科研产品包中的两个主系列：由 `akira-research` 路由的研究者 / 作者侧 Research series，以及由 `akira-review` 路由的学术评议 Review series；两者可以复用窄科研能力，但不因同仓而自动共享作者内部状态。
 
 ## 目录与所有权
 

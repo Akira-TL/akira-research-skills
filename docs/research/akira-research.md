@@ -1,6 +1,6 @@
 # akira-research
 
-`akira-research` 是 Akira 科研工作流的总入口。它维护科研目标、当前主要不确定性、Research Tree、适用规范和停止边界，并按当前证据状态自主路由到文献、假设、设计、研究实施、数据、分析、解释或传播工作。
+`akira-research` 是 Akira Research Skills 中 **Research series** 的顶层入口。它维护科研目标、当前主要不确定性、Research Tree、适用规范和停止边界，并按当前证据状态自主路由到文献、假设、设计、研究实施、数据、分析、解释或传播工作。学术评议属于平级的 Review series，由用户显式进入 `akira-review`，不会作为 Research Current Loop 的自动阶段。
 
 ## 适合什么时候用
 
