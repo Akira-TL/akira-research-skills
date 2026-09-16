@@ -54,6 +54,28 @@ class ReviewSeriesContractTests(unittest.TestCase):
         self.assertIn("review-literature", router)
         self.assertIn("closest prior work", router)
 
+    def test_independent_review_contract_is_disclosed(self) -> None:
+        router = read(SKILLS / "akira-review" / "SKILL.md")
+        boundary = read(SKILLS / "akira-review" / "references" / "REVIEW-BOUNDARY.md")
+        reporting = read(SKILLS / "akira-review" / "references" / "REPORTING.md")
+
+        self.assertIn("Review Packet", router)
+        self.assertIn("independent review", boundary)
+        self.assertIn("project-informed mentor review", boundary)
+        self.assertIn("正式同行评议", reporting)
+        self.assertIn("Reviewer recommendation", reporting)
+
+    def test_multi_pass_and_confidentiality_references_exist(self) -> None:
+        multi_pass = SKILLS / "akira-review" / "references" / "MULTI-PASS.md"
+        confidentiality = SKILLS / "akira-review" / "references" / "CONFIDENTIALITY.md"
+        self.assertTrue(multi_pass.is_file())
+        self.assertTrue(confidentiality.is_file())
+
+        self.assertIn("isolated", read(multi_pass))
+        self.assertIn("consensus", read(multi_pass).lower())
+        self.assertIn("generative AI", read(confidentiality))
+        self.assertIn("fail closed", read(confidentiality))
+
     def test_repository_declares_two_primary_routers(self) -> None:
         invocation = read(REPO / ".agents" / "invocation.md")
         self.assertIn("`akira-research`", invocation)
