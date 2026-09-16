@@ -76,6 +76,22 @@ class ReviewSeriesContractTests(unittest.TestCase):
         self.assertIn("generative AI", read(confidentiality))
         self.assertIn("fail closed", read(confidentiality))
 
+    def test_review_revision_is_model_invoked_and_routed_for_rereview(self) -> None:
+        self.assertTrue((SKILLS / "review-revision" / "SKILL.md").is_file())
+        self.assertNotIn("disable-model-invocation", frontmatter("review-revision"))
+
+        metadata = read(SKILLS / "review-revision" / "agents" / "openai.yaml")
+        self.assertNotIn("allow_implicit_invocation: false", metadata)
+        self.assertTrue((DOCS / "review-revision.md").is_file())
+
+        router = read(SKILLS / "akira-review" / "SKILL.md")
+        rereview = read(SKILLS / "review-revision" / "SKILL.md")
+        self.assertIn("review-revision", router)
+        self.assertIn("evidence-before-persuasion", rereview)
+        self.assertIn("response letter", rereview)
+        self.assertIn("部分解决", rereview)
+        self.assertIn("合理降低 Claim", rereview)
+
     def test_repository_declares_two_primary_routers(self) -> None:
         invocation = read(REPO / ".agents" / "invocation.md")
         self.assertIn("`akira-research`", invocation)

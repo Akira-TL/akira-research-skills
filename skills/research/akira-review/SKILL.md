@@ -18,7 +18,13 @@ disable-model-invocation: true
 
 完成标准：Review Mode、Review Packet、实际可见材料、缺失材料、Assessable 与 Not Assessable 均已明确；后续每个实质判断都能说明它基于哪些获准材料，且没有把缺失输入转写成作者缺陷。
 
-## 2. 先重建，再批评
+## 2. 识别修回再审
+
+如果本轮输入包含 original concern / editor decision、revised manuscript 或其他修订 evidence，并且目标是判断问题是否真正解决，直接调用 [`review-revision`](../review-revision/SKILL.md)。再审不要求用户先进入 Communication，也不把 response letter 作为起点。
+
+完成标准：修回 / 再审意图已经路由到 `review-revision`，原 concern 的 resolution criterion 在读取作者说服性回复前得到固定。
+
+## 3. 先重建，再批评
 
 在形成 Concern 前，先从材料中重建：
 
@@ -33,7 +39,7 @@ disable-model-invocation: true
 
 完成标准：能够用最窄表述复述 central Claim、最强证据与关键 scope，而不依赖作者自我评价词汇。
 
-## 3. 建立外部文献参照
+## 4. 建立外部文献参照
 
 只要本轮需要判断 novelty、priority、scientific contribution、closest prior work、方法先例或与当前 Claim 直接冲突的既有证据，先调用 [`review-literature`](../review-literature/SKILL.md)。它负责建立 bounded field frame、寻找 closest prior work、按判断责任提升阅读深度，并返回可核验的 contribution / novelty judgment。
 
@@ -41,11 +47,11 @@ disable-model-invocation: true
 
 完成标准：任何实质 novelty / priority / contribution 判断都有可核验的 prior-work basis；“未发现先例”带明确检索边界。
 
-## 4. 路由科学评议
+## 5. 路由科学评议
 
 需要判断 Claim 是否被当前设计、数据、分析与推断链支持时，调用 [`review-science`](../review-science/SKILL.md)。文献定位先于需要它支撑的 novelty / contribution 判断，但不替代对 Design、Analysis 与 Evidence → Claim 的独立科学审查。
 
-## 5. 组织评议输出
+## 6. 组织评议输出
 
 按 [`references/REPORTING.md`](references/REPORTING.md) 选择导师式学术评议或正式同行评议呈现。用户要求多个审查视角时读取 [`references/MULTI-PASS.md`](references/MULTI-PASS.md)：所有 pass 共用冻结的 Review Packet；只有真实相互隔离的 context 才称 independent / blinded passes，同一 context 的多轮只能称 multi-lens review；个体报告先冻结再综合，consensus 不替代科学判断。
 

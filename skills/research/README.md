@@ -31,6 +31,7 @@
 
 - [`review-literature`](./review-literature/SKILL.md) — bounded field frame、closest prior work、contribution 与 novelty verification。
 - [`review-science`](./review-science/SKILL.md) — Claim-driven scientific assessment、推断边界与 Concern contract。
+- [`review-revision`](./review-revision/SKILL.md) — evidence-before-persuasion 修回再审与 concern resolution 判断。
 
 ### Shared scientific capabilities
 

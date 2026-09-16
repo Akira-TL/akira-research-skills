@@ -1,0 +1,3 @@
+interface:
+  display_name: "Review Revision"
+  short_description: "Re-review revisions from evidence before response prose"

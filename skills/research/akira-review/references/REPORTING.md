@@ -24,6 +24,14 @@
 
 不为模拟真实审稿外观制造固定数量的 Major / Minor Concern。公开严重度保持 Major / Minor 等通行表述；如果某问题实际使 central Claim 无法成立，在 concern 的 scientific consequence 中直接说明。
 
+## 修回再审
+
+再审按 `review-revision` 的 artifact-based judgment 输出：
+
+`Original Concern → Original Resolution Criterion → Revised Evidence / Locator → Current Status → Reasoning → Response-letter accuracy → New Concern（若有）`
+
+原 concern 的状态与新 concern 分开；response letter 只核对作者陈述是否准确，不替代真实修订 evidence。
+
 ## Reviewer recommendation 与编辑决定
 
 Reviewer 默认不输出 `Accept`、`Reject`、`Major Revision` 等编辑决定。只有同时满足以下条件时才增加 Reviewer recommendation：
