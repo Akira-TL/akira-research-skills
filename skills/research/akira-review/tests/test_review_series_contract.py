@@ -129,11 +129,58 @@ class ReviewSeriesContractTests(unittest.TestCase):
         self.assertIn("`akira-review`", invocation)
         self.assertIn("两个顶层 user-invoked Router", invocation)
 
+        for router in ("akira-research", "akira-review"):
+            self.assertIn("disable-model-invocation: true", frontmatter(router))
+            metadata = read(SKILLS / router / "agents" / "openai.yaml")
+            self.assertIn("allow_implicit_invocation: false", metadata)
+
         readme = read(SKILLS / "README.md")
         self.assertIn("Research series", readme)
         self.assertIn("Review series", readme)
         self.assertIn("[`akira-review`]", readme)
         self.assertIn("[`review-science`]", readme)
+        self.assertIn("[`review-literature`]", readme)
+        self.assertIn("[`review-revision`]", readme)
+
+    def test_review_shared_capabilities_do_not_create_research_literature_state(self) -> None:
+        readme = read(SKILLS / "README.md")
+        literature_review = read(SKILLS / "review-literature" / "SKILL.md")
+
+        self.assertIn("Shared scientific capabilities", readme)
+        self.assertIn("literature-access", readme)
+        self.assertIn("research-standards", readme)
+        self.assertIn("literature-access", literature_review)
+        self.assertIn("research-standards", literature_review)
+        self.assertIn("不创建或修改 Research Search Run", literature_review)
+        self.assertIn("research.sqlite", literature_review)
+
+    def test_review_adds_no_database_schema_or_review_database(self) -> None:
+        self.assertFalse(any(REPO.rglob("review.sqlite")))
+
+        db_owner = SKILLS / "akira-research"
+        schema_text = "\n".join(
+            read(path)
+            for path in db_owner.rglob("*.py")
+            if "__pycache__" not in path.parts
+        )
+        self.assertNotIn("create table review", schema_text.lower())
+        self.assertNotIn("create table concern", schema_text.lower())
+        self.assertNotIn("review_round", schema_text.lower())
+
+    def test_communication_retains_author_side_delivery_contracts(self) -> None:
+        communication = read(SKILLS / "communication" / "SKILL.md")
+        for required in (
+            "INTEGRITY-AUDIT.md",
+            "REVISION-WORKFLOW.md",
+            "SUBMISSION-PACKAGE.md",
+            "reviewer response",
+        ):
+            self.assertIn(required, communication)
+
+    def test_top_level_check_runs_review_contract_and_diff_check(self) -> None:
+        check = read(REPO / "scripts" / "check.sh")
+        self.assertIn("akira-review/tests", check)
+        self.assertIn("git diff --check", check)
 
     def test_research_router_no_longer_claims_the_whole_product_family(self) -> None:
         router = read(SKILLS / "akira-research" / "SKILL.md")
