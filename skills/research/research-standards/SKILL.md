@@ -5,13 +5,13 @@ description: 识别并核验科研项目当前适用的既有规范、指南与�
 
 # Research Standards
 
-`research-standards` 不制定 Akira 自有科研方法。它负责根据当前研究问题与研究类型，查找、核验并记录真正适用的既有科研规范，再把这些约束交给 `design`、`study`、`data`、`analysis`、`interpretation` 或 `communication`。
+`research-standards` 不制定 Akira 自有科研方法。它负责根据当前研究或评议情境，查找、核验并返回真正适用的既有科研规范，再把这些约束交给 Research 或 Review 中实际需要它的调用者。
 
 ## 1. 识别当前研究情境
 
-先从项目现有事实确定与规范选择有关的维度，例如研究设计、研究对象/领域、数据类型、主要推断目标和传播目标。只记录实际影响规范选择的维度，不为了分类完整而强行给项目贴满标签。
+先从当前 Research project 或 Review Packet 的已知事实确定与规范选择有关的维度，例如研究设计、研究对象/领域、数据类型、主要推断目标和传播目标。只记录实际影响规范选择的维度，不为了分类完整而强行贴满标签。
 
-若研究设计或推断目标尚未确定，只记录当前已知边界，并把缺口返回 `akira-research`；不要用某个 reporting guideline 反推研究设计。
+若研究设计或推断目标尚未确定，只记录当前已知边界，并把缺口返回当前调用者；Research side 由 `akira-research` 决定后续动作，Review side 由 `akira-review` 保持 Not Assessable 或形成相应 Concern。不要用某个 reporting guideline 反推研究设计。
 
 ## 2. 查权威来源，而不是凭记忆套规范
 
@@ -60,6 +60,7 @@ why_applicable
 - dataset、metadata、QC、freeze、provenance → `data`；
 - 统计/计算方法与软件实现 → `analysis`；
 - evidence boundary 与 Claim → `interpretation`；
-- manuscript / report / figure / table → `communication`。
+- manuscript / report / figure / table 的作者侧执行 → `communication`；
+- manuscript / prior-work 的学术评议 → `akira-review` / `review-literature`。
 
-完成标准：当前动作依赖的规范已经从权威来源核验，职责没有混用，且相关 Skill 能明确知道“采用什么规范、为什么适用、它约束哪部分工作”。
+完成标准：当前动作依赖的规范已经从权威来源核验，职责没有混用，且调用者能明确知道“采用什么规范、为什么适用、它约束哪部分工作”。

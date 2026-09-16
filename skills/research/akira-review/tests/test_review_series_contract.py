@@ -42,6 +42,18 @@ class ReviewSeriesContractTests(unittest.TestCase):
         self.assertNotIn("allow_implicit_invocation: false", metadata)
         self.assertTrue((DOCS / "review-science.md").is_file())
 
+    def test_review_literature_is_model_invoked_and_routed_before_novelty_judgment(self) -> None:
+        self.assertTrue((SKILLS / "review-literature" / "SKILL.md").is_file())
+        self.assertNotIn("disable-model-invocation", frontmatter("review-literature"))
+
+        metadata = read(SKILLS / "review-literature" / "agents" / "openai.yaml")
+        self.assertNotIn("allow_implicit_invocation: false", metadata)
+        self.assertTrue((DOCS / "review-literature.md").is_file())
+
+        router = read(SKILLS / "akira-review" / "SKILL.md")
+        self.assertIn("review-literature", router)
+        self.assertIn("closest prior work", router)
+
     def test_repository_declares_two_primary_routers(self) -> None:
         invocation = read(REPO / ".agents" / "invocation.md")
         self.assertIn("`akira-research`", invocation)

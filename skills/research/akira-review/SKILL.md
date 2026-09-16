@@ -31,13 +31,19 @@ disable-model-invocation: true
 
 完成标准：能够用最窄表述复述 central Claim、最强证据与关键 scope，而不依赖作者自我评价词汇。
 
-## 3. 路由科学评议
+## 3. 建立外部文献参照
 
-需要判断 Claim 是否被当前设计、数据、分析与推断链支持时，调用 [`review-science`](../review-science/SKILL.md)。
+只要本轮需要判断 novelty、priority、scientific contribution、closest prior work、方法先例或与当前 Claim 直接冲突的既有证据，先调用 [`review-literature`](../review-literature/SKILL.md)。它负责建立 bounded field frame、寻找 closest prior work、按判断责任提升阅读深度，并返回可核验的 contribution / novelty judgment。
 
-若当前 Review 尚未完成独立的 literature / novelty verification，材料中的 novelty、priority、"首次"、"已有研究未解决" 等主张只能记录为**待文献核验**，不得把作者自己的定位直接升级为已核验事实，也不得仅凭模型记忆作强创新性判断。
+作者 Introduction 与 reference list 只能作为检索起点；没有完成外部文献核验时，novelty / priority 主张保持**待文献核验**，不得仅凭模型记忆或作者措辞作强判断。
 
-## 4. 组织基础导师式评议
+完成标准：任何实质 novelty / priority / contribution 判断都有可核验的 prior-work basis；“未发现先例”带明确检索边界。
+
+## 4. 路由科学评议
+
+需要判断 Claim 是否被当前设计、数据、分析与推断链支持时，调用 [`review-science`](../review-science/SKILL.md)。文献定位先于需要它支撑的 novelty / contribution 判断，但不替代对 Design、Analysis 与 Evidence → Claim 的独立科学审查。
+
+## 5. 组织基础导师式评议
 
 基础输出按 [`references/REPORTING.md`](references/REPORTING.md) 组织，至少回答：
 
