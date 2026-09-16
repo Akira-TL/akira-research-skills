@@ -16,7 +16,7 @@ Concern 是 Reviewer 对某个科学问题的可定位判断，不是泛化意�
 - **Confidence**：Reviewer 对该判断的把握及其限制；
 - **Resolution criterion**：什么证据或修改能够证明问题已经解决。
 
-当前票尚未建立 literature verification；若 Concern 使用外部文献作为关键依据，只能在外部证据真实核验后加入相应 locator，不把模型记忆当 citation。
+若当前 Review 尚未完成 literature verification，Concern 不得把模型记忆当 citation；只有在外部证据真实核验后，才能把相应文献作为关键依据并加入 locator。
 
 ## Major vs Minor
 

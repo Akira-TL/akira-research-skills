@@ -35,7 +35,7 @@ disable-model-invocation: true
 
 需要判断 Claim 是否被当前设计、数据、分析与推断链支持时，调用 [`review-science`](../review-science/SKILL.md)。
 
-#10 阶段尚未建立独立的 literature / novelty verification 闭环。若材料包含 novelty、priority、"首次"、"已有研究未解决" 等主张，可以记录为**待文献核验**，但不得把作者自己的定位直接升级为已核验事实，也不得仅凭模型记忆作强创新性判断。
+若当前 Review 尚未完成独立的 literature / novelty verification，材料中的 novelty、priority、"首次"、"已有研究未解决" 等主张只能记录为**待文献核验**，不得把作者自己的定位直接升级为已核验事实，也不得仅凭模型记忆作强创新性判断。
 
 ## 4. 组织基础导师式评议
 
