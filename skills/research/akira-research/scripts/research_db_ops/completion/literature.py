@@ -406,8 +406,8 @@ def literature_completion_readiness(
     with connect(db_path) as connection:
         acquired = connection.execute(
             """
-            SELECT c.id AS candidate_id, c.title, c.reading_priority, c.paper_id,
-                   p.read_depth, p.reading_status, p.critical_status
+            SELECT c.id AS candidate_id, c.title, c.reading_priority, c.defer_reason,
+                   c.paper_id, p.read_depth, p.reading_status, p.critical_status
             FROM candidates c
             LEFT JOIN papers p ON p.id = c.paper_id
             WHERE c.relevance_status = 'relevant'
@@ -421,15 +421,20 @@ def literature_completion_readiness(
             if not paper_id:
                 continue
             blockers.extend(acquired_main_text_access_blockers(connection, int(row["candidate_id"])))
+            deferred = (
+                row["reading_priority"] in {"normal", "low"}
+                and bool(str(row["defer_reason"] or "").strip())
+            )
             if row["reading_status"] != "extracted" or row["critical_status"] != "critically_reviewed":
-                blockers.append(
-                    {
-                        "reason": "relevant_acquired_not_fully_reviewed",
-                        "candidate_id": int(row["candidate_id"]),
-                        "paper_id": paper_id,
-                        "title": row["title"],
-                    }
-                )
+                if not deferred:
+                    blockers.append(
+                        {
+                            "reason": "relevant_acquired_not_fully_reviewed",
+                            "candidate_id": int(row["candidate_id"]),
+                            "paper_id": paper_id,
+                            "title": row["title"],
+                        }
+                    )
             else:
                 critically_reviewed_count += 1
             if row["reading_priority"] == "core":
