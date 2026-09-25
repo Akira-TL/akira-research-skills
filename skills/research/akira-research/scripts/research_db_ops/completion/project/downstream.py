@@ -3,9 +3,15 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from research_db_support.schema import DOWNSTREAM_ARTIFACT_LEGACY_BASELINE_META_KEY
 from research_db_support.storage import ResearchDbError, connect, database_path
 from ... import common
 from ..git import run_git, commit_has_path, first_path_change_after, path_changed_after
+from ..human.legacy import (
+    legacy_baseline_commit,
+    path_is_unchanged_since_baseline,
+    validate_legacy_baseline,
+)
 from ..language import canonical_paths
 
 def _append_registration_blockers(
@@ -13,16 +19,27 @@ def _append_registration_blockers(
     blockers: list[dict[str, Any]],
     dataset_count: int,
     analysis_count: int,
-) -> None:
+    legacy_baseline: str | None,
+) -> list[str]:
     tracked = run_git(project_root, "ls-files", "--", "data", "analysis")
     tracked_paths = {line.strip() for line in tracked.stdout.splitlines() if line.strip()}
     registered_paths = set(canonical_paths(project_root))
     orphaned = sorted(tracked_paths - registered_paths)
-    if orphaned:
+    grandfathered = [
+        path
+        for path in orphaned
+        if path_is_unchanged_since_baseline(
+            project_root,
+            project_root / path,
+            legacy_baseline,
+        )
+    ]
+    active_orphaned = sorted(set(orphaned) - set(grandfathered))
+    if active_orphaned:
         blockers.append(
             {
                 "reason": "tracked_downstream_artifacts_unregistered",
-                "paths": orphaned,
+                "paths": active_orphaned,
             }
         )
 
@@ -32,6 +49,7 @@ def _append_registration_blockers(
     analysis_dir = project_root / "analysis"
     if analysis_dir.exists() and any(path.is_file() for path in analysis_dir.rglob("*")) and analysis_count == 0:
         blockers.append({"reason": "analysis_assets_present_without_analysis_record"})
+    return grandfathered
 
 
 def _analysis_input_rows(connection, analysis_id: int):
@@ -378,6 +396,20 @@ def downstream_completion_readiness(project_root: Path) -> dict[str, Any]:
             "completed_analysis_count": 0,
         }
 
+    recorded_legacy_baseline = legacy_baseline_commit(
+        project_root,
+        DOWNSTREAM_ARTIFACT_LEGACY_BASELINE_META_KEY,
+    )
+    legacy_baseline, baseline_blocker = validate_legacy_baseline(
+        project_root,
+        recorded_legacy_baseline,
+        invalid_reason="downstream_artifact_legacy_baseline_invalid",
+        introduced_in_schema=28,
+    )
+    if baseline_blocker is not None:
+        blockers.append(baseline_blocker)
+    grandfathered_paths: list[str] = []
+
     with connect(db_path) as connection:
         tables = {
             str(row["name"])
@@ -410,7 +442,13 @@ def downstream_completion_readiness(project_root: Path) -> dict[str, Any]:
         completed_analysis_count = int(
             connection.execute("SELECT COUNT(*) FROM analysis_runs WHERE status = 'completed'").fetchone()[0]
         )
-        _append_registration_blockers(project_root, blockers, dataset_count, analysis_count)
+        grandfathered_paths = _append_registration_blockers(
+            project_root,
+            blockers,
+            dataset_count,
+            analysis_count,
+            legacy_baseline,
+        )
 
         attempt_workflow_row = connection.execute(
             "SELECT value FROM meta WHERE key = 'analysis_attempt_workflow_started_at'"
@@ -469,4 +507,7 @@ def downstream_completion_readiness(project_root: Path) -> dict[str, Any]:
         "dataset_count": dataset_count,
         "analysis_count": analysis_count,
         "completed_analysis_count": completed_analysis_count,
+        "legacy_baseline_commit": recorded_legacy_baseline,
+        "legacy_baseline_valid": baseline_blocker is None,
+        "grandfathered_paths": sorted(grandfathered_paths),
     }

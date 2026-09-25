@@ -76,6 +76,7 @@ from research_db_cli import (
 )
 from research_db_support.schema import (
     ACADEMIC_LANGUAGE_LEGACY_BASELINE_META_KEY,
+    DOWNSTREAM_ARTIFACT_LEGACY_BASELINE_META_KEY,
     HUMAN_ARTIFACT_LEGACY_BASELINE_META_KEY,
     LITERATURE_HUMAN_FORMAT_LEGACY_BASELINE_META_KEY,
 )
@@ -126,6 +127,12 @@ def cmd_migrate(args: argparse.Namespace) -> int:
                     "ON CONFLICT(key) DO NOTHING",
                     (LITERATURE_HUMAN_FORMAT_LEGACY_BASELINE_META_KEY, legacy_baseline_commit),
                 )
+            if 28 in applied:
+                connection.execute(
+                    "INSERT INTO meta(key, value) VALUES(?, ?) "
+                    "ON CONFLICT(key) DO NOTHING",
+                    (DOWNSTREAM_ARTIFACT_LEGACY_BASELINE_META_KEY, legacy_baseline_commit),
+                )
 
     literature_marker_migration = {"migrated_paths": []}
     if 25 in applied:
@@ -139,6 +146,8 @@ def cmd_migrate(args: argparse.Namespace) -> int:
             payload["human_artifact_legacy_baseline_commit"] = legacy_baseline_commit
         if 25 in applied:
             payload["literature_human_format_legacy_baseline_commit"] = legacy_baseline_commit
+        if 28 in applied:
+            payload["downstream_artifact_legacy_baseline_commit"] = legacy_baseline_commit
     if 25 in applied:
         payload["literature_marker_migration"] = literature_marker_migration
     emit(payload)

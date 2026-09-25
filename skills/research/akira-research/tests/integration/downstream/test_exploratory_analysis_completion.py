@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import sqlite3
 import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parents[3] / "scripts"
+MIGRATION_DIR = SCRIPT_DIR.parent / "migrations" / "versions"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 from research_db_core import init_database  # noqa: E402
@@ -364,6 +367,76 @@ ANALYSIS
         result = validate_completion(self.root)
         reasons = {item["reason"] for item in result["downstream"]["blockers"]}
         self.assertIn("completed_analysis_missing_estimate_artifact", reasons)
+    def test_migration_grandfathers_unchanged_legacy_downstream_files_only(self) -> None:
+        legacy_path = self.root / "data" / "legacy-unregistered.tsv"
+        legacy_path.write_text("id\tvalue\n1\tlegacy\n", encoding="utf-8")
+
+        db_path = self.root / ".research" / "research.sqlite"
+        db_path.unlink()
+        with closing(sqlite3.connect(db_path)) as connection, connection:
+            connection.execute("PRAGMA foreign_keys = ON")
+            for migration in sorted(MIGRATION_DIR.rglob("[0-9][0-9][0-9]_*.sql")):
+                version = int(migration.name[:3])
+                if version > 27:
+                    break
+                connection.executescript(migration.read_text(encoding="utf-8"))
+            connection.execute("PRAGMA user_version = 27")
+            connection.execute("DELETE FROM meta WHERE key = 'schema_version'")
+            connection.execute(
+                "INSERT INTO meta(key, value) VALUES('schema_version', '27')"
+            )
+
+        baseline = self._commit("RESEARCH: preserve legacy downstream baseline")
+
+        migrated = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPT_DIR / "research_db.py"),
+                "--project",
+                str(self.root),
+                "migrate",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(migrated.returncode, 0, migrated.stdout + migrated.stderr)
+
+        with closing(sqlite3.connect(db_path)) as connection:
+            marker = connection.execute(
+                "SELECT value FROM meta WHERE key = 'downstream_artifact_legacy_baseline_commit'"
+            ).fetchone()
+        self.assertIsNotNone(marker)
+        self.assertEqual(marker[0], baseline)
+
+        unchanged = validate_completion(self.root)
+        orphan_blockers = [
+            item
+            for item in unchanged["downstream"]["blockers"]
+            if item["reason"] == "tracked_downstream_artifacts_unregistered"
+        ]
+        self.assertFalse(
+            any(
+                "data/legacy-unregistered.tsv" in item.get("paths", [])
+                for item in orphan_blockers
+            ),
+            orphan_blockers,
+        )
+
+        legacy_path.write_text("id\tvalue\n1\tedited-after-migration\n", encoding="utf-8")
+        edited = validate_completion(self.root)
+        orphan_blockers = [
+            item
+            for item in edited["downstream"]["blockers"]
+            if item["reason"] == "tracked_downstream_artifacts_unregistered"
+        ]
+        self.assertTrue(
+            any(
+                "data/legacy-unregistered.tsv" in item.get("paths", [])
+                for item in orphan_blockers
+            ),
+            orphan_blockers,
+        )
 
 
 if __name__ == "__main__":

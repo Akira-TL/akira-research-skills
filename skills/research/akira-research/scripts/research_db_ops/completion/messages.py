@@ -193,7 +193,12 @@ def append_human_artifact_errors(errors: list[str], blockers: list[dict[str, Any
 def append_downstream_errors(errors: list[str], blockers: list[dict[str, Any]]) -> None:
     for blocker in blockers:
         reason = str(blocker.get("reason", "unknown"))
-        if reason == "tracked_downstream_artifacts_unregistered":
+        if reason == "downstream_artifact_legacy_baseline_invalid":
+            errors.append(
+                "历史 downstream artifact 兼容基线无效："
+                f"{blocker.get('baseline_commit')}；{blocker.get('detail')}"
+            )
+        elif reason == "tracked_downstream_artifacts_unregistered":
             errors.append(
                 "data/analysis 下存在已被 Git 跟踪但未登记到 research.sqlite 的科研 artifact："
                 + ", ".join(str(path) for path in blocker.get("paths", []))

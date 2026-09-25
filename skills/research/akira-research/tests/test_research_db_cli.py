@@ -16,6 +16,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 from research_db import _load_json_object, build_parser, bundle_path, cmd_migrate  # noqa: E402
 from research_db_core import database_path, init_database  # noqa: E402
 from research_db_support.schema import (  # noqa: E402
+    DOWNSTREAM_ARTIFACT_LEGACY_BASELINE_META_KEY,
     LITERATURE_HUMAN_FORMAT_LEGACY_BASELINE_META_KEY,
     list_migrations,
 )
@@ -290,7 +291,7 @@ class ResearchDbCliTests(unittest.TestCase):
             self.assertEqual(cmd_migrate(args), 0)
         payload = json.loads(stdout.getvalue())
 
-        self.assertEqual(payload["applied_migrations"], [25, 26, 27])
+        self.assertEqual(payload["applied_migrations"], [25, 26, 27, 28])
         self.assertEqual(payload["literature_human_format_legacy_baseline_commit"], baseline)
         self.assertEqual(
             payload["literature_marker_migration"]["migrated_paths"],
@@ -301,12 +302,17 @@ class ResearchDbCliTests(unittest.TestCase):
         self.assertNotIn("<!-- akira:literature-note:v1 -->", migrated)
         self.assertIn("用户笔记和正文必须原样保留。", migrated)
         with closing(sqlite3.connect(db_path)) as connection:
-            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 27)
+            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 28)
             stored = connection.execute(
                 "SELECT value FROM meta WHERE key = ?",
                 (LITERATURE_HUMAN_FORMAT_LEGACY_BASELINE_META_KEY,),
             ).fetchone()
+            downstream_stored = connection.execute(
+                "SELECT value FROM meta WHERE key = ?",
+                (DOWNSTREAM_ARTIFACT_LEGACY_BASELINE_META_KEY,),
+            ).fetchone()
         self.assertEqual(stored[0], baseline)
+        self.assertEqual(downstream_stored[0], baseline)
 
     def test_candidate_queue_filters_are_exposed(self) -> None:
         args = build_parser().parse_args(

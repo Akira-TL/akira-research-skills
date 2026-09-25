@@ -1,0 +1,1 @@
+-- Activate legacy compatibility for tracked downstream artifact registration.\n-- `research-db migrate` records the pre-migration Git HEAD so unchanged historical\n-- data/analysis files can remain grandfathered; any later edit restores strict registration.\n
