@@ -5,6 +5,7 @@ from typing import Any, Callable
 from research_db_core import discover_project_root
 from research_db_ops.project import (
     get_research_tree,
+    migrate_human_artifact_path,
     list_research_branches,
     list_studies,
     record_research_branch,
@@ -22,6 +23,7 @@ PROJECT_BUNDLE_DEFAULTS = {
     "record-research-branch": "research-branch.json",
     "set-research-tree-state": "research-tree-state.json",
     "record-study": "study.json",
+    "migrate-human-artifact-path": "human-artifact-path-migration.json",
 }
 
 
@@ -86,6 +88,16 @@ def register_project_commands(
         )
         return 0
 
+    def cmd_migrate_human_artifact_path(args: Any) -> int:
+        project_root = discover_project_root(args.project)
+        emit(
+            migrate_human_artifact_path(
+                project_root,
+                load_json(project_root, "migrate-human-artifact-path", args.bundle),
+            )
+        )
+        return 0
+
     def cmd_record_study(args: Any) -> int:
         project_root = discover_project_root(args.project)
         emit(
@@ -146,6 +158,12 @@ def register_project_commands(
             "登记真实 Study execution、Sample、Assay、deviation 与 artifact provenance。",
             "Study JSON bundle；默认 .research/bundles/study.json；传 '-' 从 stdin 读取。",
             cmd_record_study,
+        ),
+        (
+            "migrate-human-artifact-path",
+            "仅迁移既有 Dataset/Analysis 的 canonical human artifact 路径，不改科学身份或结果字段。",
+            "Human artifact path migration JSON bundle；默认 .research/bundles/human-artifact-path-migration.json；传 '-' 从 stdin 读取。",
+            cmd_migrate_human_artifact_path,
         ),
     ):
         parser = subparsers.add_parser(name, help=help_text)
