@@ -21,7 +21,7 @@
 
 `RESEARCH.md` 的一级标题、二级章节集合与顺序是固定的人类界面；没有内容的必需章节必须明确写不适用、未记录、未知或待确认，而不是删除或留空。导航只指向真实存在的人类可读 artifact；`.research/` 保留为机器 provenance 与内部支持区。冻结的 Hypothesis / Design 等对象不会仅为了后来补导航而改写，后续关系由下游 artifact、可更新索引和 Research Tree 表达。目录级 Objects / Relations 导航索引只承担人类反向发现，不被 Communication completion 当作新的 scientific source；真实科研对象自己的 canonical artifact 仍正常进入科学来源漂移检查。
 
-Analysis 完成门禁按分析模式区分结果要求。确认性分析进入 `completed` 时必须登记至少一个 `role=estimate` 的主要估计结果；明确不产生新估计的探索性综合、证据整理或图表数据组织可以只登记表格、图或其他真实结果产物，但仍必须满足数据输入、项目 Observation、执行 Attempt 和其他适用的 provenance 要求。不得为了通过门禁把既有汇总表或诊断文件改名为新的 estimate。旧项目从 schema v27 或更早版本正式迁移到 v28 时，会把迁移前 Git HEAD 作为 downstream artifact 兼容基线；只有当时已经被 Git 跟踪且迁移后完全未改动的历史 `data/` / `analysis/` 文件可以继续 grandfather，之后新增或编辑的未登记文件仍立即阻塞完成门禁。
+Analysis 完成门禁按分析模式区分结果要求。确认性分析进入 `completed` 时必须登记至少一个 `role=estimate` 的主要估计结果；明确不产生新估计的探索性综合、证据整理或图表数据组织可以只登记表格、图或其他真实结果产物，但仍必须满足数据输入、项目 Observation、执行 Attempt 和其他适用的 provenance 要求。不得为了通过门禁把既有汇总表或诊断文件改名为新的 estimate。旧项目从 schema v27 或更早版本正式迁移到 v28 时，会把迁移前 Git HEAD 作为 downstream artifact 兼容基线；只有当时已经被 Git 跟踪且迁移后完全未改动的历史 `data/` / `analysis/` 常规文件可以继续 grandfather，之后新增或编辑的未登记文件仍立即阻塞完成门禁。运行时能力或目录别名使用的 Git 软链接不参加“未登记科研文件”自动扫描；真正位于外部存储的科学数据仍必须通过正式 Dataset provenance 显式登记。
 
 Communication Product 可以从 `completed` 终止为 `superseded`，用于保留已被新稿替代的历史产品；该 transition 不允许同时改写产品定义或科学 `source_commit`，且 superseded 后不能重新激活。历史传播 artifact 继续保留 provenance，但不再参与当前 completed-product 的科学源漂移检查或当前传播文本的学术语言门禁。中文科研项目仍可合法维护纯英文期刊稿；只有包含中文叙述的传播段落继续执行中文成熟术语检查。
 

@@ -367,6 +367,26 @@ ANALYSIS
         result = validate_completion(self.root)
         reasons = {item["reason"] for item in result["downstream"]["blockers"]}
         self.assertIn("completed_analysis_missing_estimate_artifact", reasons)
+    def test_tracked_downstream_symlink_is_not_treated_as_unregistered_scientific_file(self) -> None:
+        skills_dir = self.root / "data" / "skills"
+        skills_dir.mkdir(parents=True)
+        target = self.root.parent / "external-skill-target"
+        target.mkdir(exist_ok=True)
+        link = skills_dir / "analysis"
+        link.symlink_to(target, target_is_directory=True)
+        self._commit("CHORE: add runtime skill symlink")
+
+        result = validate_completion(self.root)
+        orphan_blockers = [
+            item
+            for item in result["downstream"]["blockers"]
+            if item["reason"] == "tracked_downstream_artifacts_unregistered"
+        ]
+        self.assertFalse(
+            any("data/skills/analysis" in item.get("paths", []) for item in orphan_blockers),
+            orphan_blockers,
+        )
+
     def test_migration_grandfathers_unchanged_legacy_downstream_files_only(self) -> None:
         legacy_path = self.root / "data" / "legacy-unregistered.tsv"
         legacy_path.write_text("id\tvalue\n1\tlegacy\n", encoding="utf-8")

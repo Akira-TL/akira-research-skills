@@ -22,7 +22,11 @@ def _append_registration_blockers(
     legacy_baseline: str | None,
 ) -> list[str]:
     tracked = run_git(project_root, "ls-files", "--", "data", "analysis")
-    tracked_paths = {line.strip() for line in tracked.stdout.splitlines() if line.strip()}
+    tracked_paths = {
+        line.strip()
+        for line in tracked.stdout.splitlines()
+        if line.strip() and not (project_root / line.strip()).is_symlink()
+    }
     registered_paths = set(canonical_paths(project_root))
     orphaned = sorted(tracked_paths - registered_paths)
     grandfathered = [
