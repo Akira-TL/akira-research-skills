@@ -58,16 +58,17 @@ def _append_analysis_completeness_blockers(
         blockers.append(
             {"reason": "completed_analysis_missing_dataset_input", "analysis": slug}
         )
-    estimate_count = int(
-        connection.execute(
-            "SELECT COUNT(*) FROM analysis_artifacts WHERE analysis_id = ? AND role = 'estimate'",
-            (analysis_id,),
-        ).fetchone()[0]
-    )
-    if estimate_count == 0:
-        blockers.append(
-            {"reason": "completed_analysis_missing_estimate_artifact", "analysis": slug}
+    if run["analysis_mode"] == "confirmatory":
+        estimate_count = int(
+            connection.execute(
+                "SELECT COUNT(*) FROM analysis_artifacts WHERE analysis_id = ? AND role = 'estimate'",
+                (analysis_id,),
+            ).fetchone()[0]
         )
+        if estimate_count == 0:
+            blockers.append(
+                {"reason": "completed_analysis_missing_estimate_artifact", "analysis": slug}
+            )
     observation_count = int(
         connection.execute(
             "SELECT COUNT(*) FROM project_observations WHERE analysis_id = ?",
