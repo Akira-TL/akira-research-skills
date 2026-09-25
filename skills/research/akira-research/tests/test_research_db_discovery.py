@@ -326,10 +326,11 @@ class ResearchDbDiscoveryTests(unittest.TestCase):
         )
         waiting = list_candidates(self.root)["candidates"][0]
         self.assertEqual(waiting["user_access_status"], "required")
-        self.assertIn(
-            "user_access_action_required",
-            {item["reason"] for item in discovery_readiness(self.root)["blockers"]},
-        )
+        waiting_reasons = {
+            item["reason"] for item in discovery_readiness(self.root)["blockers"]
+        }
+        self.assertIn("user_access_action_required", waiting_reasons)
+        self.assertNotIn("core_candidate_not_closed", waiting_reasons)
 
         source = self.root / "authorized-paper.html"
         source.write_text("<html><body>authorized full text</body></html>", encoding="utf-8")

@@ -367,6 +367,7 @@ def discovery_readiness(project_root: Path) -> dict[str, Any]:
                         "title": row["title"],
                     }
                 )
+                continue
 
             if row["reading_priority"] in {"core", "high"} and row["acquisition_status"] not in {
                 "acquired",
