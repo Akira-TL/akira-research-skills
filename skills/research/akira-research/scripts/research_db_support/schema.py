@@ -32,6 +32,7 @@ REQUIRED_TABLES = {
     "acquisition_attempts",
     "datasets",
     "dataset_artifacts",
+    "dataset_papers",
     "analysis_runs",
     "analysis_attempts",
     "analysis_inputs",

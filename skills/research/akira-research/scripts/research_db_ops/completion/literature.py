@@ -460,12 +460,24 @@ def literature_completion_readiness(
                         }
                     )
 
+        tables = {
+            str(row["name"])
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            )
+        }
+        dataset_member_filter = (
+            "AND NOT EXISTS (SELECT 1 FROM dataset_papers dp WHERE dp.paper_id = p.id)"
+            if "dataset_papers" in tables
+            else ""
+        )
         targeted_papers = connection.execute(
-            """
+            f"""
             SELECT p.id, p.title, p.status, p.reading_status, p.critical_status
             FROM papers p
             WHERE p.status IN ('acquired', 'active')
               AND NOT EXISTS (SELECT 1 FROM candidates c WHERE c.paper_id = p.id)
+              {dataset_member_filter}
             ORDER BY p.id
             """
         ).fetchall()

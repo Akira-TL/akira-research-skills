@@ -26,6 +26,17 @@ def record_dataset(project_root: Path, bundle: dict[str, Any]) -> dict[str, Any]
     artifacts = bundle.get("artifacts")
     if not isinstance(artifacts, list) or not artifacts:
         raise ResearchDbError("dataset artifacts 必须是非空数组。")
+    raw_paper_ids = bundle.get("paper_ids", [])
+    if raw_paper_ids is None:
+        raw_paper_ids = []
+    if not isinstance(raw_paper_ids, list):
+        raise ResearchDbError("paper_ids 必须是字符串数组。")
+    paper_ids: list[str] = []
+    for index, value in enumerate(raw_paper_ids, start=1):
+        paper_id = common.text(value, required=True, field=f"paper_ids[{index}]")
+        assert paper_id is not None
+        if paper_id not in paper_ids:
+            paper_ids.append(paper_id)
 
     parsed_artifacts: list[dict[str, Any]] = []
     for index, item in enumerate(artifacts, start=1):
@@ -62,6 +73,13 @@ def record_dataset(project_root: Path, bundle: dict[str, Any]) -> dict[str, Any]
     with connect(common.db_path(project_root)) as connection:
         connection.execute("BEGIN IMMEDIATE")
         try:
+            for paper_id in paper_ids:
+                paper = connection.execute(
+                    "SELECT id FROM papers WHERE id = ?", (paper_id,)
+                ).fetchone()
+                if paper is None:
+                    raise ResearchDbError(f"Dataset 引用不存在的 Paper：{paper_id}")
+
             study_id: int | None = None
             if study_slug is not None:
                 study = connection.execute(
@@ -154,6 +172,14 @@ def record_dataset(project_root: Path, bundle: dict[str, Any]) -> dict[str, Any]
                         now,
                     ),
                 )
+            for paper_id in paper_ids:
+                connection.execute(
+                    """
+                    INSERT OR IGNORE INTO dataset_papers(dataset_id, paper_id, created_at)
+                    VALUES (?, ?, ?)
+                    """,
+                    (dataset_id, paper_id, now),
+                )
             connection.execute(
                 """
                 INSERT INTO change_log(timestamp, action, entity_type, entity_id, reason, summary)
@@ -163,20 +189,33 @@ def record_dataset(project_root: Path, bundle: dict[str, Any]) -> dict[str, Any]
                     now,
                     str(dataset_id),
                     "Dataset provenance entered canonical research state.",
-                    f"dataset={slug}; artifacts={len(parsed_artifacts)}; unit={unit}",
+                    f"dataset={slug}; artifacts={len(parsed_artifacts)}; papers={len(paper_ids)}; unit={unit}",
                 ),
             )
             connection.commit()
         except Exception:
             connection.rollback()
             raise
-    return {"ok": True, "dataset_id": dataset_id, "slug": slug, "study_slug": study_slug}
+    return {
+        "ok": True,
+        "dataset_id": dataset_id,
+        "slug": slug,
+        "study_slug": study_slug,
+        "paper_count": len(paper_ids),
+    }
 
 def list_datasets(project_root: Path, *, limit: int = 100) -> dict[str, Any]:
     with connect(common.db_path(project_root)) as connection:
         has_study_link = "study_id" in {
             str(row["name"]) for row in connection.execute("PRAGMA table_info(datasets)")
         }
+        tables = {
+            str(row["name"])
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            )
+        }
+        has_paper_membership = "dataset_papers" in tables
         if has_study_link:
             query = """
                 SELECT d.*, s.slug AS study_slug
@@ -195,9 +234,23 @@ def list_datasets(project_root: Path, *, limit: int = 100) -> dict[str, Any]:
                     "SELECT * FROM dataset_artifacts WHERE dataset_id = ? ORDER BY id", (row["id"],)
                 )
             ]
+            item["paper_ids"] = (
+                [
+                    str(x["paper_id"])
+                    for x in connection.execute(
+                        "SELECT paper_id FROM dataset_papers WHERE dataset_id = ? ORDER BY paper_id",
+                        (row["id"],),
+                    )
+                ]
+                if has_paper_membership
+                else []
+            )
             rows.append(item)
     return {
         "ok": True,
-        "schema_capabilities": {"study_dataset_link": has_study_link},
+        "schema_capabilities": {
+            "study_dataset_link": has_study_link,
+            "dataset_paper_membership": has_paper_membership,
+        },
         "datasets": rows,
     }
