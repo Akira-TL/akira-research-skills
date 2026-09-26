@@ -14,6 +14,10 @@ from research_db_core import database_path, init_database  # noqa: E402
 from research_db_ops.completion import academic_language_readiness  # noqa: E402
 from research_db_ops.downstream import record_analysis, record_dataset  # noqa: E402
 from research_db_support.storage import ResearchDbError  # noqa: E402
+from research_db_support.academic_language import (  # noqa: E402
+    academic_language_blockers_for_path,
+    require_academic_language_before_execution,
+)
 
 
 RESEARCH_MD = """# Research
@@ -69,6 +73,39 @@ class AcademicLanguageFreezeTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.tempdir.cleanup()
+
+    def test_machine_hash_records_preserve_original_fields(self) -> None:
+        log = self.root / "commits.txt"
+        for width in (40, 64):
+            with self.subTest(width=width):
+                text = f"code={'a' * width}\nfreeze={'b' * width}\n"
+                log.write_text(text, encoding="utf-8")
+                self.assertEqual(academic_language_blockers_for_path(self.root, log), [])
+                require_academic_language_before_execution(self.root, [log], object_label="Analysis")
+                self.assertEqual(log.read_text(encoding="utf-8"), text)
+
+    def test_machine_hash_exception_does_not_hide_prose(self) -> None:
+        log = self.root / "commits.txt"
+        for text in (
+            "freeze=arbitrary prose\n",
+            f"freeze={'b' * 40}\n当前 freeze 仍需检查。\n",
+            f"当前 freeze 仍需检查。\nfreeze={'b' * 40}\n",
+            f"freeze={'b' * 39}\n",
+            f"freeze={'b' * 41}\n",
+            f"freeze={'b' * 40} # analysis\n",
+        ):
+            with self.subTest(text=text):
+                log.write_text(text, encoding="utf-8")
+                self.assertTrue(academic_language_blockers_for_path(self.root, log))
+                with self.assertRaisesRegex(ResearchDbError, "执行前学术语言检查失败"):
+                    require_academic_language_before_execution(self.root, [log], object_label="Analysis")
+
+    def test_markdown_hash_fields_still_require_literal_markup(self) -> None:
+        prose = self.root / "plan.md"
+        prose.write_text(f"freeze={'b' * 40}\n", encoding="utf-8")
+        self.assertTrue(academic_language_blockers_for_path(self.root, prose))
+        prose.write_text(f"`freeze={'b' * 40}`\n", encoding="utf-8")
+        self.assertEqual(academic_language_blockers_for_path(self.root, prose), [])
 
     def _write_analysis_code(self, slug: str) -> str:
         scripts = self.root / "scripts" / "analyses"

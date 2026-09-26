@@ -47,6 +47,13 @@ def academic_language_blockers_for_path(
         return []
 
     text = path.read_text(encoding="utf-8", errors="ignore")
+    # A complete key=hash record is machine provenance, not scientific prose.
+    records = [line.strip() for line in text.splitlines() if line.strip()]
+    if path.suffix.casefold() == ".txt" and records and all(
+        re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.-]*=(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})", line)
+        for line in records
+    ):
+        return []
     text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
     blockers: list[dict[str, Any]] = []
     try:

@@ -15,6 +15,8 @@
 
 ## 关键边界
 
+学术语言检查不改写机器证据。对于全文仅含逐行 `字段=40位或64位十六进制散列` 的 `.txt` 记录，字段保持原样，不作为人类科研正文检查；这项识别同时用于分析执行前和完成门禁。只要混入正文、注释、非散列值或格式不完整，仍按原规则检查整个文件；Markdown 正文中的技术字面量仍需使用代码标记。不得按文件名或实施附件角色整体豁免可能含有人类解释的材料。
+
 它不是固定阶段流水线，也不要求每个项目都经过 Hypothesis、Study 或全部子 Skill。`REVIEW` 不进入 Research Current Loop：用户明确需要导师式学术评议、独立同行评议、创新性核验或修回再审时，切换到平级 `akira-review`，由 Review 自己固定信息边界。Review Result 返回后先由用户决定是否采纳；只有用户决定处理具体 Concern 后，`akira-research` 才把实际工作路由到 Literature、Design、Study、Data、Analysis、Interpretation 或 Communication，并由这些作者侧流程更新 canonical scientific state。
 
 只有存在真正的科学需要时才进入对应 Research 工作流；当下一条判别性证据必须依赖新样品、新实验、新权限或其他外部现实输入时，应在真实停止边界结束当前循环。
