@@ -4,4 +4,4 @@
 
 它不负责判断论文是否重要、如何批判论文或如何形成项目结论；这些职责属于 `literature`。通常由 `literature` 自动调用。
 
-需要用户已有机构/订阅权限且当前会话没有可控浏览器时，先检查机器级 `browser-access`；机器级也缺失时，把这个 first-party 能力缺口交给 `akira` Router，由 Router 在取得用户明确同意后按需安装。只有用户拒绝安装、Router/执行器无法提供该能力或浏览器仍无法满足访问要求时，才进入 `MANUAL_ACQUISITION_REQUIRED`；Research 不自行维护第二套浏览器实现。
+需要用户已有机构/订阅权限且当前会话没有可控浏览器时，把这个 first-party 能力缺口交给 `akira` Router。Router 选择 `browser-access` 入口 Package，并通过 Skiloom accepted Target state / Candidate plan 判断是否需要新增能力；需要状态变化时先取得用户明确授权，再由 Skiloom 提交。只有用户拒绝安装、候选不能通过 Package admission、Router/执行器无法提供该能力或浏览器仍无法满足访问要求时，才进入 `MANUAL_ACQUISITION_REQUIRED`；Research 不自行维护第二套浏览器实现。

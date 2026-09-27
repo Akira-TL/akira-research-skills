@@ -4,15 +4,15 @@ Akira Research 的科研决策、Research Tree、provenance、evidence boundary 
 
 ## 1. 默认不安装
 
-外部 Skill 不由 Lattice 根安装器预装；只有真实任务需要且用户明确同意时，才由 `akira` Router 安装到机器级 `~/.agents/skills/`。外部 Skill 也不以 Git submodule 的方式挂入 Akira 自研 Skill 源码。
+外部 Skill 不由 Lattice 根安装器预装；只有真实任务需要时，Research 才把能力缺口交给 `akira` Router，由它通过 Skiloom 完成 discovery、Candidate plan 与用户授权后的生命周期动作。外部 Skill 也不以 Git submodule 的方式挂入 Akira 自研 Skill 源码。
 
-当前允许作为**按需发现源**的科研 Skill 仓库为：
+当前允许作为按需发现源的科研 Skill 仓库为：
 
 ```text
 K-Dense-AI/scientific-agent-skills
 ```
 
-这里的“允许发现”只表示 Agent 可以在真实任务需要专业能力时检查其中是否存在合适 Skill；**不表示仓库内任何单个 Skill 已预先获准安装或执行。**
+“允许发现”只表示可以检查候选，不表示仓库内任何 Package 已预先通过 Skiloom admission、安装授权或执行授权。
 
 ## 2. 什么时候才推荐外部 Skill
 
@@ -20,49 +20,53 @@ K-Dense-AI/scientific-agent-skills
 
 1. 当前已经有明确科研任务，不是为了扩充能力而浏览 Skill；
 2. Akira 自身规则已经确定“为什么要做”，缺的是具体专业工具、数据库或软件实现知识；
-3. 当前会话与机器级注册表都没有已经可用且足够的同类 Skill；
-4. 候选第三方 Skill 能显著降低 API/软件误用、领域实现错误或重复查文档成本；
-5. 安装范围可以限制为所需的具体机器级 Skill，而不是整仓预装。
+3. 当前会话没有已经可用且足够的同类 Skill；
+4. Skiloom 当前 Target 也没有满足该能力的 accepted Package；
+5. 候选第三方 Skill 能显著降低 API / 软件误用、领域实现错误或重复查文档成本；
+6. 安装可以收敛为所需的具体入口 Package，而不是整仓预装。
 
-例如：Analysis 已经根据科研问题决定需要 PyMC 实现层级模型，此时可以推荐 PyMC 专门 Skill；不能因为发现 PyMC Skill 就反过来决定科研问题应该使用贝叶斯模型。
+例如：Analysis 已根据科研问题决定需要 PyMC 实现层级模型，此时可以推荐 PyMC 专门 Skill；不能因为发现 PyMC Skill 就反过来决定科研问题应该使用贝叶斯模型。
 
 ## 3. 推荐前必须核验
 
 在向用户请求安装许可前，至少核验并展示：
 
-- 来源仓库与候选 Skill 名称；
-- 当前上游 revision / 可识别版本；
-- 该 Skill 自己适用的 license；若 vendored / community-contributed 内容另有 license，以单个 Skill 为准；
+- 来源仓库与候选 Package / Skill identity；
+- Candidate plan 的 exact source revision 与 dependency graph；
+- 该 Skill 自己适用的 license；
 - 是否包含脚本、hook、安装器或会执行任意代码的指令；
 - 是否要求联网、API key、账户、专有服务、cloud execution 或额外 package 安装；
 - 是否会读取或上传项目数据；
-- 与现有 Akira / 已安装 Skill 是否职责重叠；
+- 与现有 Akira / accepted Package 是否职责重叠；
 - 为什么当前任务确实需要它，以及不安装时的替代路径。
 
 带脚本、hook、网络调用、凭据或数据上传能力的 Skill 不能只凭仓库 allowlist 自动获得执行许可。
 
-## 4. 用户确认后只安装所需机器级 Skill
+## 4. 生命周期只通过 Skiloom
 
-用户明确同意后，先用 `akira` Router 自带安装器检查远端 source，再只安装真实需要的 Skill：
+发现候选优先使用 `skiloom-discover` / `skiloom search`。用户选定候选后，由 `akira` Router 把它收敛为明确 Package coordinate 与 source mode，并先运行 Candidate plan。
 
-```bash
-uv run python ~/.agents/skills/akira/scripts/skills.py inspect \
-  https://github.com/K-Dense-AI/scientific-agent-skills.git
+对于明确的 GitHub source，可采用：
 
-uv run python ~/.agents/skills/akira/scripts/skills.py install \
-  https://github.com/K-Dense-AI/scientific-agent-skills.git \
-  --skill <skill-name>
+```text
+skiloom install <owner>/<repo>/<package> --git <ref> --scope user --plan --json
 ```
 
-不得把整个 K-Dense 仓库全部安装，也不得因为来源已登记就绕过用户决定。安装器只把远端 checkout 登记到机器级 `~/.agents/skills/`；具体执行器如何加载该 Skill 由执行器自己负责。
+只有 Package admission、source resolution 与 Candidate Graph 都成立，且用户明确授权后，才提交：
 
-机器级 `~/.agents/akira-skills.json` 只记录 Skill source identity、revision 与路径，不替代科研 provenance。第三方 Skill 本身不是科研事实源。如果它实际影响 Analysis / Study 的执行，真正的科研 provenance 仍记录具体软件、方法、参数、数据和执行版本，而不是只记录“用了某个 Skill”。
+```text
+skiloom install <owner>/<repo>/<package> --git <ref> --scope user --yes --json
+```
+
+不得整仓预装，也不得因为来源已登记就绕过用户决定。若 upstream 不能通过 Skiloom admission，保持 blocker；Research 和 `akira` 都不得调用历史 Git + symlink installer 绕过标准。
+
+Skiloom Registry / accepted state 记录的是 Package 生命周期事实，不替代科研 provenance。第三方 Skill 本身不是科研事实源；如果它实际影响 Analysis / Study，真正的科研 provenance 仍记录具体软件、方法、参数、数据和执行版本，而不是只记录“用了某个 Skill”。
 
 ## 5. 用户拒绝安装时
 
 用户拒绝外部 Skill 默认不构成科研 blocker。Agent 应优先改用：
 
-- 已安装能力；
+- 已有能力；
 - 软件官方 documentation / vignette / `--help`；
 - 当前主模型直接实现；
 - 其他不需要新增 Skill 的可审计方案。

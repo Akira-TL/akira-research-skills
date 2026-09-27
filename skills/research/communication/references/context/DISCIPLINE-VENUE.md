@@ -74,7 +74,7 @@
 
 Akira 不为每个学科复制一套完整论文 Skill。稳定的科学合同留在对应 Document Type workflow；学科 / Venue 叠加层只补当前任务真正需要的 convention。
 
-若某一高度专业领域需要成熟软件、数据库或专用写作/报告知识，而 Akira 当前规则不足，可以按 `akira-research` 的 external Skill policy 提议把单个已审计 Skill 安装到机器级注册表。具体执行器如何加载该 Skill 由执行器自己负责；第三方 Skill 仍无权改变 canonical evidence 或科研决策。
+若某一高度专业领域需要成熟软件、数据库或专用写作/报告知识，而 Akira 当前规则不足，可以按 `akira-research` 的 external Skill policy 提议单个已审计 Package / Skill；由 `akira` Router 通过 Skiloom Candidate plan 核验 source、dependency graph、admission 与 Target 影响，并在用户明确授权后提交安装。第三方 Skill 仍无权改变 canonical evidence 或科研决策。
 
 ## 5. 写作前最小检查
 

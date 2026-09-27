@@ -14,9 +14,9 @@
 
 ## 独立安装边界
 
-本仓库必须保持标准 `SKILL.md` 结构，并为每个 Skill 维护 `skiloom-package.toml`、由根目录 `skiloom-repo.toml` 定义仓库发现范围。canonical `SKILL.md` 只使用标准 Agent Skill frontmatter；执行器专属调用策略放在对应 metadata 文件中。当前运行时安装边界仍由 `akira` Router 自带安装器从远端 GitHub source 发现并安装到 `~/.agents/skills/`；Skiloom metadata 的存在不改变这条生命周期边界。基础科研流程不得要求 Lattice 的本地 `skills/research` submodule 或旧 `Akira-TL/skills` checkout 作为运行时 source；真正运行时 source 只能来自远端 checkout cache。
+本仓库必须保持标准 `SKILL.md` 结构，并为每个 Skill 维护 `skiloom-package.toml`、由根目录 `skiloom-repo.toml` 定义仓库发现范围。canonical `SKILL.md` 只使用标准 Agent Skill frontmatter；执行器专属调用策略放在对应 metadata 文件中。运行时能力选择交给 `akira` Router，Package discovery、dependency resolution、source resolution、Registry / Store / Target 与 install/update/remove/sync/repair/recovery 全部交给 Skiloom public CLI。基础科研流程不得要求 Lattice 的本地 `skills/research` submodule 或旧 `Akira-TL/skills` checkout 作为运行时 source；当前 first-party source mode 由 Akira Catalog 明确为远端 Git `main`。
 
-外部浏览器、文档、专业软件、数据库或领域 runner 只在真实任务需要时按对应 Skill 契约发现；缺失时走显式 optional dependency / user approval 路径，不自动安装整套外部仓库，也不从模型记忆重建第三方实现。具体执行器如何加载机器级 Skill 由执行器自己负责。
+外部浏览器、文档、专业软件、数据库或领域 runner 只在真实任务需要时按对应 Skill 契约发现；缺失时走 `akira` Router → Skiloom Candidate plan → 用户授权 → accepted Target state，不自动安装整套外部仓库，也不从模型记忆重建第三方实现。
 
 ## 修改规则
 
@@ -35,7 +35,7 @@ skiloom validate . --json
 ./scripts/check.sh
 ```
 
-`skiloom validate` 只负责标准 Package metadata、仓库发现规则与 canonical `SKILL.md` 的静态规范验证；运行时 discovery / install 仍通过仓库结构检查与 `akira` Router 自带安装器的远端 `inspect` 流程核验。正式提交继续使用 Akira Guard。
+`skiloom validate` 负责标准 Package metadata、仓库发现规则与 canonical `SKILL.md` 的静态规范验证；运行时 discovery / install 由 `akira` Router 选择入口 Package，再通过 Skiloom `--plan --json` / `--yes --json` 流程核验和提交。正式提交继续使用 Akira Guard。
 
 只运行与当前修改有关的更窄测试也是允许的；正式发布前再做完整验证。
 

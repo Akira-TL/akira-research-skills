@@ -25,21 +25,16 @@ Research Question / Active Uncertainty
 
 ## Installation
 
-```bash
-uv run python ~/.agents/skills/akira/scripts/skills.py install \
-  https://github.com/Akira-TL/akira-research-skills.git \
-  --all \
-  --root skills/research
+Research series 的入口 Package 是 `akira-tl/akira-research-skills/akira-research`，Review series 的入口 Package 是 `akira-tl/akira-research-skills/akira-review`。当前 first-party source mode 使用 Git `main`；由 `akira` Router 选择入口后，统一通过 Skiloom `--plan --json` → 用户授权 → `--yes --json` 安装到用户级 Target。
+
+例如 Research series：
+
+```text
+skiloom install akira-tl/akira-research-skills/akira-research --git main --scope user --plan --json
+skiloom install akira-tl/akira-research-skills/akira-research --git main --scope user --yes --json
 ```
 
-查看远端可发现 Skill：
-
-```bash
-uv run python ~/.agents/skills/akira/scripts/skills.py inspect \
-  https://github.com/Akira-TL/akira-research-skills.git
-```
-
-运行时 Skill 只从远端 GitHub checkout 安装到机器级 `~/.agents/skills/`；本地维护 checkout 不作为安装 source。安装约定见 [`.agents/install-block.md`](.agents/install-block.md)。
+完整 dependency closure 由 `skiloom-package.toml` 与 Skiloom resolver 自动解析；本地维护 checkout 不作为运行时 source。安装约定见 [`.agents/install-block.md`](.agents/install-block.md)。
 
 ## Optional capabilities
 

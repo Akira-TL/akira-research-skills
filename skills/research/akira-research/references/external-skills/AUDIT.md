@@ -162,14 +162,15 @@ Akira 的实现继续由 Analysis Attempt、Git commit、config、output、decis
 
 仓库 README 标示整体 MIT，但同时存在 vendored / community Skill；**安装前仍必须检查具体 Skill 自己的 license、脚本、网络行为、凭据需求和外部依赖。**
 
-定位：`project-local-on-demand`。
+定位：`on-demand external Package`。
 
 - 不加入 Akira Lattice submodule；
 - 不加入全局 `install.sh`；
 - 不批量安装；
-- 当前任务需要某一专业能力时，只审计那个具体 Skill；
-- 确认它只补执行知识、不接管 Akira scientific decision / provenance 后，再向用户请求机器级 Skill 安装许可；
-- 安装命令与权限边界见 [`POLICY.md`](POLICY.md)。
+- 当前任务需要某一专业能力时，只审计那个具体候选 Package / Skill；
+- 确认它只补执行知识、不接管 Akira scientific decision / provenance 后，由 `akira` Router 通过 Skiloom Candidate plan 展示 source、dependency graph 与 Target 影响，再请求用户明确授权；
+- Package admission 失败时保持 blocker，不走旧 installer fallback；
+- 生命周期命令与权限边界见 [`POLICY.md`](POLICY.md)。
 
 ## 6. 当前 Akira owner 对照
 
@@ -186,7 +187,7 @@ Akira 的实现继续由 Analysis Attempt、Git commit、config、output、decis
 | Figure / image integrity | `communication` | 已吸收 Figure evidence role、最终尺寸 QA 与原始图像完整性 |
 | Submission package | `communication` + `research-standards` | 已吸收 deliverable matrix；venue 规则动态核验 |
 | Paper presentation | `scientific-presentation-authoring` | 已吸收按论文类型和 evidence narrative 组织汇报 |
-| 专业软件/领域工具 | `K-Dense` 单 Skill（项目级、按需） | 不做默认全局依赖 |
+| 专业软件/领域工具 | `K-Dense` 单 Package / Skill（按需） | 不做默认依赖；由 Skiloom Candidate acceptance 管理 |
 
 ## 7. 本轮停止条件与后续复审
 
