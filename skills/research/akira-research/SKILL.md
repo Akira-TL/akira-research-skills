@@ -1,7 +1,6 @@
 ---
 name: akira-research
 description: 统一管理可审计、可持续迭代的科研项目；根据 Research Question、当前 evidence、research-tree 与适用科研规范，路由 literature、hypothesis、design、study、data、analysis、interpretation 与 communication，而不是按固定线性阶段推进。
-disable-model-invocation: true
 ---
 
 # Akira Research

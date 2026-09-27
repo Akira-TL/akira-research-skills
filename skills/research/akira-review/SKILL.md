@@ -1,7 +1,6 @@
 ---
 name: akira-review
 description: 对研究故事、outline、部分或完整手稿、Figure/Table 等材料进行学术评议；先固定当前可评议边界并重建稿件的 Research Question、Claims、decisive evidence 与 scope，再调用 Review series 的专业 Skill 判断科学有效性。用于用户明确要求导师式看稿、学术评议、审稿或独立检查研究论证时。
-disable-model-invocation: true
 ---
 
 # Akira Review

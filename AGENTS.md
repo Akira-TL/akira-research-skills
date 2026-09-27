@@ -14,14 +14,14 @@
 
 ## 独立安装边界
 
-本仓库必须保持标准 `SKILL.md` 结构，能够由 `akira` Router 自带安装器从远端 GitHub source 发现并安装到 `~/.agents/skills/`。基础科研流程不得要求 Lattice 的本地 `skills/research` submodule 或旧 `Akira-TL/skills` checkout 作为运行时 source；真正运行时 source 只能来自远端 checkout cache。
+本仓库必须保持标准 `SKILL.md` 结构，并为每个 Skill 维护 `skiloom-package.toml`、由根目录 `skiloom-repo.toml` 定义仓库发现范围。canonical `SKILL.md` 只使用标准 Agent Skill frontmatter；执行器专属调用策略放在对应 metadata 文件中。当前运行时安装边界仍由 `akira` Router 自带安装器从远端 GitHub source 发现并安装到 `~/.agents/skills/`；Skiloom metadata 的存在不改变这条生命周期边界。基础科研流程不得要求 Lattice 的本地 `skills/research` submodule 或旧 `Akira-TL/skills` checkout 作为运行时 source；真正运行时 source 只能来自远端 checkout cache。
 
 外部浏览器、文档、专业软件、数据库或领域 runner 只在真实任务需要时按对应 Skill 契约发现；缺失时走显式 optional dependency / user approval 路径，不自动安装整套外部仓库，也不从模型记忆重建第三方实现。具体执行器如何加载机器级 Skill 由执行器自己负责。
 
 ## 修改规则
 
 - 修改稳定 Skill 时同步修改对应 `docs/research/<skill-name>.md` 文档。
-- 新增或改变调用方式时同步 Skill frontmatter、`agents/openai.yaml` 与 `skills/research/README.md`。
+- 新增或改变调用方式时同步标准 Skill frontmatter / `description`、`agents/openai.yaml` 的执行器调用策略与 `skills/research/README.md`。
 - 同一规则只保留一个 source of truth；Research database/schema、Git provenance 与 completion gate 的契约继续由 `skills/research/akira-research/` 统一维护。
 - 人类可读科研表述继续使用现有学术术语规范，不因拆仓创造新的科研术语。
 - Git 提交保持原子；脚本或 schema 修改运行相关 targeted tests，重大科研工作流修改再运行完整 Research test suite。
@@ -31,10 +31,11 @@
 主要检查入口：
 
 ```bash
+skiloom validate . --json
 ./scripts/check.sh
 ```
 
-Skill discovery 通过仓库结构检查与 `akira` Router 自带安装器的远端 `inspect` 流程核验，不使用第三方 Skill package manager。正式提交继续使用 Akira Guard。
+`skiloom validate` 只负责标准 Package metadata、仓库发现规则与 canonical `SKILL.md` 的静态规范验证；运行时 discovery / install 仍通过仓库结构检查与 `akira` Router 自带安装器的远端 `inspect` 流程核验。正式提交继续使用 Akira Guard。
 
 只运行与当前修改有关的更窄测试也是允许的；正式发布前再做完整验证。
 

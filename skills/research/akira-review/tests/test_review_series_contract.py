@@ -28,7 +28,7 @@ def frontmatter(skill: str) -> str:
 class ReviewSeriesContractTests(unittest.TestCase):
     def test_review_router_is_user_invoked_and_documented(self) -> None:
         self.assertTrue((SKILLS / "akira-review" / "SKILL.md").is_file())
-        self.assertIn("disable-model-invocation: true", frontmatter("akira-review"))
+        self.assertNotIn("disable-model-invocation", frontmatter("akira-review"))
 
         metadata = read(SKILLS / "akira-review" / "agents" / "openai.yaml")
         self.assertIn("allow_implicit_invocation: false", metadata)
@@ -130,7 +130,7 @@ class ReviewSeriesContractTests(unittest.TestCase):
         self.assertIn("两个顶层 user-invoked Router", invocation)
 
         for router in ("akira-research", "akira-review"):
-            self.assertIn("disable-model-invocation: true", frontmatter(router))
+            self.assertNotIn("disable-model-invocation", frontmatter(router))
             metadata = read(SKILLS / router / "agents" / "openai.yaml")
             self.assertIn("allow_implicit_invocation: false", metadata)
 

@@ -2,8 +2,8 @@
 
 本仓所有稳定 Skill 位于 `skills/research/<name>/`。调用边界只有两类：
 
-- **User-invoked**：只能由用户明确启动。`SKILL.md` 设置 `disable-model-invocation: true`，同目录 `agents/openai.yaml` 设置 `policy.allow_implicit_invocation: false`。
-- **Model-invoked**：模型和用户都可以调用。`SKILL.md` 不设置 `disable-model-invocation`，`agents/openai.yaml` 也不添加禁止隐式调用的 policy。
+- **User-invoked**：只能由用户明确启动。canonical `SKILL.md` 只使用标准 Agent Skill frontmatter；OpenAI 由同目录 `agents/openai.yaml` 的 `policy.allow_implicit_invocation: false` 禁止隐式调用，其他执行器使用其明确支持的等价策略。
+- **Model-invoked**：模型和用户都可以调用。`description` 保留可判定的模型触发条件；OpenAI 的 `agents/openai.yaml` 不得禁止隐式调用。
 
 本产品族有两个顶层 user-invoked Router：
 
@@ -18,8 +18,8 @@ Skill 之间用名称和科研对象契约协作，不通过跨 Skill 相对路�
 
 新增或改变 Skill 调用方式时，同时更新：
 
-1. `SKILL.md` frontmatter；
-2. `agents/openai.yaml`；
+1. `SKILL.md` 的标准 frontmatter 与 `description`；
+2. `agents/openai.yaml` 的执行器调用策略；
 3. `skills/research/README.md`；
 4. `docs/research/<name>.md`；
 5. 若影响顶层路由，再更新 `akira-research`。
