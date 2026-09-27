@@ -1,0 +1,6 @@
+schema = 1
+
+[dependencies]
+"akira-tl/akira-research-skills/review-literature" = "*"
+"akira-tl/akira-research-skills/review-revision" = "*"
+"akira-tl/akira-research-skills/review-science" = "*"

@@ -1,0 +1,13 @@
+schema = 1
+
+[dependencies]
+"akira-tl/akira-research-skills/analysis" = "*"
+"akira-tl/akira-research-skills/communication" = "*"
+"akira-tl/akira-research-skills/data" = "*"
+"akira-tl/akira-research-skills/design" = "*"
+"akira-tl/akira-research-skills/hypothesis" = "*"
+"akira-tl/akira-research-skills/interpretation" = "*"
+"akira-tl/akira-research-skills/literature" = "*"
+"akira-tl/akira-research-skills/research-standards" = "*"
+"akira-tl/akira-research-skills/research-tree" = "*"
+"akira-tl/akira-research-skills/study" = "*"

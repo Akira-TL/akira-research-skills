@@ -1,0 +1,8 @@
+schema = 1
+
+[dependencies]
+"akira-tl/akira-research-skills/analysis" = "*"
+"akira-tl/akira-research-skills/design" = "*"
+"akira-tl/akira-research-skills/interpretation" = "*"
+"akira-tl/akira-research-skills/literature-access" = "*"
+"akira-tl/akira-research-skills/research-tree" = "*"
