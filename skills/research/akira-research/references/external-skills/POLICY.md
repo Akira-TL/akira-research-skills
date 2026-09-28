@@ -46,17 +46,19 @@ K-Dense-AI/scientific-agent-skills
 
 发现候选优先使用 `skiloom-discover` / `skiloom search`。用户选定候选后，由 `akira` Router 把它收敛为明确 Package coordinate 与 source mode，并先运行 Candidate plan。
 
-对于明确的 GitHub source，可采用：
+对于明确的 GitHub source，默认跟随当前 Research 项目的 workspace Target：
 
 ```text
-skiloom install <owner>/<repo>/<package> --git <ref> --scope user --plan --json
+skiloom install <owner>/<repo>/<package> --git <ref> --scope workspace --plan --json
 ```
 
 只有 Package admission、source resolution 与 Candidate Graph 都成立，且用户明确授权后，才提交：
 
 ```text
-skiloom install <owner>/<repo>/<package> --git <ref> --scope user --yes --json
+skiloom install <owner>/<repo>/<package> --git <ref> --scope workspace --yes --json
 ```
+
+第三方科研执行能力默认不得安装到用户级 Target；只有它被独立定义为跨项目通用能力、且 `akira` Catalog 明确把它登记为 `user` scope 时，才允许脱离科研项目安装。
 
 不得整仓预装，也不得因为来源已登记就绕过用户决定。若 upstream 不能通过 Skiloom admission，保持 blocker；Research 和 `akira` 都不得调用历史 Git + symlink installer 绕过标准。
 

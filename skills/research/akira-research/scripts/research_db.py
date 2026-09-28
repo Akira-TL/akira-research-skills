@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import sys
+
+sys.dont_write_bytecode = True
+
 import argparse
 import json
 import sqlite3
 import subprocess
-import sys
 from pathlib import Path
 from typing import Any, Callable
 

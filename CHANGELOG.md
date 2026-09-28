@@ -12,8 +12,9 @@
 
 ### Changed
 
-- 补齐跨产品 first-party 可选能力路由：Research 需要 `browser-access`、`general-word-document-generation`、`scientific-presentation-authoring` 等通用能力而当前会话与机器级注册表均缺失时，将能力缺口交给 `akira` Router 按 Catalog 请求用户授权并按需安装；Research 不复制浏览器、Word 或 PPT 执行层，用户拒绝或执行器无法加载时保留明确的人工/格式未完成状态。
-- Research 安装协议改为 Akira 机器级 Git + symlink 注册：远端 source 进入 `~/.agents/sources/`，Research suite 与按需外部 Skill 注册到 `~/.agents/skills/`；不再使用 `npx skills`、项目级 `skills-lock.json` 或固定执行器目录，具体 harness 自行负责加载机器级 Skill。
+- 补齐跨产品 first-party 可选能力路由：Research 需要 `browser-access`、`general-word-document-generation`、`scientific-presentation-authoring` 等通用能力而当前会话缺失时，将能力缺口交给 `akira` Router 按 Catalog 检查对应 Target scope 并按需安装；Research 不复制浏览器、Word 或 PPT 执行层，用户拒绝或执行器无法加载时保留明确的人工/格式未完成状态。
+- Research / Review 安装协议统一改为 Skiloom 项目级 Target：从目标科研/评议项目根目录使用 `--scope workspace` 安装入口 Package，并由 `skiloom-package.toml` 解析依赖闭包；Research suite 与科研专属外部 Skill 不再进入用户级 `~/.agents/skills` Target。
+- `research_db.py` 在导入本地模块前关闭 Python bytecode 写入，避免 Skiloom 以 symlink materialization 投影 Package Store 时生成 `__pycache__` / `.pyc` 污染 immutable Store payload。
 - Research suite 从通用 Akira Skill 仓拆出，科研项目可以独立安装完整 Research 能力。
 - Hypothesis、Design、Study、Dataset、Analysis 与 Interpretation 的长期人类 Markdown 采用 owner-defined 固定格式、相对导航与目录索引；目录索引固定区分 `Objects` / `Relations` 并机械覆盖已知上/下游关系，completion 同时验证路径、H1/H2、已知上游导航和本地链接完整性。
 - Hypothesis / Design 首次进入 frozen / execution-ready 前先通过严格人类格式 preflight，再执行学术语言检查；格式错误不会先写入冻结状态，避免 completion 阶段才发现必须回写冻结正文。

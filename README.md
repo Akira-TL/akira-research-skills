@@ -25,13 +25,13 @@ Research Question / Active Uncertainty
 
 ## Installation
 
-Research series 的入口 Package 是 `akira-tl/akira-research-skills/akira-research`，Review series 的入口 Package 是 `akira-tl/akira-research-skills/akira-review`。当前 first-party source mode 使用 Git `main`；由 `akira` Router 选择入口后，统一通过 Skiloom `--plan --json` → 用户授权 → `--yes --json` 安装到用户级 Target。
+Research series 的入口 Package 是 `akira-tl/akira-research-skills/akira-research`，Review series 的入口 Package 是 `akira-tl/akira-research-skills/akira-review`。当前 first-party source mode 使用 Git `main`；两者都属于项目级专业工作流，必须从目标科研/评议项目根目录通过 Skiloom `--scope workspace` 安装，不进入用户级 `~/.agents/skills` Target。
 
 例如 Research series：
 
 ```text
-skiloom install akira-tl/akira-research-skills/akira-research --git main --scope user --plan --json
-skiloom install akira-tl/akira-research-skills/akira-research --git main --scope user --yes --json
+skiloom install akira-tl/akira-research-skills/akira-research --git main --scope workspace --plan --json
+skiloom install akira-tl/akira-research-skills/akira-research --git main --scope workspace --yes --json
 ```
 
 完整 dependency closure 由 `skiloom-package.toml` 与 Skiloom resolver 自动解析；本地维护 checkout 不作为运行时 source。安装约定见 [`.agents/install-block.md`](.agents/install-block.md)。
