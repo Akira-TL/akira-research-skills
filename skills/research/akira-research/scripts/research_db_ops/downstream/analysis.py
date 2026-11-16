@@ -338,6 +338,19 @@ def _record_analysis_artifacts(
             (analysis_id, path),
         ).fetchone()
         assert row is not None
+        common.attach_sha256(
+            connection,
+            "analysis_artifacts",
+            int(row["id"]),
+            common.untracked_sha256(
+                project_root,
+                item.get("sha256"),
+                git_tracking=git_tracking,
+                location=path,
+                field="analysis artifact sha256",
+            ),
+            label=f"analysis artifact {path}",
+        )
         artifact_ids_by_path[path] = int(row["id"])
     return artifact_ids_by_path
 

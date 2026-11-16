@@ -66,6 +66,13 @@ def record_dataset(project_root: Path, bundle: dict[str, Any]) -> dict[str, Any]
                 "tracking_reason": tracking_reason,
                 "source_url": common.text(item.get("source_url")),
                 "version": common.text(item.get("version")),
+                "sha256": common.untracked_sha256(
+                    project_root,
+                    item.get("sha256"),
+                    git_tracking=git_tracking,
+                    location=location if storage_kind == "local" else None,
+                    field="dataset artifact sha256",
+                ),
             }
         )
 
@@ -172,6 +179,18 @@ def record_dataset(project_root: Path, bundle: dict[str, Any]) -> dict[str, Any]
                         now,
                     ),
                 )
+                artifact_row = connection.execute(
+                    "SELECT id FROM dataset_artifacts WHERE dataset_id = ? AND location = ?",
+                    (dataset_id, item["location"]),
+                ).fetchone()
+                if artifact_row is not None:
+                    common.attach_sha256(
+                        connection,
+                        "dataset_artifacts",
+                        int(artifact_row["id"]),
+                        item["sha256"],
+                        label=f"dataset artifact {item['location']}",
+                    )
             for paper_id in paper_ids:
                 connection.execute(
                     """

@@ -12,6 +12,7 @@
 
 ### Changed
 
+- 冻结规则统一为“Git 跟踪对象 = 提交号 + 路径”：Dataset / Study / Analysis artifact 新增 `sha256` 字段，只用于未被 Git 跟踪的外部数据、模型权重与检查点，对 Git 跟踪 artifact 登记校验值会被拒绝；schema v30 把旧项目未跟踪 artifact 写在 `version` 中的 SHA256 迁入该字段。
 - 科研项目根目录可以位于 Git 仓库子目录：`research-db` 的 `<commit>:<path>`、变更列表、冻结内容读取与科研分支 tip 判定统一换算为 Git 顶层路径；数据库可用 `../` 登记科研根之外、仓库之内的代码，托管 `.gitignore` 区块固定写在科研根目录。
 - 补齐跨产品 first-party 可选能力路由：Research 需要 `browser-access`、`general-word-document-generation`、`scientific-presentation-authoring` 等通用能力而当前会话缺失时，将能力缺口交给 `akira` Router 按 Catalog 检查对应 Target scope 并按需安装；Research 不复制浏览器、Word 或 PPT 执行层，用户拒绝或执行器无法加载时保留明确的人工/格式未完成状态。
 - Research / Review 安装协议统一改为 Skiloom 项目级 Target：从目标科研/评议项目根目录使用 `--scope workspace` 安装入口 Package，并由 `skiloom-package.toml` 解析依赖闭包；Research suite 与科研专属外部 Skill 不再进入用户级 `~/.agents/skills` Target。

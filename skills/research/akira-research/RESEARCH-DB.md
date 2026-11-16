@@ -249,6 +249,14 @@ Target workspace 的 `source_commit` 是“本次目标格式 build 实际消费
 
 数据库**不**复制每个 H1/H2、Prediction、Discriminator Matrix、Decision Boundary、传播稿逐句 Claim、组别表、单个 hypothesis 的 `live/favored/weakened/...` 状态或完整设计正文；这些仍由 canonical Markdown artifact 或派生传播文件承载。当前也不建立 Project Claim / Communication Claim 表。只有未来真实项目反复证明某个科研语义对象存在稳定的跨项目查询/关系需求时，才继续迁移，不能为了工作流阶段对称而机械建表。
 
+### 冻结对象：提交号、路径与校验值
+
+本节是项目冻结规则的唯一来源；其他 Skill 只引用，不重复定义。
+
+- **Git 跟踪的对象**（`git_tracking=required` 的 Dataset / Study / Analysis artifact、Hypothesis / Design 正文、Analysis 计划与代码等）以“冻结提交号 + 路径”冻结：数据库记录冻结提交（如 `freeze_commit`、`source_commit`），门禁从该提交读取内容（`git show <commit>:<path>`）。这类对象不记录、也不要求文件校验值；`dataset_artifacts` / `study_artifacts` / `analysis_artifacts` 中对 Git 跟踪对象登记 `sha256` 会被拒绝。
+- **未被 Git 跟踪的对象**（外部存储数据、模型权重、检查点、被忽略的运行输出等，即 `git_tracking=not_required` 或 `storage_kind=external`）可在上述三张表的 `sha256` 字段记录一个 SHA256（64 位十六进制，接受 `sha256:` 前缀并规范为小写）。本地文件登记时会与当前内容核对；同一 artifact 已有校验值后不可静默改写。门禁不在每次 completion 中重算大文件。
+- schema v30 只把旧项目中未跟踪 artifact 写在自由文本 `version` 里的 `sha256:<hex>` / 裸 64 位值复制到 `sha256`；Git 跟踪 artifact 的旧 `version` 文本保持原样，仅作为历史说明，不参与冻结判定。
+
 ### `acquisition_attempts`
 
 保存正文、Supplementary Information 与 code/data 的真实获取尝试，用来区分“某个 URL 请求失败”与“当前合法获取路径已经合理穷尽”：

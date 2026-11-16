@@ -438,7 +438,29 @@ def _check_communication_project(project_root: Path, connection, errors: list[st
         if not path.is_file():
             errors.append(f"communication artifact {row['id']} 文件不存在：{path}")
 
+
+_SHA256_TABLES = ("dataset_artifacts", "study_artifacts", "analysis_artifacts")
+
+
+def _check_artifact_sha256(connection, errors: list[str]) -> None:
+    for table in _SHA256_TABLES:
+        columns = {str(row[1]) for row in connection.execute(f'PRAGMA table_info("{table}")')}
+        if "sha256" not in columns:
+            continue
+        for row in connection.execute(
+            f"SELECT id, git_tracking, sha256 FROM {table} WHERE sha256 IS NOT NULL ORDER BY id"
+        ):
+            digest = str(row["sha256"])
+            if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+                errors.append(f"{table} {row['id']} 的 sha256 不是小写 64 位十六进制值。")
+            if row["git_tracking"] == "required":
+                errors.append(
+                    f"{table} {row['id']} 由 Git 跟踪，冻结只记录提交号 + 路径，不应再登记 sha256。"
+                )
+
+
 def check_project(project_root: Path, connection, errors: list[str]) -> None:
+    _check_artifact_sha256(connection, errors)
     _check_downstream_project(project_root, connection, errors)
     _check_planning_project(project_root, connection, errors)
     _check_research_tree_project(project_root, connection, errors)

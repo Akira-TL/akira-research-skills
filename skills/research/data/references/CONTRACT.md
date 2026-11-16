@@ -42,7 +42,7 @@ Known missingness / exclusions / anomalies
 Processing entrypoint or pointer
 ```
 
-有 DOI、accession、repository ID、instrument run ID、sample ID 等稳定身份时优先使用它们。日常科研不默认对所有 artifact 计算 SHA；只有来源缺少稳定版本、跨介质传输完整性需要验证、或上游已经提供 checksum 时才记录 checksum。对能够由明确软件版本/官方对象稳定重导出的公开数据，不要为了“显得严谨”额外计算 checksum；身份、版本、来源和可重复导出路径已经足以承担常规 provenance。
+有 DOI、accession、repository ID、instrument run ID、sample ID 等稳定身份时优先使用它们。冻结与校验值规则统一见 [`RESEARCH-DB.md` 的“冻结对象：提交号、路径与校验值”](../../akira-research/RESEARCH-DB.md)：Git 跟踪的 artifact 只记提交号 + 路径，不记文件校验值；不进入 Git 的数据、模型权重与检查点在 artifact 的 `sha256` 字段记录一个 SHA256。对能够由明确软件版本/官方对象稳定重导出的公开数据，身份、版本、来源和可重复导出路径已经足以承担常规 provenance。
 
 ## 4. Sample identity 与 unit of inference
 

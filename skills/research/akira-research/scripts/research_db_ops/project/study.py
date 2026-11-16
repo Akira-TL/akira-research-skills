@@ -376,6 +376,13 @@ def _record_artifacts(project_root: Path, connection: Any, study_id: int, items:
             assert location is not None
             if git_tracking == "required":
                 raise ResearchDbError("external study artifact 不能声明 git_tracking=required。")
+        digest = common.untracked_sha256(
+            project_root,
+            item.get("sha256"),
+            git_tracking=git_tracking,
+            location=location if storage_kind == "local" else None,
+            field="study artifact sha256",
+        )
         existing = connection.execute(
             "SELECT * FROM study_artifacts WHERE study_id = ? AND location = ?",
             (study_id, location),
@@ -416,6 +423,18 @@ def _record_artifacts(project_root: Path, connection: Any, study_id: int, items:
                 raise ResearchDbError(
                     "已登记 Study artifact 的 provenance 不可静默改写：" + ", ".join(changed)
                 )
+        artifact_row = connection.execute(
+            "SELECT id FROM study_artifacts WHERE study_id = ? AND location = ?",
+            (study_id, location),
+        ).fetchone()
+        if artifact_row is not None:
+            common.attach_sha256(
+                connection,
+                "study_artifacts",
+                int(artifact_row["id"]),
+                digest,
+                label=f"study artifact {location}",
+            )
 
 
 def record_study(project_root: Path, bundle: dict[str, Any]) -> dict[str, Any]:

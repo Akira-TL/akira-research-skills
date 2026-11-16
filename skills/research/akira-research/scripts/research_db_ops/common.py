@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -108,3 +109,63 @@ def is_analysis_code_path(project_root: Path, path: str) -> bool:
 
 def tracking(value: object, *, default: str = "required") -> str:
     return enum_value(value, GIT_TRACKING, default=default, field="git_tracking")
+
+
+_SHA256_RE = re.compile(r"^(?:sha256:)?([0-9a-fA-F]{64})$")
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def untracked_sha256(
+    project_root: Path,
+    value: object,
+    *,
+    git_tracking: str,
+    location: str | None,
+    field: str,
+) -> str | None:
+    """Validate the single content checksum allowed for artifacts outside Git.
+
+    Git-tracked artifacts are frozen by commit + path, so a checksum is rejected
+    as redundant. For local untracked files the recorded value must match the
+    current file content.
+    """
+
+    raw = text(value)
+    if raw is None:
+        return None
+    if git_tracking == "required":
+        raise ResearchDbError(
+            f"{field}：Git 跟踪的 artifact 由提交号 + 路径冻结，不记录文件校验值；"
+            "sha256 只用于 git_tracking=not_required 或外部存储的对象。"
+        )
+    match = _SHA256_RE.fullmatch(raw)
+    if match is None:
+        raise ResearchDbError(f"{field} 必须是 64 位十六进制 SHA256（可带 sha256: 前缀）。")
+    digest = match.group(1).lower()
+    if location is not None:
+        path = Path(location)
+        path = path if path.is_absolute() else project_root / path
+        if path.is_file() and file_sha256(path) != digest:
+            raise ResearchDbError(f"{field} 与当前文件内容不一致：{location}")
+    return digest
+
+
+def attach_sha256(connection, table: str, row_id: int, digest: str | None, *, label: str) -> None:
+    """Fill an artifact checksum once; an existing different checksum is never overwritten."""
+
+    if digest is None:
+        return
+    row = connection.execute(f"SELECT sha256 FROM {table} WHERE id = ?", (row_id,)).fetchone()
+    if row is None:
+        return
+    if row["sha256"] is None:
+        connection.execute(f"UPDATE {table} SET sha256 = ? WHERE id = ?", (digest, row_id))
+    elif str(row["sha256"]) != digest:
+        raise ResearchDbError(f"{label} 已登记不同的 sha256，不可静默改写。")
