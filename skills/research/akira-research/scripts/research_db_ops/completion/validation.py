@@ -7,7 +7,7 @@ from research_db_validation import validate
 from research_db_ops.candidates import discovery_readiness
 from research_db_core import managed_gitignore_warning
 from research_db_support.git_layout import git_layout
-from .git import run_git
+from .git import freeze_history_session, run_git
 from .human import core_human_artifact_readiness
 from .language import canonical_paths, academic_language_readiness
 from .literature import literature_completion_readiness
@@ -51,6 +51,14 @@ def _empty_git_info() -> dict[str, Any]:
 
 
 def validate_completion(project_root: Path) -> dict[str, Any]:
+    with freeze_history_session(project_root) as history:
+        result = _validate_completion(project_root)
+        if result["schema_compatible"]:
+            result["git"].update(history.summary())
+        return result
+
+
+def _validate_completion(project_root: Path) -> dict[str, Any]:
     base = validate(project_root)
     errors = list(base["errors"])
     warnings = list(base["warnings"])

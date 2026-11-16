@@ -6,7 +6,7 @@ from typing import Any
 from research_db_support.schema import DOWNSTREAM_ARTIFACT_LEGACY_BASELINE_META_KEY
 from research_db_support.storage import ResearchDbError, connect, database_path
 from ... import common
-from ..git import run_git, commit_has_path, first_path_change_after, path_changed_after
+from ..git import freeze_history, run_git
 from ..human.legacy import (
     legacy_baseline_commit,
     path_is_unchanged_since_baseline,
@@ -247,13 +247,14 @@ def _append_freeze_snapshot_blockers(
 ) -> None:
     analysis_id = int(run["id"])
     slug = str(run["slug"])
+    history = freeze_history(project_root)
     freeze_required_paths, post_result_context_paths = _freeze_scope_paths(
         connection, run, input_rows
     )
     missing_at_freeze = sorted(
         path
         for path in dict.fromkeys(freeze_required_paths)
-        if not commit_has_path(project_root, freeze_commit, path)
+        if not history.has_path(freeze_commit, path)
     )
     if missing_at_freeze:
         blockers.append(
@@ -265,19 +266,22 @@ def _append_freeze_snapshot_blockers(
             }
         )
 
-    changed_after_freeze = sorted(
-        path
-        for path in dict.fromkeys(freeze_required_paths)
-        if commit_has_path(project_root, freeze_commit, path)
-        and path_changed_after(project_root, freeze_commit, path)
-    )
-    if changed_after_freeze:
+    unrecorded_changes: list[dict[str, Any]] = []
+    for path in dict.fromkeys(freeze_required_paths):
+        if not history.has_path(freeze_commit, path):
+            continue
+        commits = history.unrecorded_changes(freeze_commit, path, anchor=f"analysis:{slug}")
+        if commits is not None:
+            unrecorded_changes.append({"path": path, "commits": commits})
+    if unrecorded_changes:
+        unrecorded_changes.sort(key=lambda item: item["path"])
         blockers.append(
             {
                 "reason": "analysis_frozen_artifact_changed_after_freeze",
                 "analysis": slug,
                 "freeze_commit": freeze_commit,
-                "paths": changed_after_freeze,
+                "paths": [item["path"] for item in unrecorded_changes],
+                "changes": unrecorded_changes,
             }
         )
 
@@ -295,7 +299,7 @@ def _append_freeze_snapshot_blockers(
     context_present_at_freeze = sorted(
         path
         for path in dict.fromkeys(post_result_context_paths)
-        if commit_has_path(project_root, freeze_commit, path)
+        if history.has_path(freeze_commit, path)
     )
     if context_present_at_freeze:
         blockers.append(
@@ -311,11 +315,9 @@ def _append_freeze_snapshot_blockers(
     for path in dict.fromkeys(post_result_context_paths):
         if path in context_present_at_freeze:
             continue
-        first_context_commit = first_path_change_after(
-            project_root, freeze_commit, path
-        )
+        first_context_commit = history.first_change(freeze_commit, path)
         if first_context_commit is None or not any(
-            commit_has_path(project_root, first_context_commit, result_path)
+            history.has_path(first_context_commit, result_path)
             for result_path in result_paths
         ):
             premature_context_paths.append(path)
@@ -329,7 +331,7 @@ def _append_freeze_snapshot_blockers(
             }
         )
     result_present_at_freeze = sorted(
-        path for path in result_paths if commit_has_path(project_root, freeze_commit, path)
+        path for path in result_paths if history.has_path(freeze_commit, path)
     )
     if result_present_at_freeze:
         blockers.append(
@@ -338,6 +340,22 @@ def _append_freeze_snapshot_blockers(
                 "analysis": slug,
                 "freeze_commit": freeze_commit,
                 "paths": result_present_at_freeze,
+            }
+        )
+    results_not_after_freeze = sorted(
+        path
+        for path in result_paths
+        if path not in result_present_at_freeze
+        and (first_result := history.first_change(freeze_commit, path)) is not None
+        and not history.is_ancestor(freeze_commit, first_result)
+    )
+    if results_not_after_freeze:
+        blockers.append(
+            {
+                "reason": "analysis_result_commit_not_after_freeze",
+                "analysis": slug,
+                "freeze_commit": freeze_commit,
+                "paths": results_not_after_freeze,
             }
         )
 

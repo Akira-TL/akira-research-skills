@@ -5,7 +5,7 @@ from typing import Any
 
 from research_db_support.storage import ResearchDbError, connect, database_path
 from ... import common
-from ..git import run_git, commit_has_path, first_path_change_after, path_changed_after
+from ..git import freeze_history, run_git
 from ..language import canonical_paths
 
 def planning_completion_readiness(project_root: Path) -> dict[str, Any]:
@@ -152,7 +152,7 @@ def planning_completion_readiness(project_root: Path) -> dict[str, Any]:
                         "freeze_commit": freeze_commit,
                     }
                 )
-            if not commit_has_path(project_root, freeze_commit, str(hypothesis["artifact_path"])):
+            if not freeze_history(project_root).has_path(freeze_commit, str(hypothesis["artifact_path"])):
                 blockers.append(
                     {
                         "reason": "hypothesis_artifact_missing_at_freeze",
@@ -201,7 +201,7 @@ def planning_completion_readiness(project_root: Path) -> dict[str, Any]:
             missing_at_freeze = [
                 path
                 for path in freeze_paths
-                if not commit_has_path(project_root, freeze_commit, path)
+                if not freeze_history(project_root).has_path(freeze_commit, path)
             ]
             if missing_at_freeze:
                 blockers.append(

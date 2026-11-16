@@ -9,7 +9,7 @@ from research_db_support.git_layout import project_relative, read_at_commit
 from research_db_support.schema import latest_version
 from research_db_support.storage import connect, database_path
 
-from ..git import commit_has_path, path_changed_after, run_git
+from ..git import freeze_history, run_git
 
 
 def legacy_baseline_commit(project_root: Path, meta_key: str) -> str | None:
@@ -92,17 +92,20 @@ def path_is_unchanged_since_baseline(
     path: Path,
     baseline_commit: str | None,
 ) -> bool:
+    """A legacy artifact keeps its grandfathered status while it matches the baseline.
+
+    Committed changes after the baseline keep the status only when each change
+    commit has a recorded freeze revision; uncommitted edits always end it.
+    """
+
     if not baseline_commit:
         return False
     relative_path = project_relative(project_root, path)
-    if run_git(
-        project_root, "merge-base", "--is-ancestor", baseline_commit, "HEAD"
-    ).returncode != 0:
+    history = freeze_history(project_root)
+    if not history.is_ancestor(baseline_commit, "HEAD"):
         return False
-    if not commit_has_path(project_root, baseline_commit, relative_path):
+    if not history.has_path(baseline_commit, relative_path):
         return False
-    if path_changed_after(project_root, baseline_commit, relative_path):
+    if history.unrecorded_changes(baseline_commit, relative_path, anchor="legacy_baseline") is not None:
         return False
-    return run_git(
-        project_root, "diff", "--quiet", baseline_commit, "--", relative_path
-    ).returncode == 0
+    return run_git(project_root, "diff", "--quiet", "HEAD", "--", relative_path).returncode == 0

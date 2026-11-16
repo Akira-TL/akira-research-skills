@@ -64,6 +64,7 @@ REQUIRED_TABLES = {
     "study_assay_samples",
     "study_deviations",
     "study_artifacts",
+    "freeze_revisions",
 }
 KNOWLEDGE_ENTITY_TABLES = {
     "method": "methods",

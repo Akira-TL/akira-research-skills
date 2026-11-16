@@ -5,7 +5,9 @@ from typing import Any, Callable
 from research_db_core import discover_project_root
 from research_db_ops.project import (
     get_research_tree,
+    list_freeze_revisions,
     migrate_human_artifact_path,
+    record_freeze_revisions,
     list_research_branches,
     list_studies,
     record_research_branch,
@@ -24,6 +26,7 @@ PROJECT_BUNDLE_DEFAULTS = {
     "set-research-tree-state": "research-tree-state.json",
     "record-study": "study.json",
     "migrate-human-artifact-path": "human-artifact-path-migration.json",
+    "record-freeze-revisions": "freeze-revisions.json",
 }
 
 
@@ -98,6 +101,21 @@ def register_project_commands(
         )
         return 0
 
+    def cmd_record_freeze_revisions(args: Any) -> int:
+        project_root = discover_project_root(args.project)
+        emit(
+            record_freeze_revisions(
+                project_root,
+                load_json(project_root, "record-freeze-revisions", args.bundle),
+            )
+        )
+        return 0
+
+    def cmd_freeze_revisions(args: Any) -> int:
+        project_root = discover_project_root(args.project)
+        emit(list_freeze_revisions(project_root, pending=args.pending, limit=args.limit))
+        return 0
+
     def cmd_record_study(args: Any) -> int:
         project_root = discover_project_root(args.project)
         emit(
@@ -121,6 +139,14 @@ def register_project_commands(
         parser = subparsers.add_parser(name, help=help_text)
         parser.add_argument("--limit", type=int, default=100)
         parser.set_defaults(handler=handler)
+
+    revisions_parser = subparsers.add_parser(
+        "freeze-revisions",
+        help="列出冻结对象的已登记修订说明；--pending 同时列出尚未登记的冻结后内容变化。",
+    )
+    revisions_parser.add_argument("--pending", action="store_true")
+    revisions_parser.add_argument("--limit", type=int, default=500)
+    revisions_parser.set_defaults(handler=cmd_freeze_revisions)
 
     render_parser = subparsers.add_parser(
         "render-research-tree-view",
@@ -158,6 +184,12 @@ def register_project_commands(
             "登记真实 Study execution、Sample、Assay、deviation 与 artifact provenance。",
             "Study JSON bundle；默认 .research/bundles/study.json；传 '-' 从 stdin 读取。",
             cmd_record_study,
+        ),
+        (
+            "record-freeze-revisions",
+            "批量登记冻结对象在冻结提交之后的修订说明（路径、修订提交、类别、原因）。",
+            "Freeze revisions JSON bundle；默认 .research/bundles/freeze-revisions.json；传 '-' 从 stdin 读取。",
+            cmd_record_freeze_revisions,
         ),
         (
             "migrate-human-artifact-path",

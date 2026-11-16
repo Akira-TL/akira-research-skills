@@ -1,32 +1,242 @@
+"""History of frozen research objects after their freeze commit.
+
+A frozen Git-tracked object is identified by its freeze commit and path. Later
+commits may still change it; such a change passes the completion gate only
+when ``freeze_revisions`` records it (path + revision commit + category +
+reason). Unrecorded changes are reported with their commits so they can be
+recorded or reverted. Content is compared by Git blob, so commits that touch a
+path without changing its content are not changes.
+"""
+
 from __future__ import annotations
 
+import sqlite3
+import subprocess
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, Iterator
 
-from research_db_support.git_layout import commit_has_path, run_git
+from research_db_support.git_layout import GitLayout, commit_has_path, git_layout, run_git
+from research_db_support.storage import connect, database_path
+
+
+@dataclass
+class FrozenChange:
+    path: str
+    anchor: str
+    since: str
+    commits: list[str] = field(default_factory=list)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {"path": self.path, "anchor": self.anchor, "since": self.since, "commits": self.commits}
+
+
+class FreezeHistory:
+    def __init__(self, project_root: Path) -> None:
+        self.project_root = project_root
+        self.layout: GitLayout = git_layout(project_root)
+        self._commits: dict[str, str | None] = {}
+        self._ancestry: dict[tuple[str, str], bool] = {}
+        self._blobs: dict[tuple[str, str], str | None] = {}
+        self._changes: dict[tuple[str, str], list[str]] = {}
+        self.revisions: set[tuple[str, str]] = set()
+        self.unrecorded: dict[tuple[str, str, str], FrozenChange] = {}
+        self.applied: dict[tuple[str, str], dict[str, Any]] = {}
+        self._revision_rows: dict[tuple[str, str], dict[str, Any]] = {}
+        self._load_revisions()
+
+    # -- database --------------------------------------------------------------
+
+    def _load_revisions(self) -> None:
+        db_path = database_path(self.project_root)
+        if not db_path.exists():
+            return
+        with connect(db_path) as connection:
+            try:
+                rows = connection.execute(
+                    "SELECT path, revision_commit, category, reason FROM freeze_revisions ORDER BY id"
+                ).fetchall()
+            except sqlite3.OperationalError:
+                return
+        for row in rows:
+            repo_path = self.layout.repo_path(str(row["path"]))
+            if repo_path is None:
+                continue
+            key = (repo_path, str(row["revision_commit"]))
+            self.revisions.add(key)
+            self._revision_rows[key] = {
+                "path": str(row["path"]),
+                "revision_commit": str(row["revision_commit"]),
+                "category": str(row["category"]),
+                "reason": str(row["reason"]),
+            }
+
+    # -- git primitives --------------------------------------------------------
+
+    def resolve(self, ref: str) -> str | None:
+        if ref not in self._commits:
+            result = run_git(self.project_root, "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}")
+            self._commits[ref] = result.stdout.strip() if result.returncode == 0 else None
+        return self._commits[ref]
+
+    def is_ancestor(self, ancestor: str, descendant: str) -> bool:
+        key = (ancestor, descendant)
+        if key not in self._ancestry:
+            self._ancestry[key] = (
+                run_git(self.project_root, "merge-base", "--is-ancestor", ancestor, descendant).returncode == 0
+            )
+        return self._ancestry[key]
+
+    def parents(self, commit: str) -> list[str]:
+        result = run_git(self.project_root, "rev-list", "--parents", "-n", "1", commit)
+        return result.stdout.split()[1:] if result.returncode == 0 else []
+
+    def path_at(self, commit: str, project_path: str) -> str | None:
+        """Top-level relative path the object had in ``commit``."""
+
+        return self.layout.repo_path(project_path)
+
+    def _blob(self, commit: str, repo_path: str | None) -> str | None:
+        if repo_path is None:
+            return None
+        key = (commit, repo_path)
+        if key not in self._blobs:
+            result = run_git(self.project_root, "rev-parse", "--verify", "--quiet", f"{commit}:{repo_path}")
+            self._blobs[key] = result.stdout.strip() if result.returncode == 0 else None
+        return self._blobs[key]
+
+    def blob(self, commit: str, project_path: str) -> str | None:
+        return self._blob(commit, self.path_at(commit, project_path))
+
+    def has_path(self, commit: str, project_path: str) -> bool:
+        return self.blob(commit, project_path) is not None
+
+    def read(self, commit: str, project_path: str) -> bytes | None:
+        repo_path = self.path_at(commit, project_path)
+        if repo_path is None:
+            return None
+        result = subprocess.run(
+            ["git", "-C", str(self.project_root), "show", f"{commit}:{repo_path}"],
+            capture_output=True,
+            check=False,
+        )
+        return result.stdout if result.returncode == 0 else None
+
+    def _history_paths(self, since: str, project_path: str) -> list[str]:
+        paths = {self.path_at(since, project_path), self.path_at("HEAD", project_path)}
+        return sorted(path for path in paths if path is not None)
+
+    # -- change detection ------------------------------------------------------
+
+    def content_changes(self, since: str, project_path: str) -> list[str]:
+        """Commits after ``since`` (oldest first) that changed the object's content."""
+
+        key = (since, project_path)
+        if key in self._changes:
+            return self._changes[key]
+        paths = self._history_paths(since, project_path)
+        changes: list[str] = []
+        if paths:
+            result = run_git(
+                self.project_root,
+                "log",
+                "--reverse",
+                "--full-history",
+                "--no-merges",
+                "--format=%H %P",
+                f"{since}..HEAD",
+                "--",
+                *(f":(top){path}" for path in paths),
+            )
+            for line in result.stdout.splitlines():
+                parts = line.split()
+                if not parts:
+                    continue
+                commit, parents = parts[0], parts[1:]
+                after = self.blob(commit, project_path)
+                before = self.blob(parents[0], project_path) if parents else None
+                if after != before:
+                    changes.append(commit)
+        self._changes[key] = changes
+        return changes
+
+    def net_changed(self, since: str, project_path: str) -> bool:
+        return self.blob(since, project_path) != self.blob("HEAD", project_path)
+
+    def is_recorded(self, project_path: str, commit: str) -> bool:
+        repo_path = self.layout.repo_path(project_path)
+        return repo_path is not None and (repo_path, commit) in self.revisions
+
+    def unrecorded_changes(
+        self,
+        since: str,
+        project_path: str,
+        *,
+        anchor: str,
+        net_only: bool = False,
+    ) -> list[str] | None:
+        """Return ``None`` when the frozen object passes, else its unrecorded change commits.
+
+        ``net_only`` ignores changes that were reverted before HEAD.
+        """
+
+        if net_only and not self.net_changed(since, project_path):
+            return None
+        changes = self.content_changes(since, project_path)
+        unrecorded: list[str] = []
+        for commit in changes:
+            repo_path = self.layout.repo_path(project_path)
+            if repo_path is not None and (repo_path, commit) in self.revisions:
+                self.applied[(repo_path, commit)] = self._revision_rows[(repo_path, commit)]
+            else:
+                unrecorded.append(commit)
+        if not unrecorded and (changes or not net_only):
+            return None
+        entry = self.unrecorded.setdefault(
+            (project_path, anchor, since), FrozenChange(path=project_path, anchor=anchor, since=since)
+        )
+        entry.commits = unrecorded
+        return unrecorded
+
+    def first_change(self, since: str, project_path: str) -> str | None:
+        changes = self.content_changes(since, project_path)
+        return changes[0] if changes else None
+
+    def summary(self) -> dict[str, Any]:
+        return {
+            "unrecorded_frozen_changes": [change.as_dict() for change in self.unrecorded.values()],
+            "applied_freeze_revisions": list(self.applied.values()),
+        }
+
+
+_SESSIONS: dict[str, FreezeHistory] = {}
+
+
+@contextmanager
+def freeze_history_session(project_root: Path) -> Iterator[FreezeHistory]:
+    """Share one history (caches, recorded/unrecorded changes) across a completion run."""
+
+    key = str(project_root.resolve())
+    owner = key not in _SESSIONS
+    if owner:
+        _SESSIONS[key] = FreezeHistory(project_root)
+    try:
+        yield _SESSIONS[key]
+    finally:
+        if owner:
+            _SESSIONS.pop(key, None)
+
+
+def freeze_history(project_root: Path) -> FreezeHistory:
+    return _SESSIONS.get(str(project_root.resolve())) or FreezeHistory(project_root)
+
 
 __all__ = [
+    "FreezeHistory",
+    "FrozenChange",
     "commit_has_path",
-    "first_path_change_after",
-    "path_changed_after",
+    "freeze_history",
+    "freeze_history_session",
     "run_git",
 ]
-
-
-def path_changed_after(project_root: Path, commit: str, path: str) -> bool:
-    result = run_git(project_root, "log", "--format=%H", f"{commit}..HEAD", "--", path)
-    return result.returncode != 0 or bool(result.stdout.strip())
-
-
-def first_path_change_after(project_root: Path, commit: str, path: str) -> str | None:
-    result = run_git(
-        project_root,
-        "log",
-        "--reverse",
-        "--format=%H",
-        f"{commit}..HEAD",
-        "--",
-        path,
-    )
-    if result.returncode != 0:
-        return None
-    return next((line.strip() for line in result.stdout.splitlines() if line.strip()), None)

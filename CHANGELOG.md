@@ -12,6 +12,7 @@
 
 ### Changed
 
+- 冻结后修改改为“有修订说明即放行”：schema v31 新增 `freeze_revisions`（路径、修订提交、类别、原因），确认性 Analysis 冻结范围、Communication 科学来源与 legacy 兼容 artifact 的冻结后内容变化逐提交核对，未登记的变化作为阻塞项列出提交号；新增 `record-freeze-revisions`（可批量）与 `freeze-revisions --pending`。结果 artifact 的首次提交必须是冻结提交的后代。
 - 冻结规则统一为“Git 跟踪对象 = 提交号 + 路径”：Dataset / Study / Analysis artifact 新增 `sha256` 字段，只用于未被 Git 跟踪的外部数据、模型权重与检查点，对 Git 跟踪 artifact 登记校验值会被拒绝；schema v30 把旧项目未跟踪 artifact 写在 `version` 中的 SHA256 迁入该字段。
 - 科研项目根目录可以位于 Git 仓库子目录：`research-db` 的 `<commit>:<path>`、变更列表、冻结内容读取与科研分支 tip 判定统一换算为 Git 顶层路径；数据库可用 `../` 登记科研根之外、仓库之内的代码，托管 `.gitignore` 区块固定写在科研根目录。
 - 补齐跨产品 first-party 可选能力路由：Research 需要 `browser-access`、`general-word-document-generation`、`scientific-presentation-authoring` 等通用能力而当前会话缺失时，将能力缺口交给 `akira` Router 按 Catalog 检查对应 Target scope 并按需安装；Research 不复制浏览器、Word 或 PPT 执行层，用户拒绝或执行器无法加载时保留明确的人工/格式未完成状态。

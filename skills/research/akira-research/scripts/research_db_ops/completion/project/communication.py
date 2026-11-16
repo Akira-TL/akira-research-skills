@@ -17,7 +17,7 @@ from research_db_ops.communication.target import (
     stored_generated_outputs,
     workspace_path,
 )
-from ..git import commit_has_path, run_git
+from ..git import freeze_history, run_git
 from ..human import human_navigation_index_paths
 from ..language import canonical_paths
 
@@ -328,7 +328,7 @@ def communication_completion_readiness(project_root: Path) -> dict[str, Any]:
                         "source_commit": source_commit,
                     }
                 )
-            elif not commit_has_path(project_root, source_commit, canonical_source):
+            elif not freeze_history(project_root).has_path(source_commit, canonical_source):
                 blockers.append(
                     {
                         "reason": "communication_target_source_missing_at_commit",
@@ -338,15 +338,7 @@ def communication_completion_readiness(project_root: Path) -> dict[str, Any]:
                         "path": canonical_source,
                     }
                 )
-            elif run_git(
-                project_root,
-                "diff",
-                "--quiet",
-                source_commit,
-                "HEAD",
-                "--",
-                canonical_source,
-            ).returncode != 0:
+            elif freeze_history(project_root).net_changed(source_commit, canonical_source):
                 blockers.append(
                     {
                         "reason": "communication_target_source_drift",
@@ -730,7 +722,7 @@ def communication_completion_readiness(project_root: Path) -> dict[str, Any]:
             wrong_timing: list[str] = []
             for artifact in artifacts:
                 path = str(artifact["path"])
-                existed = commit_has_path(project_root, source_commit, path)
+                existed = freeze_history(project_root).has_path(source_commit, path)
                 if artifact["timing_role"] == "derived_output" and existed:
                     wrong_timing.append(path)
                 if artifact["timing_role"] == "source_support" and not existed:
@@ -745,18 +737,22 @@ def communication_completion_readiness(project_root: Path) -> dict[str, Any]:
                     }
                 )
 
-            changed_science = [
-                path
-                for path in scientific_paths
-                if run_git(project_root, "diff", "--quiet", source_commit, "HEAD", "--", path).returncode != 0
-            ]
+            history = freeze_history(project_root)
+            changed_science = []
+            for path in scientific_paths:
+                commits = history.unrecorded_changes(
+                    source_commit, path, anchor=f"communication:{slug}", net_only=True
+                )
+                if commits is not None:
+                    changed_science.append({"path": path, "commits": commits})
             if changed_science:
                 blockers.append(
                     {
                         "reason": "scientific_source_changed_after_communication_freeze",
                         "communication": slug,
                         "source_commit": source_commit,
-                        "paths": changed_science,
+                        "paths": [item["path"] for item in changed_science],
+                        "changes": changed_science,
                     }
                 )
 

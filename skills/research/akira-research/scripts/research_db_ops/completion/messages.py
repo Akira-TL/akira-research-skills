@@ -2,6 +2,16 @@ from __future__ import annotations
 
 from typing import Any
 
+
+def format_frozen_changes(blocker: dict[str, Any]) -> str:
+    changes = blocker.get("changes")
+    if not changes:
+        return ", ".join(str(path) for path in blocker.get("paths", []))
+    return "; ".join(
+        f"{item['path']}（" + (", ".join(commit[:12] for commit in item["commits"]) or "无可定位提交") + "）"
+        for item in changes
+    )
+
 def append_literature_errors(errors: list[str], blockers: list[dict[str, Any]]) -> None:
     for blocker in blockers:
         reason = str(blocker.get("reason", "unknown"))
@@ -266,9 +276,16 @@ def append_downstream_errors(errors: list[str], blockers: list[dict[str, Any]]) 
             )
         elif reason == "analysis_frozen_artifact_changed_after_freeze":
             errors.append(
-                f"Analysis {blocker.get('analysis')} 的已冻结计划/代码/输入在 freeze 后发生提交内容变化："
+                f"Analysis {blocker.get('analysis')} 的已冻结计划/代码/输入在 freeze 后有未登记修订说明的内容变化："
+                + format_frozen_changes(blocker)
+                + "；若修改正当，用 research-db record-freeze-revisions 逐提交登记修订类别与原因，"
+                "否则恢复冻结版本，并把结果后修订作为新增 artifact/amendment。"
+            )
+        elif reason == "analysis_result_commit_not_after_freeze":
+            errors.append(
+                f"Analysis {blocker.get('analysis')} 的结果 artifact 首次提交不是 freeze commit 的后代，"
+                "不能证明设计先于结果："
                 + ", ".join(str(path) for path in blocker.get("paths", []))
-                + "；请保留冻结版本，并把结果后修订作为新增 artifact/amendment。"
             )
         elif reason == "analysis_post_result_context_present_at_freeze":
             errors.append(
@@ -517,9 +534,10 @@ def append_communication_errors(errors: list[str], blockers: list[dict[str, Any]
             )
         elif reason == "scientific_source_changed_after_communication_freeze":
             errors.append(
-                f"Communication Product {blocker.get('communication')} 所依据的科研 source commit 之后仍有科学 canonical artifact 变化；"
-                "传播稿必须基于最新稳定证据重新审阅："
-                + ", ".join(str(path) for path in blocker.get("paths", []))
+                f"Communication Product {blocker.get('communication')} 所依据的科研 source commit 之后"
+                "仍有未登记修订说明的科学 canonical artifact 变化；"
+                "传播稿必须基于最新稳定证据重新审阅，或为不影响科学内容的修改登记 record-freeze-revisions："
+                + format_frozen_changes(blocker)
             )
         elif reason in {
             "communication_target_workspace_identity_mismatch",
