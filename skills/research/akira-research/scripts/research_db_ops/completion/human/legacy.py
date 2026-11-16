@@ -106,6 +106,9 @@ def path_is_unchanged_since_baseline(
         return False
     if not history.has_path(baseline_commit, relative_path):
         return False
-    if history.unrecorded_changes(baseline_commit, relative_path, anchor="legacy_baseline") is not None:
+    if (
+        history.unrecorded_changes(baseline_commit, relative_path, anchor="legacy_baseline", report=False)
+        is not None
+    ):
         return False
     return run_git(project_root, "diff", "--quiet", "HEAD", "--", relative_path).returncode == 0

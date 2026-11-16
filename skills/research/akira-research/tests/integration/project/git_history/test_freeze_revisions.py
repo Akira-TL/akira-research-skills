@@ -11,6 +11,7 @@ from git_fixtures import GitResearchProject, blockers_with_reason  # noqa: E402
 
 from research_db_core import ResearchDbError  # noqa: E402
 from research_db_ops.completion import validate_completion  # noqa: E402
+from research_db_ops.completion.git import freeze_history_session  # noqa: E402
 from research_db_ops.completion.human.legacy import path_is_unchanged_since_baseline  # noqa: E402
 from research_db_ops.downstream import record_analysis  # noqa: E402
 from research_db_ops.project import list_freeze_revisions, record_freeze_revisions  # noqa: E402
@@ -108,7 +109,9 @@ class FreezeRevisionTests(unittest.TestCase):
         self.assertTrue(path_is_unchanged_since_baseline(self.root, legacy, baseline))
         legacy.write_text("# 旧设计\n", encoding="utf-8")
         revision = self.project.commit("DESIGN: drop redundant checksum")
-        self.assertFalse(path_is_unchanged_since_baseline(self.root, legacy, baseline))
+        with freeze_history_session(self.root) as history:
+            self.assertFalse(path_is_unchanged_since_baseline(self.root, legacy, baseline))
+            self.assertEqual(history.summary()["unrecorded_frozen_changes"], [])
         record_freeze_revisions(
             self.root,
             {

@@ -52,7 +52,6 @@ class FreezeHistory:
         self._ancestry: dict[tuple[str, str], bool] = {}
         self._blobs: dict[tuple[str, str], str | None] = {}
         self._changes: dict[tuple[str, str], list[str]] = {}
-        self.revisions: set[tuple[str, str]] = set()
         self.unrecorded: dict[tuple[str, str, str], FrozenChange] = {}
         self.applied: dict[tuple[str, str], dict[str, Any]] = {}
         self._revision_rows: dict[tuple[str, str], dict[str, Any]] = {}
@@ -78,7 +77,6 @@ class FreezeHistory:
             if repo_path is None:
                 continue
             key = (repo_path, str(row["revision_commit"]))
-            self.revisions.add(key)
             self._revision_rows[key] = {
                 "path": str(row["path"]),
                 "revision_commit": str(row["revision_commit"]),
@@ -190,12 +188,16 @@ class FreezeHistory:
 
     # -- change detection ------------------------------------------------------
 
-    def content_changes(self, since: str, project_path: str) -> list[str]:
-        """Commits after ``since`` (oldest first) that changed the object's content."""
+    def iter_content_changes(self, since: str, project_path: str) -> Iterator[str]:
+        """Commits after ``since`` (oldest first) that changed the object's content.
+
+        The list is cached only after a full pass, so callers may stop early.
+        """
 
         key = (since, project_path)
         if key in self._changes:
-            return self._changes[key]
+            yield from self._changes[key]
+            return
         paths = self._history_paths(since, project_path)
         changes: list[str] = []
         if paths:
@@ -219,15 +221,18 @@ class FreezeHistory:
                 before = self.blob(parents[0], project_path) if parents else None
                 if after != before:
                     changes.append(commit)
+                    yield commit
         self._changes[key] = changes
-        return changes
+
+    def content_changes(self, since: str, project_path: str) -> list[str]:
+        return list(self.iter_content_changes(since, project_path))
 
     def net_changed(self, since: str, project_path: str) -> bool:
         return self.blob(since, project_path) != self.blob("HEAD", project_path)
 
-    def is_recorded(self, project_path: str, commit: str) -> bool:
+    def _revision_for(self, project_path: str, commit: str) -> dict[str, Any] | None:
         repo_path = self.layout.repo_path(project_path)
-        return repo_path is not None and (repo_path, commit) in self.revisions
+        return None if repo_path is None else self._revision_rows.get((repo_path, commit))
 
     def unrecorded_changes(
         self,
@@ -236,33 +241,41 @@ class FreezeHistory:
         *,
         anchor: str,
         net_only: bool = False,
+        report: bool = True,
     ) -> list[str] | None:
         """Return ``None`` when the frozen object passes, else its unrecorded change commits.
 
-        ``net_only`` ignores changes that were reverted before HEAD.
+        ``net_only`` ignores changes that were reverted before HEAD. With
+        ``report=False`` the check stops at the first unrecorded commit and is
+        not listed among pending freeze revisions (used for legacy
+        compatibility, where a living document is expected to change).
         """
 
         if net_only and not self.net_changed(since, project_path):
             return None
-        changes = self.content_changes(since, project_path)
+        found_change = False
         unrecorded: list[str] = []
-        for commit in changes:
-            repo_path = self.layout.repo_path(project_path)
-            if repo_path is not None and (repo_path, commit) in self.revisions:
-                self.applied[(repo_path, commit)] = self._revision_rows[(repo_path, commit)]
-            else:
-                unrecorded.append(commit)
-        if not unrecorded and (changes or not net_only):
+        for commit in self.iter_content_changes(since, project_path):
+            found_change = True
+            revision = self._revision_for(project_path, commit)
+            if revision is not None:
+                if report:
+                    self.applied[(revision["path"], commit)] = revision
+                continue
+            unrecorded.append(commit)
+            if not report:
+                return unrecorded
+        if not unrecorded and (found_change or not net_only):
             return None
-        entry = self.unrecorded.setdefault(
-            (project_path, anchor, since), FrozenChange(path=project_path, anchor=anchor, since=since)
-        )
-        entry.commits = unrecorded
+        if report:
+            entry = self.unrecorded.setdefault(
+                (project_path, anchor, since), FrozenChange(path=project_path, anchor=anchor, since=since)
+            )
+            entry.commits = unrecorded
         return unrecorded
 
     def first_change(self, since: str, project_path: str) -> str | None:
-        changes = self.content_changes(since, project_path)
-        return changes[0] if changes else None
+        return next(self.iter_content_changes(since, project_path), None)
 
     def summary(self) -> dict[str, Any]:
         return {

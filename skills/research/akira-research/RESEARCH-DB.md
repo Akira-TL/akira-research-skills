@@ -261,7 +261,7 @@ Target workspace 的 `source_commit` 是“本次目标格式 build 实际消费
 
 - 字段：`path`（相对科研根，指冻结对象）、`revision_commit`（完整提交号）、`category`（`path_migration` 路径迁移 | `redundant_checksum_removal` 去掉冗余校验值 | `substantive` 实质修改）、`reason`；同一 `(path, revision_commit)` 只能有一条，已有说明不可静默改写。
 - 有记录的修改通过门禁，并出现在 `validate --completion` 输出的 `git.applied_freeze_revisions`；没有记录的修改作为 blocker 报出并列出提交号，同时汇总在 `git.unrecorded_frozen_changes`。`substantive` 同样放行，但它说明冻结内容在结果前提已经改变，解释与 Claim 必须据此降级或建立新的 Analysis。
-- 适用范围：确认性 Analysis 的冻结计划、代码与输入；Communication 科学 `source_commit` 之后的科学 canonical artifact（只看相对 `source_commit` 的净变化）；以及 legacy baseline 兼容的人类 artifact（全部改动有记录时保留兼容身份）。Communication target build 的 source drift 仍要求重新 build，不接受修订说明。
+- 适用范围：确认性 Analysis 的冻结计划、代码与输入；Communication 科学 `source_commit` 之后的科学 canonical artifact（只看相对 `source_commit` 的净变化）；以及 legacy baseline 兼容的人类 artifact（全部改动有记录时保留兼容身份；`RESEARCH.md` 这类持续更新的文件不会被列为待登记修订，需保留兼容身份的文件由修改者显式登记）。Communication target build 的 source drift 仍要求重新 build，不接受修订说明。
 - 门禁读取冻结内容一律从冻结提交取（`git show <commit>:<path>`）；“设计先于结果”由冻结提交是结果 artifact 首次提交的祖先来判定，结果 artifact 也不得已存在于冻结提交。
 - 登记：`research-db record-freeze-revisions [bundle]`，bundle 顶层可给出 `revision_commit` / `category` / `reason` 默认值，`revisions` 中每项是路径字符串或含同名字段的对象；每个提交必须位于当前 HEAD 历史中且确实改变了该对象内容，否则整批不写入。`research-db freeze-revisions --pending` 列出已登记修订与尚未登记的冻结后变化。
 
