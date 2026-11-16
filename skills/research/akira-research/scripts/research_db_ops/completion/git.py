@@ -1,21 +1,15 @@
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 
-def run_git(project_root: Path, *args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        ["git", "-C", str(project_root), *args],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+from research_db_support.git_layout import commit_has_path, run_git
 
-
-
-def commit_has_path(project_root: Path, commit: str, path: str) -> bool:
-    result = run_git(project_root, "cat-file", "-e", f"{commit}:{path}")
-    return result.returncode == 0
+__all__ = [
+    "commit_has_path",
+    "first_path_change_after",
+    "path_changed_after",
+    "run_git",
+]
 
 
 def path_changed_after(project_root: Path, commit: str, path: str) -> bool:

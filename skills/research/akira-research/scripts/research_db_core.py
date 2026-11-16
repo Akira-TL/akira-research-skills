@@ -7,6 +7,7 @@ from research_db_support.checks import (
     main_text_exposes_code_data_locator,
     source_locator_is_specific as _source_locator_is_specific,
 )
+from research_db_support.git_layout import GitLayout
 from research_db_support.schema import (
     ENTITY_TABLES,
     MIGRATION_DIR,
@@ -84,6 +85,23 @@ def ensure_research_gitignore(project_root: Path) -> bool:
         existing += "\n"
     path.write_text(existing + block, encoding="utf-8")
     return True
+
+
+def managed_gitignore_warning(layout: GitLayout) -> str | None:
+    """Warn when the managed ignore block only exists above a subdirectory research root."""
+
+    if layout.toplevel is None or not layout.prefix:
+        return None
+    project_ignore = layout.project_root / ".gitignore"
+    if project_ignore.is_file() and GITIGNORE_BEGIN in project_ignore.read_text(encoding="utf-8"):
+        return None
+    top_ignore = layout.toplevel / ".gitignore"
+    if top_ignore.is_file() and GITIGNORE_BEGIN in top_ignore.read_text(encoding="utf-8"):
+        return (
+            "akira-research 托管 ignore 区块位于 Git 顶层 .gitignore，但科研根目录是 "
+            f"{layout.prefix}；区块中的锚定模式只对所在目录生效，应移入 {layout.prefix}.gitignore。"
+        )
+    return None
 
 
 def init_database(project_root: Path) -> dict[str, Any]:

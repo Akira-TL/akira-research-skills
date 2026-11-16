@@ -583,7 +583,9 @@ uv run scripts/research_db.py validate
 uv run scripts/research_db.py validate --completion
 ```
 
-默认从当前目录向上定位 `RESEARCH.md` 或 `.research/research.sqlite`；也可用全局 `--project <path>` 显式指定科研项目根目录。`init` 同时创建 `.research/bundles/`；`record-search` 默认读取 `search.json`，`record-access-attempt` 默认读取 `access-attempt.json`，`update-candidate` 默认读取 `candidate-update.json`，`ingest-paper`、`add-paper-artifacts`、`ingest-reading`、`ingest-critical` 分别读取 `paper.json`、`paper-artifacts.json`、`reconstruction.json`、`critical.json`；都可显式传其他 JSON 路径或 `-` 从 stdin 读取。命令输出结构化 JSON。
+默认从当前目录向上定位 `RESEARCH.md` 或 `.research/research.sqlite`；也可用全局 `--project <path>` 显式指定科研项目根目录。
+
+科研项目根目录（含 `RESEARCH.md` 与 `.research/` 的目录）可以是 Git 顶层，也可以是 Git 仓库中的子目录（例如代码仓库把 `research/` 作为科研根）。数据库中的路径字段一律相对科研项目根目录保存；指向科研根之外、但仍在同一 Git 工作树内的代码或配置使用 `../` 形式（如 `../scripts/analyses/run.py`、`../src/model.py`），越出 Git 工作树的本地路径会被拒绝。所有 `<commit>:<path>` 查询、变更判定与冻结内容读取都先换算成 Git 顶层相对路径，因此存在性检查与 Git 检查对两种布局一致。`init` 把托管 ignore 区块写入科研根目录自己的 `.gitignore`，其中锚定模式只对科研根生效；若科研根是子目录而托管区块仍留在 Git 顶层 `.gitignore`，`validate --completion` 给出警告，应把区块移入科研根的 `.gitignore`。`init` 同时创建 `.research/bundles/`；`record-search` 默认读取 `search.json`，`record-access-attempt` 默认读取 `access-attempt.json`，`update-candidate` 默认读取 `candidate-update.json`，`ingest-paper`、`add-paper-artifacts`、`ingest-reading`、`ingest-critical` 分别读取 `paper.json`、`paper-artifacts.json`、`reconstruction.json`、`critical.json`；都可显式传其他 JSON 路径或 `-` 从 stdin 读取。命令输出结构化 JSON。
 
 知识读取接口当前可用：
 

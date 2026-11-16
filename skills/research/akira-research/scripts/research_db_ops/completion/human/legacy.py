@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import sqlite3
-import subprocess
 import tempfile
 from pathlib import Path
 from typing import Any
 
+from research_db_support.git_layout import project_relative, read_at_commit
 from research_db_support.schema import latest_version
 from research_db_support.storage import connect, database_path
 
@@ -29,21 +29,11 @@ def legacy_baseline_commit(project_root: Path, meta_key: str) -> str | None:
 
 
 def schema_version_at_commit(project_root: Path, commit: str) -> int | None:
-    result = subprocess.run(
-        [
-            "git",
-            "-C",
-            str(project_root),
-            "show",
-            f"{commit}:.research/research.sqlite",
-        ],
-        capture_output=True,
-        check=False,
-    )
-    if result.returncode != 0 or not result.stdout:
+    content = read_at_commit(project_root, commit, ".research/research.sqlite")
+    if not content:
         return None
     with tempfile.NamedTemporaryFile(suffix=".sqlite") as handle:
-        handle.write(result.stdout)
+        handle.write(content)
         handle.flush()
         try:
             with sqlite3.connect(handle.name) as connection:
@@ -104,10 +94,7 @@ def path_is_unchanged_since_baseline(
 ) -> bool:
     if not baseline_commit:
         return False
-    try:
-        relative_path = path.resolve().relative_to(project_root.resolve()).as_posix()
-    except ValueError:
-        return False
+    relative_path = project_relative(project_root, path)
     if run_git(
         project_root, "merge-base", "--is-ancestor", baseline_commit, "HEAD"
     ).returncode != 0:

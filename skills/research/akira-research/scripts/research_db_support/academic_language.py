@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 from typing import Any, Iterable
 
+from research_db_support.git_layout import project_relative
 from research_db_support.storage import ResearchDbError
 
 
@@ -56,10 +57,7 @@ def academic_language_blockers_for_path(
         return []
     text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
     blockers: list[dict[str, Any]] = []
-    try:
-        relative_path = path.resolve().relative_to(project_root.resolve()).as_posix()
-    except ValueError:
-        relative_path = str(path)
+    relative_path = project_relative(project_root, path)
 
     for index, paragraph in enumerate(re.split(r"\n\s*\n", text), start=1):
         stripped = paragraph.strip()

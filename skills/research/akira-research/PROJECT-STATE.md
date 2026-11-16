@@ -4,7 +4,7 @@
 
 ## Bootstrap
 
-新的科研项目首先确认 Git 仓库；若当前目录尚不是 Git repository，则以 `main` 作为 canonical branch 初始化（等价于 `git init -b main`）。Bootstrap 只强制创建 `RESEARCH.md`，其他科研内容目录按真实需求出现，不预生成空的 `literature/`、`hypotheses/`、`analysis/` 等目录。`research-db init` 同时维护一段项目级 `.gitignore`：默认排除 `.research/artifacts/`、cache/tmp、Attempt 可重建 outputs/logs、人类 convenience PDF 和常见可重建分析图；不使用全局 `*.pdf` / `*.png` 之类规则误伤需要审阅的显式 artifact。初始化 Git 不等于完成 provenance：最迟在第一个可独立解释的科研状态形成时必须提交一次，不能让整个科研项目长期停留在“有 `.git` 但没有任何 commit”的状态。
+新的科研项目首先确认 Git 仓库；若当前目录尚不是 Git repository，则以 `main` 作为 canonical branch 初始化（等价于 `git init -b main`）。科研项目根目录也可以是已有代码仓库中的子目录（如 `research/`），此时 Git 历史由所在仓库承载，路径与 Git 规则见 [`RESEARCH-DB.md`](RESEARCH-DB.md)。Bootstrap 只强制创建 `RESEARCH.md`，其他科研内容目录按真实需求出现，不预生成空的 `literature/`、`hypotheses/`、`analysis/` 等目录。`research-db init` 同时在科研项目根目录维护一段托管 `.gitignore`：默认排除 `.research/artifacts/`、cache/tmp、Attempt 可重建 outputs/logs、人类 convenience PDF 和常见可重建分析图；不使用全局 `*.pdf` / `*.png` 之类规则误伤需要审阅的显式 artifact。初始化 Git 不等于完成 provenance：最迟在第一个可独立解释的科研状态形成时必须提交一次，不能让整个科研项目长期停留在“有 `.git` 但没有任何 commit”的状态。
 
 固定结构如下；完整可复制模板、导航写法与错误示例见 [`references/human/RESEARCH-STATE.md`](references/human/RESEARCH-STATE.md)：
 

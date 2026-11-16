@@ -562,10 +562,7 @@ def record_analysis(project_root: Path, bundle: dict[str, Any]) -> dict[str, Any
                         common.parse_timestamp(existing["created_at"], field="analysis created_at")
                         >= workflow_started
                     )
-            if attempt_workflow_active and not (
-                spec.code_path.startswith("scripts/analyses/")
-                or spec.code_path.startswith("src/")
-            ):
+            if attempt_workflow_active and not common.is_analysis_code_path(project_root, spec.code_path):
                 raise ResearchDbError(
                     "新 Analysis 的 code_path 必须位于 scripts/analyses/ 或 src/；"
                     "不要继续把科研实现散放在 analysis/ 或临时脚本目录。"

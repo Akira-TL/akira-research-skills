@@ -4,6 +4,7 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
+from research_db_support.git_layout import git_layout, project_relative
 from research_db_support.storage import ResearchDbError, database_path
 
 
@@ -75,13 +76,34 @@ def local_path(
         path = project_root / path
     resolved = path.resolve()
     try:
-        relative = resolved.relative_to(project_root.resolve())
+        relative = resolved.relative_to(project_root.resolve()).as_posix()
     except ValueError as exc:
-        raise ResearchDbError(f"{field} 必须位于科研项目目录内：{resolved}") from exc
+        layout = git_layout(project_root)
+        if layout.toplevel is None:
+            raise ResearchDbError(f"{field} 必须位于科研项目目录内：{resolved}") from exc
+        try:
+            resolved.relative_to(layout.toplevel)
+        except ValueError:
+            raise ResearchDbError(
+                f"{field} 必须位于科研项目目录或其所在 Git 仓库内：{resolved}"
+            ) from exc
+        relative = project_relative(project_root, resolved)
     exists = resolved.is_file() if require_file else resolved.exists()
     if not exists:
-        raise ResearchDbError(f"{field} 指向的文件不存在：{relative.as_posix()}")
-    return relative.as_posix()
+        raise ResearchDbError(f"{field} 指向的文件不存在：{relative}")
+    return relative
+
+
+ANALYSIS_CODE_PREFIXES = ("scripts/analyses/", "src/")
+
+
+def is_analysis_code_path(project_root: Path, path: str) -> bool:
+    """Analysis code lives in scripts/analyses/ or src/ of the research root or of the Git top-level."""
+
+    if path.startswith(ANALYSIS_CODE_PREFIXES):
+        return True
+    repo_path = git_layout(project_root).repo_path(path) if path.startswith("../") else None
+    return repo_path is not None and repo_path.startswith(ANALYSIS_CODE_PREFIXES)
 
 
 def tracking(value: object, *, default: str = "required") -> str:

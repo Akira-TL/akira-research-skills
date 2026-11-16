@@ -12,6 +12,7 @@ from research_db_ops.communication.target import (
     stored_generated_outputs,
     verify_target_build,
 )
+from research_db_support.git_layout import commit_has_path
 from research_db_support.storage import ResearchDbError, connect
 
 
@@ -105,8 +106,7 @@ def _require_tracked_at_head(project_root: Path, paths: list[str]) -> None:
     missing: list[str] = []
     for path in paths:
         tracked = _git(project_root, "ls-files", "--error-unmatch", "--", path, check=False)
-        present = _git(project_root, "cat-file", "-e", f"HEAD:{path}", check=False)
-        if tracked.returncode != 0 or present.returncode != 0:
+        if tracked.returncode != 0 or not commit_has_path(project_root, "HEAD", path):
             missing.append(path)
     if missing:
         raise ResearchDbError(

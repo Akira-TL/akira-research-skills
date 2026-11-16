@@ -4,6 +4,7 @@ from pathlib import Path
 import subprocess
 from typing import Any
 
+from research_db_support.git_layout import commit_has_path
 from research_db_support.storage import ResearchDbError, connect
 import research_db_ops.common as common
 from .target import (
@@ -338,12 +339,7 @@ def _require_git_source_commit(project_root: Path, source_commit: str, canonical
     )
     if ancestor.returncode != 0:
         raise ResearchDbError("target source_commit 必须是当前 HEAD 的祖先。")
-    source = subprocess.run(
-        ["git", "-C", str(project_root), "cat-file", "-e", f"{source_commit}:{canonical_source}"],
-        capture_output=True,
-        check=False,
-    )
-    if source.returncode != 0:
+    if not commit_has_path(project_root, source_commit, canonical_source):
         raise ResearchDbError(
             f"target source_commit 中不存在 canonical communication source：{canonical_source}"
         )

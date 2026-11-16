@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from research_db_ops.project.research_tree_view import VIEW_PATH
+from research_db_support.git_layout import git_layout
 from research_db_support.storage import connect, database_path
 
 from ..human import human_markdown_blockers
@@ -29,7 +30,7 @@ def _is_ancestor(project_root: Path, ancestor: str, descendant: str) -> bool:
 
 
 def _changed_paths(project_root: Path, start: str, end: str) -> set[str]:
-    result = _git(project_root, "diff", "--name-only", f"{start}..{end}")
+    result = _git(project_root, "diff", "--name-only", "--no-relative", f"{start}..{end}")
     if result.returncode != 0:
         return set()
     return {line.strip() for line in result.stdout.splitlines() if line.strip()}
@@ -40,7 +41,8 @@ def _only_provenance_changes(project_root: Path, start: str, end: str) -> bool:
         return True
     if not _is_ancestor(project_root, start, end):
         return False
-    return _changed_paths(project_root, start, end) <= {".research/research.sqlite"}
+    database_repo_path = git_layout(project_root).repo_path(".research/research.sqlite")
+    return _changed_paths(project_root, start, end) <= {database_repo_path}
 
 
 def _is_annotated_tag(project_root: Path, tag: str) -> bool:

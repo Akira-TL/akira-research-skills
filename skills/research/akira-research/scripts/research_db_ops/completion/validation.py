@@ -5,6 +5,8 @@ from typing import Any
 
 from research_db_validation import validate
 from research_db_ops.candidates import discovery_readiness
+from research_db_core import managed_gitignore_warning
+from research_db_support.git_layout import git_layout
 from .git import run_git
 from .human import core_human_artifact_readiness
 from .language import canonical_paths, academic_language_readiness
@@ -41,6 +43,7 @@ def _unchecked_readiness(reason: str) -> dict[str, Any]:
 def _empty_git_info() -> dict[str, Any]:
     return {
         "repository_root": None,
+        "project_prefix": None,
         "head": None,
         "canonical_paths": [],
         "dirty_canonical_paths": [],
@@ -113,16 +116,15 @@ def validate_completion(project_root: Path) -> dict[str, Any]:
     project_state = project_state_readiness(project_root)
     append_project_state_errors(errors, project_state["blockers"])
     git_info = _empty_git_info()
-    top = run_git(project_root, "rev-parse", "--show-toplevel")
-    if top.returncode != 0:
+    layout = git_layout(project_root)
+    if layout.toplevel is None:
         errors.append("科研项目尚不是 Git repository；不能完成科研 provenance gate。")
     else:
-        repo_root = Path(top.stdout.strip()).resolve()
-        git_info["repository_root"] = str(repo_root)
-        if repo_root != project_root.resolve():
-            errors.append(
-                f"科研项目根目录不是独立 Git repository top-level：{repo_root}。"
-            )
+        git_info["repository_root"] = str(layout.toplevel)
+        git_info["project_prefix"] = layout.prefix
+        gitignore_warning = managed_gitignore_warning(layout)
+        if gitignore_warning:
+            warnings.append(gitignore_warning)
 
         head = run_git(project_root, "rev-parse", "--verify", "HEAD")
         if head.returncode != 0:

@@ -7,6 +7,7 @@ from research_db_support.academic_language import (
     academic_language_blockers_for_path,
     project_uses_chinese_research_text,
 )
+from research_db_support.git_layout import project_relative
 from research_db_support.schema import ACADEMIC_LANGUAGE_LEGACY_BASELINE_META_KEY
 from research_db_support.storage import connect, database_path
 from .human import human_navigation_index_paths
@@ -212,10 +213,10 @@ def academic_language_readiness(project_root: Path) -> dict[str, Any]:
     for path in _academic_language_paths(project_root):
         if not path.exists() or path.suffix.casefold() not in {".md", ".txt"}:
             continue
+        relative_path = project_relative(project_root, path)
         if _path_is_unchanged_legacy_text(project_root, path, legacy_baseline_commit):
-            grandfathered_paths.append(path.resolve().relative_to(project_root.resolve()).as_posix())
+            grandfathered_paths.append(relative_path)
             continue
-        relative_path = path.resolve().relative_to(project_root.resolve()).as_posix()
         blockers.extend(
             academic_language_blockers_for_path(
                 project_root,

@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import unquote
 
+from research_db_support.git_layout import path_boundary, project_relative
+
 
 _LINK_RE = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
 _H1_RE = re.compile(r"(?m)^#\s+(.+?)\s*$")
@@ -96,7 +98,7 @@ def human_markdown_blockers(
             }
         )
 
-    root = project_root.resolve()
+    boundary = path_boundary(project_root)
     for match in _LINK_RE.finditer(text):
         target = _markdown_target(match.group(1))
         if not target or target.startswith("#"):
@@ -126,7 +128,7 @@ def human_markdown_blockers(
             continue
         resolved = (path.parent / path_part).resolve()
         try:
-            resolved_relative = resolved.relative_to(root).as_posix()
+            resolved.relative_to(boundary)
         except ValueError:
             blockers.append(
                 {
@@ -136,6 +138,7 @@ def human_markdown_blockers(
                 }
             )
             continue
+        resolved_relative = project_relative(project_root, resolved)
         if resolved_relative == ".research" or resolved_relative.startswith(".research/"):
             blockers.append(
                 {
@@ -169,7 +172,7 @@ def human_markdown_local_targets(
         _, sections = _sections(text)
         text = sections.get(section, "")
 
-    root = project_root.resolve()
+    boundary = path_boundary(project_root)
     targets: set[str] = set()
     for match in _LINK_RE.finditer(text):
         target = _markdown_target(match.group(1))
@@ -180,8 +183,8 @@ def human_markdown_local_targets(
             continue
         resolved = (path.parent / path_part).resolve()
         try:
-            relative = resolved.relative_to(root).as_posix()
+            resolved.relative_to(boundary)
         except ValueError:
             continue
-        targets.add(relative)
+        targets.add(project_relative(project_root, resolved))
     return targets

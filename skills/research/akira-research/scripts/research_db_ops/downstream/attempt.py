@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import research_db_ops.common as common
+from research_db_support.git_layout import commit_has_path, read_at_commit
 from research_db_support.storage import ResearchDbError, connect
 
 
@@ -49,16 +50,16 @@ def _optional_local_path(project_root: Path, value: object, *, field: str) -> st
 
 
 def _path_exists_at_commit(project_root: Path, commit: str, path: str) -> bool:
-    return _git(project_root, "cat-file", "-e", f"{commit}:{path}").returncode == 0
+    return commit_has_path(project_root, commit, path)
 
 
 def _source_at_commit(project_root: Path, commit: str, path: str) -> str:
-    result = _git(project_root, "show", f"{commit}:{path}")
-    if result.returncode != 0:
+    source = read_at_commit(project_root, commit, path)
+    if source is None:
         raise ResearchDbError(
             f"Analysis code_path 在 Attempt git_commit 中不存在：{path} @ {commit}。"
         )
-    return result.stdout
+    return source.decode("utf-8", errors="replace")
 
 
 def _code_isolation_blockers(source: str, *, analysis_slug: str) -> list[str]:
@@ -96,10 +97,7 @@ def _code_isolation_blockers(source: str, *, analysis_slug: str) -> list[str]:
 
 def _validate_code_contract(project_root: Path, analysis: Any, commit: str) -> None:
     code_path = str(analysis["code_path"])
-    if not (
-        code_path.startswith("scripts/analyses/")
-        or code_path.startswith("src/")
-    ):
+    if not common.is_analysis_code_path(project_root, code_path):
         raise ResearchDbError(
             "新 Analysis Attempt 的 code_path 必须位于 scripts/analyses/ 或 src/；"
             "不要把科研实现散放在 analysis/、.research/analysis/ 或全局临时脚本中。"

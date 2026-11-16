@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import research_db_ops.common as common
+from research_db_support.git_layout import git_layout
 from research_db_support.storage import ResearchDbError, connect
 
 
@@ -48,10 +49,16 @@ def _is_ancestor(project_root: Path, ancestor: str, descendant: str) -> bool:
 
 
 def _changed_paths(project_root: Path, start: str, end: str) -> set[str]:
-    result = _git(project_root, "diff", "--name-only", f"{start}..{end}", check=False)
+    """Changed paths relative to the Git top-level, including paths outside the research root."""
+
+    result = _git(project_root, "diff", "--name-only", "--no-relative", f"{start}..{end}", check=False)
     if result.returncode != 0:
         return set()
     return {line.strip() for line in result.stdout.splitlines() if line.strip()}
+
+
+def _database_repo_path(project_root: Path) -> str | None:
+    return git_layout(project_root).repo_path(".research/research.sqlite")
 
 
 def _merge_parents(project_root: Path, commit: str) -> list[str]:
@@ -75,7 +82,7 @@ def _material_tip(project_root: Path, previous_tip: str, branch_head: str) -> st
             "不要对已进入科研 provenance 的 branch 执行 rebase/reset/amend 历史重写。"
         )
     changed = _changed_paths(project_root, previous_tip, branch_head)
-    if changed and changed <= {".research/research.sqlite"}:
+    if changed and changed <= {_database_repo_path(project_root)}:
         return previous_tip
     return branch_head
 
