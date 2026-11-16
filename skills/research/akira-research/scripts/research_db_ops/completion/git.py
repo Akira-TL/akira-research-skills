@@ -21,6 +21,18 @@ from research_db_support.git_layout import GitLayout, commit_has_path, git_layou
 from research_db_support.storage import connect, database_path
 
 
+@dataclass(frozen=True)
+class PathMigration:
+    commit: str
+    old_prefix: str
+    new_prefix: str
+
+    def to_old(self, repo_path: str) -> str | None:
+        if not repo_path.startswith(self.new_prefix):
+            return None
+        return self.old_prefix + repo_path[len(self.new_prefix):]
+
+
 @dataclass
 class FrozenChange:
     path: str
@@ -44,7 +56,9 @@ class FreezeHistory:
         self.unrecorded: dict[tuple[str, str, str], FrozenChange] = {}
         self.applied: dict[tuple[str, str], dict[str, Any]] = {}
         self._revision_rows: dict[tuple[str, str], dict[str, Any]] = {}
+        self.migrations: list[PathMigration] = []
         self._load_revisions()
+        self._load_migrations()
 
     # -- database --------------------------------------------------------------
 
@@ -72,6 +86,29 @@ class FreezeHistory:
                 "reason": str(row["reason"]),
             }
 
+    def _load_migrations(self) -> None:
+        db_path = database_path(self.project_root)
+        if not db_path.exists():
+            return
+        with connect(db_path) as connection:
+            try:
+                rows = connection.execute(
+                    "SELECT migration_commit, old_prefix, new_prefix FROM path_migrations ORDER BY id"
+                ).fetchall()
+            except sqlite3.OperationalError:
+                return
+        head = self.resolve("HEAD")
+        distance: dict[PathMigration, int] = {}
+        for row in rows:
+            commit = self.resolve(str(row["migration_commit"]))
+            if commit is None or head is None or not self.is_ancestor(commit, head):
+                continue
+            migration = PathMigration(commit, str(row["old_prefix"]), str(row["new_prefix"]))
+            count = run_git(self.project_root, "rev-list", "--count", f"{commit}..{head}")
+            distance[migration] = int(count.stdout.strip() or 0)
+        # Newest first, so chained moves are undone in reverse order.
+        self.migrations = sorted(distance, key=lambda item: (distance[item], -len(item.new_prefix)))
+
     # -- git primitives --------------------------------------------------------
 
     def resolve(self, ref: str) -> str | None:
@@ -93,9 +130,30 @@ class FreezeHistory:
         return result.stdout.split()[1:] if result.returncode == 0 else []
 
     def path_at(self, commit: str, project_path: str) -> str | None:
-        """Top-level relative path the object had in ``commit``."""
+        """Top-level relative path the object had in ``commit``.
 
-        return self.layout.repo_path(project_path)
+        The current path is mapped back through every recorded directory
+        migration that ``commit`` predates.
+        """
+
+        repo_path = self.layout.repo_path(project_path)
+        if repo_path is None or not self.migrations:
+            return repo_path
+        full = self.resolve(commit)
+        if full is None:
+            return repo_path
+        for migration in self.migrations:
+            if self.is_ancestor(migration.commit, full):
+                continue
+            older = migration.to_old(repo_path)
+            if older is not None:
+                repo_path = older
+        return repo_path
+
+    def repo_blob(self, commit: str, repo_path: str | None) -> str | None:
+        """Blob (or tree) id of a top-level relative path in ``commit``."""
+
+        return self._blob(commit, repo_path)
 
     def _blob(self, commit: str, repo_path: str | None) -> str | None:
         if repo_path is None:
@@ -125,6 +183,9 @@ class FreezeHistory:
 
     def _history_paths(self, since: str, project_path: str) -> list[str]:
         paths = {self.path_at(since, project_path), self.path_at("HEAD", project_path)}
+        for migration in self.migrations:
+            for parent in self.parents(migration.commit):
+                paths.add(self.path_at(parent, project_path))
         return sorted(path for path in paths if path is not None)
 
     # -- change detection ------------------------------------------------------
@@ -234,6 +295,7 @@ def freeze_history(project_root: Path) -> FreezeHistory:
 
 __all__ = [
     "FreezeHistory",
+    "PathMigration",
     "FrozenChange",
     "commit_has_path",
     "freeze_history",

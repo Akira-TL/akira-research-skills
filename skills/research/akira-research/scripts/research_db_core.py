@@ -92,16 +92,19 @@ def managed_gitignore_warning(layout: GitLayout) -> str | None:
 
     if layout.toplevel is None or not layout.prefix:
         return None
+    top_ignore = layout.toplevel / ".gitignore"
+    if not (top_ignore.is_file() and GITIGNORE_BEGIN in top_ignore.read_text(encoding="utf-8")):
+        return None
     project_ignore = layout.project_root / ".gitignore"
     if project_ignore.is_file() and GITIGNORE_BEGIN in project_ignore.read_text(encoding="utf-8"):
-        return None
-    top_ignore = layout.toplevel / ".gitignore"
-    if top_ignore.is_file() and GITIGNORE_BEGIN in top_ignore.read_text(encoding="utf-8"):
         return (
-            "akira-research 托管 ignore 区块位于 Git 顶层 .gitignore，但科研根目录是 "
-            f"{layout.prefix}；区块中的锚定模式只对所在目录生效，应移入 {layout.prefix}.gitignore。"
+            f"科研根目录 {layout.prefix} 已有自己的 akira-research 托管 ignore 区块；"
+            "Git 顶层 .gitignore 中的同名区块对科研根无效，应删除。"
         )
-    return None
+    return (
+        "akira-research 托管 ignore 区块位于 Git 顶层 .gitignore，但科研根目录是 "
+        f"{layout.prefix}；区块中的锚定模式只对所在目录生效，应移入 {layout.prefix}.gitignore。"
+    )
 
 
 def init_database(project_root: Path) -> dict[str, Any]:

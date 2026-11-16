@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import research_db_ops.common as common
-from research_db_support.git_layout import commit_has_path, read_at_commit
+from research_db_ops.completion.git import freeze_history
 from research_db_support.storage import ResearchDbError, connect
 
 
@@ -50,11 +50,11 @@ def _optional_local_path(project_root: Path, value: object, *, field: str) -> st
 
 
 def _path_exists_at_commit(project_root: Path, commit: str, path: str) -> bool:
-    return commit_has_path(project_root, commit, path)
+    return freeze_history(project_root).has_path(commit, path)
 
 
 def _source_at_commit(project_root: Path, commit: str, path: str) -> str:
-    source = read_at_commit(project_root, commit, path)
+    source = freeze_history(project_root).read(commit, path)
     if source is None:
         raise ResearchDbError(
             f"Analysis code_path 在 Attempt git_commit 中不存在：{path} @ {commit}。"

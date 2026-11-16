@@ -265,6 +265,12 @@ Target workspace 的 `source_commit` 是“本次目标格式 build 实际消费
 - 门禁读取冻结内容一律从冻结提交取（`git show <commit>:<path>`）；“设计先于结果”由冻结提交是结果 artifact 首次提交的祖先来判定，结果 artifact 也不得已存在于冻结提交。
 - 登记：`research-db record-freeze-revisions [bundle]`，bundle 顶层可给出 `revision_commit` / `category` / `reason` 默认值，`revisions` 中每项是路径字符串或含同名字段的对象；每个提交必须位于当前 HEAD 历史中且确实改变了该对象内容，否则整批不写入。`research-db freeze-revisions --pending` 列出已登记修订与尚未登记的冻结后变化。
 
+整体目录迁移（schema v32 `path_migrations`）：
+
+- 一条记录 = 迁移提交 + 旧前缀 + 新前缀，前缀相对 Git 顶层（`""` 表示顶层本身，其余为 `dir/`）；同一迁移提交可有多条。科研根目录本身也可以随之移动，例如把整个科研项目从仓库根移入 `research/` 登记为 `"" → "research/"`。
+- 核验旧冻结对象时，门禁把对象当前路径按“晚于该冻结提交”的迁移从新到旧逐条映射回旧路径，再到冻结提交中查找和读取；迁移提交中内容未变的纯移动按 Git blob 相同判定，不算修改；移动同时改了内容的，按上一条规则逐提交登记修订说明（通常为 `path_migration`）。
+- `research-db record-path-migration [bundle]`：bundle 含 `migration_commit`（默认 `HEAD`）、`moves`（`old_prefix` / `new_prefix` 数组）、`reason` 与可选 `dry_run`。命令在一个事务中写入迁移记录，并把数据库全部路径字段（Paper artifact 与侧记、Dataset / Study / Analysis / Attempt / Hypothesis / Design / Research Node / Communication 路径、`freeze_revisions.path`）改写为迁移后相对当前科研根的路径：真实移动的文件改到新位置，留在原处的文件（如仓库顶层的 `scripts/`、`src/`）改写为 `../` 形式；外部存储位置不改。文件已不存在时按最近仍存在的上级目录判断，仍无法判断的保留原位置并在 `unresolved` 中列出供人工核对。同一迁移不可重复登记；命令同时确保科研根目录有托管 `.gitignore` 区块。`research-db path-migrations` 列出已登记迁移。JSON 字段内嵌的路径文本与 `change_log` 历史说明不改写。
+
 ### `acquisition_attempts`
 
 保存正文、Supplementary Information 与 code/data 的真实获取尝试，用来区分“某个 URL 请求失败”与“当前合法获取路径已经合理穷尽”：
@@ -627,6 +633,8 @@ research-db record-study [bundle]
 research-db studies
 research-db record-freeze-revisions [bundle]
 research-db freeze-revisions [--pending]
+research-db record-path-migration [bundle]
+research-db path-migrations
 research-db record-hypothesis-proposal [bundle]
 research-db hypothesis-proposals
 research-db record-user-hypothesis-decision [bundle]

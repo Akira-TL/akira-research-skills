@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from research_db_support.git_layout import project_relative, read_at_commit
+from research_db_support.git_layout import project_relative
 from research_db_support.schema import latest_version
 from research_db_support.storage import connect, database_path
 
@@ -29,7 +29,7 @@ def legacy_baseline_commit(project_root: Path, meta_key: str) -> str | None:
 
 
 def schema_version_at_commit(project_root: Path, commit: str) -> int | None:
-    content = read_at_commit(project_root, commit, ".research/research.sqlite")
+    content = freeze_history(project_root).read(commit, ".research/research.sqlite")
     if not content:
         return None
     with tempfile.NamedTemporaryFile(suffix=".sqlite") as handle:

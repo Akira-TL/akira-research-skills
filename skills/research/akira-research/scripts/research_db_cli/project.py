@@ -6,8 +6,10 @@ from research_db_core import discover_project_root
 from research_db_ops.project import (
     get_research_tree,
     list_freeze_revisions,
+    list_path_migrations,
     migrate_human_artifact_path,
     record_freeze_revisions,
+    record_path_migration,
     list_research_branches,
     list_studies,
     record_research_branch,
@@ -27,6 +29,7 @@ PROJECT_BUNDLE_DEFAULTS = {
     "record-study": "study.json",
     "migrate-human-artifact-path": "human-artifact-path-migration.json",
     "record-freeze-revisions": "freeze-revisions.json",
+    "record-path-migration": "path-migration.json",
 }
 
 
@@ -116,6 +119,21 @@ def register_project_commands(
         emit(list_freeze_revisions(project_root, pending=args.pending, limit=args.limit))
         return 0
 
+    def cmd_record_path_migration(args: Any) -> int:
+        project_root = discover_project_root(args.project)
+        emit(
+            record_path_migration(
+                project_root,
+                load_json(project_root, "record-path-migration", args.bundle),
+            )
+        )
+        return 0
+
+    def cmd_path_migrations(args: Any) -> int:
+        project_root = discover_project_root(args.project)
+        emit(list_path_migrations(project_root))
+        return 0
+
     def cmd_record_study(args: Any) -> int:
         project_root = discover_project_root(args.project)
         emit(
@@ -147,6 +165,12 @@ def register_project_commands(
     revisions_parser.add_argument("--pending", action="store_true")
     revisions_parser.add_argument("--limit", type=int, default=500)
     revisions_parser.set_defaults(handler=cmd_freeze_revisions)
+
+    migrations_parser = subparsers.add_parser(
+        "path-migrations",
+        help="列出已登记的整体目录迁移（迁移提交、旧前缀、新前缀）。",
+    )
+    migrations_parser.set_defaults(handler=cmd_path_migrations)
 
     render_parser = subparsers.add_parser(
         "render-research-tree-view",
@@ -190,6 +214,12 @@ def register_project_commands(
             "批量登记冻结对象在冻结提交之后的修订说明（路径、修订提交、类别、原因）。",
             "Freeze revisions JSON bundle；默认 .research/bundles/freeze-revisions.json；传 '-' 从 stdin 读取。",
             cmd_record_freeze_revisions,
+        ),
+        (
+            "record-path-migration",
+            "登记整体目录迁移，并一次性把数据库全部路径字段改写到迁移后的位置。",
+            "Path migration JSON bundle；默认 .research/bundles/path-migration.json；传 '-' 从 stdin 读取。",
+            cmd_record_path_migration,
         ),
         (
             "migrate-human-artifact-path",

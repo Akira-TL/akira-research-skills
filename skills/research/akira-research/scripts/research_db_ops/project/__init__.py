@@ -1,5 +1,6 @@
 from .freeze_revisions import list_freeze_revisions, record_freeze_revisions
 from .human_artifact_migration import migrate_human_artifact_path
+from .path_migration import list_path_migrations, record_path_migration
 from .research_git import list_research_branches, record_research_branch
 from .research_tree import (
     get_research_tree,
@@ -13,10 +14,12 @@ from .study import list_studies, record_study
 __all__ = [
     "get_research_tree",
     "list_freeze_revisions",
+    "list_path_migrations",
     "list_research_branches",
     "list_studies",
     "migrate_human_artifact_path",
     "record_freeze_revisions",
+    "record_path_migration",
     "record_research_branch",
     "record_research_edge",
     "record_research_node",
