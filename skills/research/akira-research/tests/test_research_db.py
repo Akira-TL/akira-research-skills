@@ -21,7 +21,7 @@ from research_db_core import (  # noqa: E402
     validate,
 )
 from research_db_ops.downstream import list_analyses  # noqa: E402
-from research_db_support.schema import list_migrations  # noqa: E402
+from research_db_support.schema import latest_version, list_migrations  # noqa: E402
 
 
 class ResearchDbTests(unittest.TestCase):
@@ -192,7 +192,9 @@ class ResearchDbTests(unittest.TestCase):
                 ("P000001", now),
             )
 
-        self.assertEqual(apply_migrations(db_path), [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
+        self.assertEqual(
+            apply_migrations(db_path), list(range(2, latest_version() + 1))
+        )
         with closing(sqlite3.connect(db_path)) as connection, connection:
             connection.row_factory = sqlite3.Row
             artifact_columns = {
@@ -245,7 +247,9 @@ class ResearchDbTests(unittest.TestCase):
                 (now, now),
             )
 
-        self.assertEqual(apply_migrations(db_path), [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
+        self.assertEqual(
+            apply_migrations(db_path), list(range(5, latest_version() + 1))
+        )
         with closing(sqlite3.connect(db_path)) as connection, connection:
             row = connection.execute(
                 "SELECT acquisition_status, identity_status FROM candidates"

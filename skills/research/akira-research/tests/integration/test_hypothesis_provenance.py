@@ -20,7 +20,7 @@ from research_db_ops.planning import (  # noqa: E402
     record_research_judgment,
     record_user_hypothesis_decision,
 )
-from research_db_support.schema import list_migrations  # noqa: E402
+from research_db_support.schema import latest_version, list_migrations  # noqa: E402
 
 
 class HypothesisProvenanceTests(unittest.TestCase):
@@ -237,7 +237,9 @@ class HypothesisProvenanceTests(unittest.TestCase):
                 """
             )
 
-        self.assertEqual(apply_migrations(db_path), [18, 19, 20, 21, 22, 23, 24, 25, 26, 27])
+        self.assertEqual(
+            apply_migrations(db_path), list(range(18, latest_version() + 1))
+        )
         result = validate(legacy_root)
         self.assertTrue(result["ok"], result["errors"])
 
