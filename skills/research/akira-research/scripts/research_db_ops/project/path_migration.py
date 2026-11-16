@@ -56,7 +56,7 @@ class Move:
 
 
 class _PathMapper:
-    def __init__(self, project_root: Path, history: FreezeHistory, commit: str, moves: list[Move]) -> None:
+    def __init__(self, history: FreezeHistory, commit: str, moves: list[Move]) -> None:
         self.layout = history.layout
         assert self.layout.toplevel is not None
         self.toplevel = self.layout.toplevel
@@ -141,7 +141,7 @@ def record_path_migration(project_root: Path, bundle: dict[str, Any]) -> dict[st
     head = history.resolve("HEAD")
     if commit is None or head is None or not history.is_ancestor(commit, head):
         raise ResearchDbError("migration_commit 必须是当前 HEAD 历史中可解析的提交。")
-    mapper = _PathMapper(project_root, history, commit, moves)
+    mapper = _PathMapper(history, commit, moves)
 
     rewrites: list[dict[str, Any]] = []
     unresolved: list[dict[str, Any]] = []

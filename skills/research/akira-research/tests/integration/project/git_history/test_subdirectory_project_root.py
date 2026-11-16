@@ -13,7 +13,8 @@ from research_db_core import GITIGNORE_BEGIN, ResearchDbError  # noqa: E402
 from research_db_ops import common  # noqa: E402
 from research_db_ops.completion import validate_completion  # noqa: E402
 from research_db_ops.project.research_git import _material_tip  # noqa: E402
-from research_db_support.git_layout import commit_has_path, git_layout, read_at_commit  # noqa: E402
+from research_db_ops.completion.git import FreezeHistory  # noqa: E402
+from research_db_support.git_layout import commit_has_path, git_layout  # noqa: E402
 
 
 class SubdirectoryProjectRootTests(unittest.TestCase):
@@ -53,7 +54,7 @@ class SubdirectoryProjectRootTests(unittest.TestCase):
         self.assertTrue(commit_has_path(self.root, commit, "data/a.txt"))
         self.assertTrue(commit_has_path(self.root, commit, "../scripts/b.py"))
         self.assertTrue(commit_has_path(self.root, commit, ".research/research.sqlite"))
-        self.assertEqual(read_at_commit(self.root, commit, "../scripts/b.py"), b"b\n")
+        self.assertEqual(FreezeHistory(self.root).read(commit, "../scripts/b.py"), b"b\n")
 
     def test_branch_tip_ignores_database_only_commits_but_not_outside_code(self) -> None:
         self.project.write("data/a.txt", "a\n")

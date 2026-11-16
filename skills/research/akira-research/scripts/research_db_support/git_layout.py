@@ -125,16 +125,3 @@ def commit_has_path(project_root: Path, commit: str, project_path: str) -> bool:
         return False
     return run_git(project_root, "cat-file", "-e", spec).returncode == 0
 
-
-def read_at_commit(project_root: Path, commit: str, project_path: str) -> bytes | None:
-    """Read a project path exactly as stored in ``commit`` (``git show <commit>:<path>``)."""
-
-    spec = git_layout(project_root).object_spec(commit, project_path)
-    if spec is None:
-        return None
-    result = subprocess.run(
-        ["git", "-C", str(project_root), "show", spec],
-        capture_output=True,
-        check=False,
-    )
-    return result.stdout if result.returncode == 0 else None
