@@ -36,15 +36,15 @@ class ResearchDbTests(unittest.TestCase):
     def test_init_creates_current_schema(self) -> None:
         result = init_database(self.root)
 
-        self.assertEqual(result["schema_version"], 29)
+        self.assertEqual(result["schema_version"], latest_version())
         self.assertEqual(
             Path(result["bundle_directory"]), self.root / ".research" / "bundles"
         )
         self.assertTrue((self.root / ".research" / "bundles").is_dir())
         db_status = status(self.root)
         self.assertTrue(db_status["exists"])
-        self.assertEqual(db_status["schema_version"], 29)
-        self.assertEqual(db_status["meta_schema_version"], 29)
+        self.assertEqual(db_status["schema_version"], latest_version())
+        self.assertEqual(db_status["meta_schema_version"], latest_version())
         self.assertEqual(db_status["tables"]["papers"], 0)
         self.assertTrue(validate(self.root)["ok"])
 
@@ -88,7 +88,7 @@ class ResearchDbTests(unittest.TestCase):
 
         db_status = status(self.root)
         self.assertEqual(db_status["schema_version"], 15)
-        self.assertEqual(db_status["latest_schema_version"], 29)
+        self.assertEqual(db_status["latest_schema_version"], latest_version())
         self.assertTrue(db_status["migration_needed"])
 
         with closing(sqlite3.connect(db_path)) as connection, connection:

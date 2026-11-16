@@ -18,6 +18,7 @@ from research_db_core import database_path, init_database  # noqa: E402
 from research_db_support.schema import (  # noqa: E402
     DOWNSTREAM_ARTIFACT_LEGACY_BASELINE_META_KEY,
     LITERATURE_HUMAN_FORMAT_LEGACY_BASELINE_META_KEY,
+    latest_version,
     list_migrations,
 )
 
@@ -291,7 +292,7 @@ class ResearchDbCliTests(unittest.TestCase):
             self.assertEqual(cmd_migrate(args), 0)
         payload = json.loads(stdout.getvalue())
 
-        self.assertEqual(payload["applied_migrations"], [25, 26, 27, 28, 29])
+        self.assertEqual(payload["applied_migrations"], list(range(25, latest_version() + 1)))
         self.assertEqual(payload["literature_human_format_legacy_baseline_commit"], baseline)
         self.assertEqual(
             payload["literature_marker_migration"]["migrated_paths"],
@@ -302,7 +303,7 @@ class ResearchDbCliTests(unittest.TestCase):
         self.assertNotIn("<!-- akira:literature-note:v1 -->", migrated)
         self.assertIn("用户笔记和正文必须原样保留。", migrated)
         with closing(sqlite3.connect(db_path)) as connection:
-            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 29)
+            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], latest_version())
             stored = connection.execute(
                 "SELECT value FROM meta WHERE key = ?",
                 (LITERATURE_HUMAN_FORMAT_LEGACY_BASELINE_META_KEY,),
