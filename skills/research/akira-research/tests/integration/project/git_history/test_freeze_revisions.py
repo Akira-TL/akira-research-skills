@@ -65,6 +65,28 @@ class FreezeRevisionTests(unittest.TestCase):
         )
         self.assertEqual(list_freeze_revisions(self.root, pending=True)["pending"], [])
 
+    def test_change_and_restore_pair_is_informational_after_a_recorded_revision(self) -> None:
+        moved = self._frozen_then_revised()
+        record_freeze_revisions(
+            self.root,
+            {
+                "revision_commit": moved,
+                "category": "path_migration",
+                "reason": "更新数据位置。",
+                "revisions": ["data/sleep/README.md"],
+            },
+        )
+        note = self.root / "data/sleep/README.md"
+        kept = note.read_text(encoding="utf-8")
+        note.write_text(kept + "\n误改。\n", encoding="utf-8")
+        mistaken = self.project.commit("DATA: mistaken edit")
+        note.write_text(kept, encoding="utf-8")
+        restored = self.project.commit("DATA: restore")
+        result = validate_completion(self.root)
+        self.assertEqual(blockers_with_reason(result, "downstream", CHANGED), [])
+        reverted = result["git"]["reverted_frozen_changes"]
+        self.assertEqual(reverted[0]["commits"], [mistaken, restored])
+
     def test_revision_must_name_a_commit_that_changed_the_object(self) -> None:
         self._frozen_then_revised()
         with self.assertRaisesRegex(ResearchDbError, "没有改变该对象内容"):

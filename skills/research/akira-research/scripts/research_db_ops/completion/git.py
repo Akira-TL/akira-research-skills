@@ -252,6 +252,28 @@ class FreezeHistory:
         repo_path = self.layout.repo_path(project_path)
         return None if repo_path is None else self._revision_rows.get((repo_path, commit))
 
+    def effective_changes(self, since: str, project_path: str) -> tuple[list[str], list[str]]:
+        """Split content changes into (effective, restored) commits.
+
+        Commits whose edits are later undone, i.e. the object returns to a
+        content it already had since the freeze (the frozen bytes or an
+        earlier state), are ``restored``; the remaining commits explain the
+        difference between the frozen and the current content.
+        """
+
+        stack: list[tuple[str | None, str | None]] = [(self.blob(since, project_path), None)]
+        restored: list[str] = []
+        for commit in self.iter_content_changes(since, project_path):
+            blob = self.blob(commit, project_path)
+            earlier = next((index for index, (state, _) in enumerate(stack) if state == blob), None)
+            if earlier is None:
+                stack.append((blob, commit))
+                continue
+            restored.extend(str(entry[1]) for entry in stack[earlier + 1 :])
+            restored.append(commit)
+            del stack[earlier + 1 :]
+        return [str(commit) for _, commit in stack[1:]], restored
+
     def blocking_changes(
         self,
         since: str,
@@ -262,39 +284,35 @@ class FreezeHistory:
     ) -> FrozenChange | None:
         """Return ``None`` when the frozen object passes, else the commits that block it.
 
-        An object whose current content is byte-identical to the frozen version
-        passes; intermediate commits that changed and restored it are only
-        listed in the run summary (``reverted_frozen_changes``). Otherwise every
+        Edits that were later undone (the object came back to bytes it already
+        had, including the frozen bytes) do not block; they are only listed in
+        the run summary (``reverted_frozen_changes``). Every remaining
         content-changing commit needs a recorded passing revision
         (``PASSING_REVISION_CATEGORIES``). Unrecorded commits are listed in
         ``commits``; commits recorded as ``substantive`` stay blocking and are
         listed in ``substantive_commits`` because they need a new Analysis or
-        Design rather than a revision note. With ``report=False`` the check
-        stops at the first blocking commit and nothing is added to the run
-        summary (used for legacy compatibility, where living documents are
-        expected to change).
+        Design rather than a revision note. With ``report=False`` nothing is
+        added to the run summary (used for legacy compatibility, where living
+        documents are expected to change).
         """
 
         change = FrozenChange(path=project_path, anchor=anchor, since=since)
+        effective, restored = self.effective_changes(since, project_path)
+        if report and restored:
+            self.reverted[(project_path, anchor, since)] = FrozenChange(
+                path=project_path, anchor=anchor, since=since, commits=restored
+            )
         if not self.net_changed(since, project_path):
-            if report:
-                change.commits = self.content_changes(since, project_path)
-                if change.commits:
-                    self.reverted[(project_path, anchor, since)] = change
             return None
-        for commit in self.iter_content_changes(since, project_path):
+        for commit in effective:
             revision = self._revision_for(project_path, commit)
             if revision is not None and revision["category"] in PASSING_REVISION_CATEGORIES:
                 if report:
                     self.applied[(revision["path"], commit)] = revision
                 continue
             (change.commits if revision is None else change.substantive_commits).append(commit)
-            if not report:
-                return change
-        if not change.commits and not change.substantive_commits:
-            # Net content differs, yet every change commit is a recorded passing revision.
-            if self.content_changes(since, project_path):
-                return None
+        if not change.commits and not change.substantive_commits and effective:
+            return None
         if report:
             self.blocked[(project_path, anchor, since)] = change
         return change
