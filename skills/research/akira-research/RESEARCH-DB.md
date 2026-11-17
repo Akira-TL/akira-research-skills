@@ -259,10 +259,11 @@ Target workspace 的 `source_commit` 是“本次目标格式 build 实际消费
 
 冻结之后的修改不再一律判为失败。门禁按 Git blob 比较冻结对象在冻结提交之后的每个非合并提交（只碰路径而内容不变的提交不算修改），对每个改变内容的提交查 `freeze_revisions`（schema v31）：
 
-- 字段：`path`（相对科研根，指冻结对象）、`revision_commit`（完整提交号）、`category`（`path_migration` 路径迁移 | `redundant_checksum_removal` 去掉冗余校验值 | `substantive` 实质修改）、`reason`；同一 `(path, revision_commit)` 只能有一条，已有说明不可静默改写。
+- 字段：`path`（相对科研根，指冻结对象）、`revision_commit`（完整提交号）、`category`（`path_migration` 路径迁移 | `redundant_checksum_removal` 去掉冗余校验值 | `execution_status_update` 执行状态更新 | `substantive` 实质修改）、`reason`；同一 `(path, revision_commit)` 只能有一条，已有说明不可静默改写。
 - 冻结对象当前内容与冻结版本逐字节相同（按 Git blob 比较，迁移后按映射路径比较）时直接放行；中间“改了又改回”的提交不要求登记，只列在 `git.reverted_frozen_changes` 供查看。
-- 只有登记为 `path_migration` 或 `redundant_checksum_removal` 的修改通过门禁，并出现在 `validate --completion` 输出的 `git.applied_freeze_revisions`。没有记录的修改作为 blocker 报出并列出提交号，同时汇总在 `git.unrecorded_frozen_changes`。登记为 `substantive` 的修改只保留 provenance，仍然阻塞（blocker 中的 `substantive_commits`，汇总在 `git.substantive_frozen_changes`）：实质修改须恢复冻结版本，并以新的 Analysis、Design 或 Hypothesis Set 承载。
-- 适用范围：已冻结 Hypothesis Set 与 frozen / execution-ready Research Design 的正文；确认性 Analysis 的冻结计划、代码与输入；Communication 科学 `source_commit` 之后的科学 canonical artifact；以及 legacy baseline 兼容的人类 artifact。legacy 文件只有在全部改动都登记为上述两类非实质修订时才保留兼容身份，出现 `substantive` 修订或未提交修改后按当前格式契约检查；`RESEARCH.md` 这类持续更新的文件不会被列为待登记修订，需保留兼容身份的文件由修改者显式登记。Communication target build 的 source drift 仍要求重新 build，不接受修订说明。
+- 只有登记为 `path_migration`、`redundant_checksum_removal` 或 `execution_status_update` 的修改通过门禁，并出现在 `validate --completion` 输出的 `git.applied_freeze_revisions`。没有记录的修改作为 blocker 报出并列出提交号，同时汇总在 `git.unrecorded_frozen_changes`。登记为 `substantive` 的修改只保留 provenance，仍然阻塞（blocker 中的 `substantive_commits`，汇总在 `git.substantive_frozen_changes`）：实质修改须恢复冻结版本，并以新的 Analysis、Design 或 Hypothesis Set 承载。
+- 适用范围：已冻结 Hypothesis Set 与 frozen / execution-ready Research Design 的正文；确认性 Analysis 的冻结计划、代码与输入；Communication 科学 `source_commit` 之后的科学 canonical artifact；以及 legacy baseline 兼容的人类 artifact。legacy 文件只有在全部改动都登记为上述三类非实质修订时才保留兼容身份，出现 `substantive` 修订或未提交修改后按当前格式契约检查；`RESEARCH.md` 这类持续更新的文件不会被列为待登记修订，需保留兼容身份的文件由修改者显式登记。Communication target build 的 source drift 仍要求重新 build，不接受修订说明。
+- `execution_status_update`（执行状态更新）只允许修改执行层状态（如“已冻结待实现”改为“可执行未执行”）、实现提交号与评审记录，不允许改科学内容（问题、估计量、样本、测量、判定边界、预测等）。对已登记的 Design 正文，登记时机器核对：标题与二级章节结构不变，且只有 `Navigation`、`Feasibility / Ethics / Access Constraints`、`Freeze and Amendments` 发生变化；对 Hypothesis Set 正文只允许 `Navigation` 变化。其他文件（Analysis / Dataset 说明、代码等）无法机器区分，由登记者对“未改科学内容”负责。
 - 门禁读取冻结内容一律从冻结提交取（`git show <commit>:<path>`）；“设计先于结果”由冻结提交是结果 artifact 首次提交的祖先来判定，结果 artifact 也不得已存在于冻结提交。
 - 登记：`research-db record-freeze-revisions [bundle]`，bundle 顶层可给出 `revision_commit` / `category` / `reason` 默认值，`revisions` 中每项是路径字符串或含同名字段的对象；每个提交必须位于当前 HEAD 历史中且确实改变了该对象内容，否则整批不写入。`research-db freeze-revisions --pending` 列出已登记修订与尚未登记的冻结后变化。
 

@@ -8,10 +8,23 @@ from typing import Any
 
 import research_db_ops.common as common
 from research_db_ops.completion.git import FreezeHistory
+from research_db_ops.completion.human.validation import markdown_h2_sections
 from research_db_support.storage import ResearchDbError, connect
 
 
-REVISION_CATEGORIES = {"path_migration", "redundant_checksum_removal", "substantive"}
+REVISION_CATEGORIES = {
+    "path_migration",
+    "redundant_checksum_removal",
+    "execution_status_update",
+    "substantive",
+}
+# H2 sections of fixed-format human artifacts that may carry execution-layer
+# status, implementation commit ids and review records. An
+# execution_status_update revision of such an artifact may change nothing else.
+EXECUTION_STATUS_SECTIONS = {
+    "design": {"Navigation", "Feasibility / Ethics / Access Constraints", "Freeze and Amendments"},
+    "hypothesis": {"Navigation"},
+}
 
 
 def _revision_items(bundle: dict[str, Any]) -> list[dict[str, Any]]:
@@ -38,6 +51,38 @@ def _revision_items(bundle: dict[str, Any]) -> list[dict[str, Any]]:
     return parsed
 
 
+def _structured_artifact_kinds(project_root: Path, history: FreezeHistory) -> dict[str, str]:
+    """Map repository paths of registered Design / Hypothesis artifacts to their kind."""
+
+    kinds: dict[str, str] = {}
+    with connect(common.db_path(project_root)) as connection:
+        for kind, table in (("design", "research_designs"), ("hypothesis", "hypothesis_sets")):
+            for row in connection.execute(f"SELECT artifact_path FROM {table}"):
+                repo_path = history.layout.repo_path(str(row["artifact_path"]))
+                if repo_path is not None:
+                    kinds[repo_path] = kind
+    return kinds
+
+
+def _execution_status_problem(history: FreezeHistory, kind: str, item: dict[str, Any], parent: str) -> str | None:
+    before_raw = history.read(parent, item["path"])
+    after_raw = history.read(item["revision_commit"], item["path"])
+    if before_raw is None or after_raw is None:
+        return f"{item['path']}：execution_status_update 只能用于修改已有对象，不能新增或删除文件。"
+    before = markdown_h2_sections(before_raw.decode("utf-8", errors="replace"))
+    after = markdown_h2_sections(after_raw.decode("utf-8", errors="replace"))
+    if before[0] != after[0] or before[1] != after[1]:
+        return f"{item['path']}：execution_status_update 不能改变标题或二级章节结构。"
+    allowed = EXECUTION_STATUS_SECTIONS[kind]
+    changed = [name for name in before[1] if name not in allowed and before[2][name] != after[2].get(name)]
+    if changed:
+        return (
+            f"{item['path']}：execution_status_update 只允许修改 {', '.join(sorted(allowed))}；"
+            f"该提交还改了科学章节：{', '.join(changed)}。"
+        )
+    return None
+
+
 def record_freeze_revisions(project_root: Path, bundle: dict[str, Any]) -> dict[str, Any]:
     """Atomically record one or more (path, revision commit) revision notes.
 
@@ -51,6 +96,7 @@ def record_freeze_revisions(project_root: Path, bundle: dict[str, Any]) -> dict[
     if head is None:
         raise ResearchDbError("科研项目尚无 Git commit，无法登记冻结后修订。")
     problems: list[str] = []
+    structured_kinds: dict[str, str] | None = None
     for item in items:
         full = history.resolve(str(item["revision_commit"]))
         if full is None:
@@ -67,6 +113,14 @@ def record_freeze_revisions(project_root: Path, bundle: dict[str, Any]) -> dict[
         before = history.blob(parents[0], item["path"]) if parents else None
         if history.blob(full, item["path"]) == before:
             problems.append(f"{item['path']}：{full[:12]} 没有改变该对象内容，无需登记修订。")
+            continue
+        if item["category"] == "execution_status_update" and parents:
+            if structured_kinds is None:
+                structured_kinds = _structured_artifact_kinds(project_root, history)
+            kind = structured_kinds.get(str(history.layout.repo_path(str(item["path"]))))
+            problem = _execution_status_problem(history, kind, item, parents[0]) if kind else None
+            if problem:
+                problems.append(problem)
     if problems:
         raise ResearchDbError("冻结后修订登记失败：" + " | ".join(problems))
 

@@ -23,7 +23,9 @@ from research_db_support.storage import connect, database_path
 
 # Revision categories that let a post-freeze change pass. A ``substantive``
 # revision is recorded for provenance but keeps blocking.
-PASSING_REVISION_CATEGORIES = frozenset({"path_migration", "redundant_checksum_removal"})
+PASSING_REVISION_CATEGORIES = frozenset(
+    {"path_migration", "redundant_checksum_removal", "execution_status_update"}
+)
 
 
 @dataclass(frozen=True)

@@ -28,6 +28,15 @@ def _sections(text: str) -> tuple[list[str], dict[str, str]]:
     return order, sections
 
 
+def markdown_h2_sections(text: str) -> tuple[str, list[str], dict[str, str]]:
+    """Split Markdown into (text before the first H2, H2 order, H2 bodies)."""
+
+    first = _H2_RE.search(text)
+    preamble = text[: first.start()].strip() if first else text.strip()
+    order, sections = _sections(text)
+    return preamble, order, sections
+
+
 def _markdown_target(raw: str) -> str:
     target = raw.strip()
     if target.startswith("<") and ">" in target:

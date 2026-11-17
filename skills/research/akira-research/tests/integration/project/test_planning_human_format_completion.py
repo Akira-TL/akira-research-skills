@@ -9,7 +9,7 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parents[3] / "scripts"
 sys.path.insert(0, str(SCRIPT_DIR))
 
-from research_db_core import init_database  # noqa: E402
+from research_db_core import ResearchDbError, init_database  # noqa: E402
 from research_db_ops.completion import planning_completion_readiness, validate_completion  # noqa: E402
 from research_db_ops.project import record_freeze_revisions  # noqa: E402
 from research_db_ops.planning import (  # noqa: E402
@@ -293,6 +293,32 @@ Statement: 主要效应由目标因素之外的路径解释。
         self.assertEqual(changed[0]["changes"][0]["commits"], [moved])
         self._record_design_revision(moved, "path_migration")
         self.assertEqual(self._design_change_blockers(), [])
+
+        design_path.write_text(
+            design_path.read_text(encoding="utf-8").replace(
+                "进入结果判别前冻结；后续变更必须显式记录。",
+                "进入结果判别前冻结；执行层状态：可执行、未执行，实现提交 abc1234 已通过评审。",
+            ),
+            encoding="utf-8",
+        )
+        status = self._commit_all("DESIGN: mark execution ready")
+        self._record_design_revision(status, "execution_status_update")
+        self.assertEqual(self._design_change_blockers(), [])
+
+        design_path.write_text(
+            design_path.read_text(encoding="utf-8").replace("按结果前定义的主要对比边界解释。", "放宽判定边界。"),
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "-C", str(self.root), "add", "designs/causal-design.md"], check=True)
+        subprocess.run(
+            ["git", "-C", str(self.root), "commit", "-qm", "DESIGN: widen decision boundary"], check=True
+        )
+        disguised = subprocess.run(
+            ["git", "-C", str(self.root), "rev-parse", "HEAD"], check=True, capture_output=True, text=True
+        ).stdout.strip()
+        with self.assertRaisesRegex(ResearchDbError, "Decision Boundary"):
+            self._record_design_revision(disguised, "execution_status_update")
+        subprocess.run(["git", "-C", str(self.root), "reset", "-q", "--keep", "HEAD~1"], check=True)
 
         design_path.write_text(
             design_path.read_text(encoding="utf-8").replace("独立随机化集群。", "独立受试者。", 1), encoding="utf-8"

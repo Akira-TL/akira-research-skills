@@ -19,7 +19,8 @@ def format_frozen_changes(blocker: dict[str, Any]) -> str:
 
 
 FROZEN_CHANGE_GUIDANCE = (
-    "只有路径迁移（path_migration）与去掉冗余校验值（redundant_checksum_removal）可用 "
+    "只有路径迁移（path_migration）、去掉冗余校验值（redundant_checksum_removal）与执行状态更新"
+    "（execution_status_update）可用 "
     "research-db record-freeze-revisions 登记后放行；实质修改须恢复冻结版本，"
     "并以新的 Analysis / Design（或 Hypothesis Set）承载修订。"
 )
