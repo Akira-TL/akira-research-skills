@@ -91,6 +91,6 @@ Research Question、Active Uncertainty、分支和跨对象关系由 [`research-
 
 科研历史依赖 Git 保存版本演化，结构化数据库另保留其语义 change log。每个可独立解释的科研事件按全局原子提交规则收口。
 
-准备声明一个有边界科研工作流或里程碑完成前，先提交本轮 owned canonical artifacts / derived outputs，再运行 `research-db validate --completion`。冻结对象以提交号 + 路径识别；冻结后的修改需逐提交登记修订说明才能通过门禁，规则见 [`RESEARCH-DB.md`](RESEARCH-DB.md)。该门禁证明当前已实现的 provenance / workflow 条件闭合，不证明 Scientific Objective 已被“验证为真”。
+准备声明一个有边界科研工作流或里程碑完成前，先提交本轮 owned canonical artifacts / derived outputs，再运行 `research-db validate --completion`。冻结对象以提交号 + 路径识别；冻结后只有路径迁移与去掉冗余校验值两类修改可登记修订说明后通过门禁，实质修改须建立新的 Analysis 或 Design，规则见 [`RESEARCH-DB.md`](RESEARCH-DB.md)。该门禁证明当前已实现的 provenance / workflow 条件闭合，不证明 Scientific Objective 已被“验证为真”。
 
 完成标准：项目状态、research-tree、适用规范、子工作流结果、provenance 与 Git history 彼此一致，且总 Router 能解释为什么下一步继续、切换分支或在真实边界停止。

@@ -7,10 +7,23 @@ def format_frozen_changes(blocker: dict[str, Any]) -> str:
     changes = blocker.get("changes")
     if not changes:
         return ", ".join(str(path) for path in blocker.get("paths", []))
-    return "; ".join(
-        f"{item['path']}（" + (", ".join(commit[:12] for commit in item["commits"]) or "无可定位提交") + "）"
-        for item in changes
-    )
+    parts: list[str] = []
+    for item in changes:
+        notes: list[str] = []
+        if item.get("commits"):
+            notes.append("未登记：" + ", ".join(commit[:12] for commit in item["commits"]))
+        if item.get("substantive_commits"):
+            notes.append("实质修改：" + ", ".join(commit[:12] for commit in item["substantive_commits"]))
+        parts.append(f"{item['path']}（{'；'.join(notes) or '无可定位提交'}）")
+    return "; ".join(parts)
+
+
+FROZEN_CHANGE_GUIDANCE = (
+    "只有路径迁移（path_migration）与去掉冗余校验值（redundant_checksum_removal）可用 "
+    "research-db record-freeze-revisions 登记后放行；实质修改须恢复冻结版本，"
+    "并以新的 Analysis / Design（或 Hypothesis Set）承载修订。"
+)
+
 
 def append_literature_errors(errors: list[str], blockers: list[dict[str, Any]]) -> None:
     for blocker in blockers:
@@ -276,10 +289,10 @@ def append_downstream_errors(errors: list[str], blockers: list[dict[str, Any]]) 
             )
         elif reason == "analysis_frozen_artifact_changed_after_freeze":
             errors.append(
-                f"Analysis {blocker.get('analysis')} 的已冻结计划/代码/输入在 freeze 后有未登记修订说明的内容变化："
+                f"Analysis {blocker.get('analysis')} 的已冻结计划/代码/输入在 freeze 后有未放行的内容变化："
                 + format_frozen_changes(blocker)
-                + "；若修改正当，用 research-db record-freeze-revisions 逐提交登记修订类别与原因，"
-                "否则恢复冻结版本，并把结果后修订作为新增 artifact/amendment。"
+                + "；"
+                + FROZEN_CHANGE_GUIDANCE
             )
         elif reason == "analysis_result_commit_not_after_freeze":
             errors.append(
@@ -535,8 +548,9 @@ def append_communication_errors(errors: list[str], blockers: list[dict[str, Any]
         elif reason == "scientific_source_changed_after_communication_freeze":
             errors.append(
                 f"Communication Product {blocker.get('communication')} 所依据的科研 source commit 之后"
-                "仍有未登记修订说明的科学 canonical artifact 变化；"
-                "传播稿必须基于最新稳定证据重新审阅，或为不影响科学内容的修改登记 record-freeze-revisions："
+                "仍有未放行的科学 canonical artifact 变化；"
+                "传播稿必须基于最新稳定证据重新审阅，或为不影响科学内容的路径迁移/冗余校验值删除登记 "
+                "record-freeze-revisions："
                 + format_frozen_changes(blocker)
             )
         elif reason in {

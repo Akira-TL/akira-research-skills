@@ -93,7 +93,8 @@ class PathMigrationTests(unittest.TestCase):
         self.project.commit("PROVENANCE: record directory migration")
         changed = blockers_with_reason(validate_completion(research), "downstream", CHANGED)
         self.assertEqual(
-            changed[0]["changes"], [{"path": "analysis/trajectory/README.md", "commits": [migration_commit]}]
+            changed[0]["changes"],
+            [{"path": "analysis/trajectory/README.md", "commits": [migration_commit], "substantive_commits": []}],
         )
         record_freeze_revisions(
             research,

@@ -95,7 +95,9 @@ def path_is_unchanged_since_baseline(
     """A legacy artifact keeps its grandfathered status while it matches the baseline.
 
     Committed changes after the baseline keep the status only when each change
-    commit has a recorded freeze revision; uncommitted edits always end it.
+    commit has a recorded non-substantive freeze revision (path migration or
+    redundant checksum removal); a substantive revision or an uncommitted edit
+    ends it, and the current format contract applies.
     """
 
     if not baseline_commit:
@@ -107,7 +109,7 @@ def path_is_unchanged_since_baseline(
     if not history.has_path(baseline_commit, relative_path):
         return False
     if (
-        history.unrecorded_changes(baseline_commit, relative_path, anchor="legacy_baseline", report=False)
+        history.blocking_changes(baseline_commit, relative_path, anchor="legacy_baseline", report=False)
         is not None
     ):
         return False

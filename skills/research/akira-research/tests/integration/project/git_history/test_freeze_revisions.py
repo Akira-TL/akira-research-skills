@@ -41,7 +41,8 @@ class FreezeRevisionTests(unittest.TestCase):
         changed = blockers_with_reason(result, "downstream", CHANGED)
         self.assertEqual(len(changed), 1)
         self.assertEqual(
-            changed[0]["changes"], [{"path": "data/sleep/README.md", "commits": [revision_commit]}]
+            changed[0]["changes"],
+            [{"path": "data/sleep/README.md", "commits": [revision_commit], "substantive_commits": []}],
         )
         pending = list_freeze_revisions(self.root, pending=True)["pending"]
         self.assertEqual([item["path"] for item in pending], ["data/sleep/README.md"])
@@ -102,6 +103,41 @@ class FreezeRevisionTests(unittest.TestCase):
         second = self.project.commit("DATA: substantive edit")
         changed = blockers_with_reason(validate_completion(self.root), "downstream", CHANGED)
         self.assertEqual(changed[0]["changes"][0]["commits"], [second])
+
+    def test_substantive_revision_is_recorded_but_keeps_blocking(self) -> None:
+        revision = self._frozen_then_revised()
+        record_freeze_revisions(
+            self.root,
+            {
+                "revision_commit": revision,
+                "category": "substantive",
+                "reason": "改变了推断单位说明。",
+                "revisions": ["data/sleep/README.md"],
+            },
+        )
+        result = validate_completion(self.root)
+        changed = blockers_with_reason(result, "downstream", CHANGED)
+        self.assertEqual(changed[0]["changes"][0]["substantive_commits"], [revision])
+        self.assertEqual(changed[0]["changes"][0]["commits"], [])
+        self.assertEqual(result["git"]["unrecorded_frozen_changes"], [])
+        self.assertEqual(list_freeze_revisions(self.root, pending=True)["pending"], [])
+        self.assertTrue(any("新的 Analysis" in error for error in result["errors"]))
+
+    def test_legacy_status_ends_with_a_substantive_revision(self) -> None:
+        legacy = self.project.write("designs/legacy.md", "# 旧设计\n\n旧结论。\n")
+        baseline = self.project.commit("DESIGN: legacy baseline")
+        legacy.write_text("# 旧设计\n\n新结论。\n", encoding="utf-8")
+        revision = self.project.commit("DESIGN: rewrite conclusion")
+        record_freeze_revisions(
+            self.root,
+            {
+                "revision_commit": revision,
+                "category": "substantive",
+                "reason": "改写结论。",
+                "revisions": ["designs/legacy.md"],
+            },
+        )
+        self.assertFalse(path_is_unchanged_since_baseline(self.root, legacy, baseline))
 
     def test_legacy_grandfathering_survives_recorded_revisions_only(self) -> None:
         legacy = self.project.write("designs/legacy.md", "# 旧设计\n\nsha256: abc\n")

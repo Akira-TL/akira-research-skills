@@ -266,22 +266,23 @@ def _append_freeze_snapshot_blockers(
             }
         )
 
-    unrecorded_changes: list[dict[str, Any]] = []
-    for path in dict.fromkeys(freeze_required_paths):
-        if not history.has_path(freeze_commit, path):
-            continue
-        commits = history.unrecorded_changes(freeze_commit, path, anchor=f"analysis:{slug}")
-        if commits is not None:
-            unrecorded_changes.append({"path": path, "commits": commits})
-    if unrecorded_changes:
-        unrecorded_changes.sort(key=lambda item: item["path"])
+    blocked_changes = sorted(
+        (
+            change.blocker_entry()
+            for path in dict.fromkeys(freeze_required_paths)
+            if history.has_path(freeze_commit, path)
+            and (change := history.blocking_changes(freeze_commit, path, anchor=f"analysis:{slug}")) is not None
+        ),
+        key=lambda item: item["path"],
+    )
+    if blocked_changes:
         blockers.append(
             {
                 "reason": "analysis_frozen_artifact_changed_after_freeze",
                 "analysis": slug,
                 "freeze_commit": freeze_commit,
-                "paths": [item["path"] for item in unrecorded_changes],
-                "changes": unrecorded_changes,
+                "paths": [item["path"] for item in blocked_changes],
+                "changes": blocked_changes,
             }
         )
 

@@ -740,11 +740,11 @@ def communication_completion_readiness(project_root: Path) -> dict[str, Any]:
             history = freeze_history(project_root)
             changed_science = []
             for path in scientific_paths:
-                commits = history.unrecorded_changes(
+                change = history.blocking_changes(
                     source_commit, path, anchor=f"communication:{slug}", net_only=True
                 )
-                if commits is not None:
-                    changed_science.append({"path": path, "commits": commits})
+                if change is not None:
+                    changed_science.append(change.blocker_entry())
             if changed_science:
                 blockers.append(
                     {

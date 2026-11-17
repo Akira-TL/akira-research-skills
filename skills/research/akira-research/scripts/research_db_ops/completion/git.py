@@ -21,6 +21,11 @@ from research_db_support.git_layout import GitLayout, commit_has_path, git_layou
 from research_db_support.storage import connect, database_path
 
 
+# Revision categories that let a post-freeze change pass. A ``substantive``
+# revision is recorded for provenance but keeps blocking.
+PASSING_REVISION_CATEGORIES = frozenset({"path_migration", "redundant_checksum_removal"})
+
+
 @dataclass(frozen=True)
 class PathMigration:
     commit: str
@@ -39,9 +44,19 @@ class FrozenChange:
     anchor: str
     since: str
     commits: list[str] = field(default_factory=list)
+    substantive_commits: list[str] = field(default_factory=list)
 
     def as_dict(self) -> dict[str, Any]:
-        return {"path": self.path, "anchor": self.anchor, "since": self.since, "commits": self.commits}
+        return {
+            "path": self.path,
+            "anchor": self.anchor,
+            "since": self.since,
+            "commits": self.commits,
+            "substantive_commits": self.substantive_commits,
+        }
+
+    def blocker_entry(self) -> dict[str, Any]:
+        return {"path": self.path, "commits": self.commits, "substantive_commits": self.substantive_commits}
 
 
 class FreezeHistory:
@@ -52,7 +67,7 @@ class FreezeHistory:
         self._ancestry: dict[tuple[str, str], bool] = {}
         self._blobs: dict[tuple[str, str], str | None] = {}
         self._changes: dict[tuple[str, str], list[str]] = {}
-        self.unrecorded: dict[tuple[str, str, str], FrozenChange] = {}
+        self.blocked: dict[tuple[str, str, str], FrozenChange] = {}
         self.applied: dict[tuple[str, str], dict[str, Any]] = {}
         self._revision_rows: dict[tuple[str, str], dict[str, Any]] = {}
         self.migrations: list[PathMigration] = []
@@ -234,7 +249,7 @@ class FreezeHistory:
         repo_path = self.layout.repo_path(project_path)
         return None if repo_path is None else self._revision_rows.get((repo_path, commit))
 
-    def unrecorded_changes(
+    def blocking_changes(
         self,
         since: str,
         project_path: str,
@@ -242,44 +257,56 @@ class FreezeHistory:
         anchor: str,
         net_only: bool = False,
         report: bool = True,
-    ) -> list[str] | None:
-        """Return ``None`` when the frozen object passes, else its unrecorded change commits.
+    ) -> FrozenChange | None:
+        """Return ``None`` when the frozen object passes, else the commits that block it.
 
-        ``net_only`` ignores changes that were reverted before HEAD. With
-        ``report=False`` the check stops at the first unrecorded commit and is
-        not listed among pending freeze revisions (used for legacy
-        compatibility, where a living document is expected to change).
+        A content change passes only with a recorded non-substantive revision
+        (``PASSING_REVISION_CATEGORIES``). Unrecorded commits are listed in
+        ``commits``; commits recorded as ``substantive`` stay blocking and are
+        listed in ``substantive_commits`` because they need a new Analysis or
+        Design rather than a revision note. ``net_only`` ignores changes that
+        were reverted before HEAD. With ``report=False`` the check stops at the
+        first blocking commit and nothing is added to the run summary (used for
+        legacy compatibility, where living documents are expected to change).
         """
 
         if net_only and not self.net_changed(since, project_path):
             return None
+        change = FrozenChange(path=project_path, anchor=anchor, since=since)
         found_change = False
-        unrecorded: list[str] = []
         for commit in self.iter_content_changes(since, project_path):
             found_change = True
             revision = self._revision_for(project_path, commit)
-            if revision is not None:
+            if revision is not None and revision["category"] in PASSING_REVISION_CATEGORIES:
                 if report:
                     self.applied[(revision["path"], commit)] = revision
                 continue
-            unrecorded.append(commit)
+            (change.commits if revision is None else change.substantive_commits).append(commit)
             if not report:
-                return unrecorded
-        if not unrecorded and (found_change or not net_only):
+                return change
+        if not change.commits and not change.substantive_commits and (found_change or not net_only):
             return None
         if report:
-            entry = self.unrecorded.setdefault(
-                (project_path, anchor, since), FrozenChange(path=project_path, anchor=anchor, since=since)
-            )
-            entry.commits = unrecorded
-        return unrecorded
+            self.blocked[(project_path, anchor, since)] = change
+        return change
 
     def first_change(self, since: str, project_path: str) -> str | None:
         return next(self.iter_content_changes(since, project_path), None)
 
     def summary(self) -> dict[str, Any]:
+        def entry(change: FrozenChange, commits: list[str]) -> dict[str, Any]:
+            return {"path": change.path, "anchor": change.anchor, "since": change.since, "commits": commits}
+
+        blocked = list(self.blocked.values())
         return {
-            "unrecorded_frozen_changes": [change.as_dict() for change in self.unrecorded.values()],
+            "unrecorded_frozen_changes": [
+                entry(change, change.commits)
+                for change in blocked
+                if change.commits or not change.substantive_commits
+            ],
+            "substantive_frozen_changes": [
+                entry(change, change.substantive_commits) for change in blocked if change.substantive_commits
+            ],
             "applied_freeze_revisions": list(self.applied.values()),
         }
 
@@ -308,6 +335,7 @@ def freeze_history(project_root: Path) -> FreezeHistory:
 
 __all__ = [
     "FreezeHistory",
+    "PASSING_REVISION_CATEGORIES",
     "PathMigration",
     "FrozenChange",
     "commit_has_path",
