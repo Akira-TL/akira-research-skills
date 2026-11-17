@@ -12,6 +12,7 @@
 
 ### Changed
 
+- 新增 `redact-text-checksums`（支持 `--dry-run` 与 `--reason`）：把说明 / 理由 / 摘要类自由文本字段中独立出现的 64 位 SHA256（含 `sha256:` 前缀）替换为 `［已移除冗余校验值］`，逐字段写 `change_log`（`text_checksum_redacted`）；40 位提交号、身份、路径、`version`、JSON、专用 `sha256` 列与 `change_log` 不改。
 - 新增 `clear-tracked-artifact-checksums`（支持 `--dry-run`）清空 Git 跟踪 artifact `version` 中的纯 SHA256 并逐条写 `change_log`；`tracked-artifact-checksums` 增加 `kind`，区分纯校验值与内嵌散列的版本标签（后者不清理）。
 - 新增第三类非实质修订 `execution_status_update`（执行状态更新，schema v33）：只改执行层状态、实现提交号与评审记录，登记后放行并保留 legacy 兼容身份；Design / Hypothesis 正文登记时机器核对只有允许的章节发生变化。
 - 冻结对象当前内容与冻结版本逐字节相同时直接放行，“改了又改回”的提交（对象回到冻结后已出现过的内容，即使此后还有已登记修订）不再阻塞、不要求登记，只在 `validate --completion` 的 `git.reverted_frozen_changes` 中列出。

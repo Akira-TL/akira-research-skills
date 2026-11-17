@@ -18,6 +18,7 @@ from research_db_ops.project import (
     record_research_edge,
     record_research_node,
     record_study,
+    redact_text_checksums,
     render_research_tree_view,
     set_research_tree_state,
 )
@@ -146,6 +147,11 @@ def register_project_commands(
         emit(clear_tracked_artifact_checksums(project_root, reason=args.reason, dry_run=args.dry_run))
         return 0
 
+    def cmd_redact_text_checksums(args: Any) -> int:
+        project_root = discover_project_root(args.project)
+        emit(redact_text_checksums(project_root, reason=args.reason, dry_run=args.dry_run))
+        return 0
+
     def cmd_record_study(args: Any) -> int:
         project_root = discover_project_root(args.project)
         emit(
@@ -197,6 +203,14 @@ def register_project_commands(
     clear_parser.add_argument("--dry-run", action="store_true")
     clear_parser.add_argument("--reason")
     clear_parser.set_defaults(handler=cmd_clear_tracked_artifact_checksums)
+
+    redact_parser = subparsers.add_parser(
+        "redact-text-checksums",
+        help="把说明/理由/摘要类自由文本中的独立 SHA256 替换为固定占位文本，逐格写 change_log；--dry-run 只列出。",
+    )
+    redact_parser.add_argument("--dry-run", action="store_true")
+    redact_parser.add_argument("--reason")
+    redact_parser.set_defaults(handler=cmd_redact_text_checksums)
 
     render_parser = subparsers.add_parser(
         "render-research-tree-view",

@@ -15,6 +15,7 @@ from .research_tree import (
 )
 from .research_tree_view import render_research_tree_view
 from .study import list_studies, record_study
+from .text_checksums import redact_text_checksums
 
 __all__ = [
     "clear_tracked_artifact_checksums",
@@ -31,6 +32,7 @@ __all__ = [
     "record_research_edge",
     "record_research_node",
     "record_study",
+    "redact_text_checksums",
     "render_research_tree_view",
     "set_research_tree_state",
 ]
