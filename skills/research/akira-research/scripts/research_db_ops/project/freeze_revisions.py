@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -127,3 +128,36 @@ def list_freeze_revisions(project_root: Path, *, pending: bool = False, limit: i
         git_info = validate_completion(project_root).get("git", {})
         result["pending"] = git_info.get("unrecorded_frozen_changes", [])
     return result
+
+
+_CHECKSUM_TEXT_RE = re.compile(r"[0-9a-fA-F]{64}")
+_TRACKED_ARTIFACT_QUERIES = (
+    (
+        "dataset_artifacts",
+        "SELECT a.id, d.slug AS owner, a.location AS path, a.version FROM dataset_artifacts a "
+        "JOIN datasets d ON d.id = a.dataset_id WHERE a.git_tracking = 'required' AND a.version IS NOT NULL "
+        "ORDER BY a.id",
+    ),
+    (
+        "study_artifacts",
+        "SELECT a.id, s.slug AS owner, a.location AS path, a.version FROM study_artifacts a "
+        "JOIN studies s ON s.id = a.study_id WHERE a.git_tracking = 'required' AND a.version IS NOT NULL "
+        "ORDER BY a.id",
+    ),
+)
+
+
+def list_tracked_artifact_checksums(project_root: Path) -> dict[str, Any]:
+    """Read-only report: Git-tracked artifacts whose free-text version still carries a SHA256.
+
+    Git-tracked artifacts are frozen by commit + path, so such checksums are
+    redundant historical text the project may clean up; nothing is changed here.
+    """
+
+    rows: list[dict[str, Any]] = []
+    with connect(common.db_path(project_root)) as connection:
+        for table, query in _TRACKED_ARTIFACT_QUERIES:
+            for row in connection.execute(query):
+                if _CHECKSUM_TEXT_RE.search(str(row["version"])):
+                    rows.append({"table": table, **dict(row)})
+    return {"ok": True, "count": len(rows), "artifacts": rows}

@@ -7,6 +7,7 @@ from research_db_ops.project import (
     get_research_tree,
     list_freeze_revisions,
     list_path_migrations,
+    list_tracked_artifact_checksums,
     migrate_human_artifact_path,
     record_freeze_revisions,
     record_path_migration,
@@ -134,6 +135,11 @@ def register_project_commands(
         emit(list_path_migrations(project_root))
         return 0
 
+    def cmd_tracked_artifact_checksums(args: Any) -> int:
+        project_root = discover_project_root(args.project)
+        emit(list_tracked_artifact_checksums(project_root))
+        return 0
+
     def cmd_record_study(args: Any) -> int:
         project_root = discover_project_root(args.project)
         emit(
@@ -171,6 +177,12 @@ def register_project_commands(
         help="列出已登记的整体目录迁移（迁移提交、旧前缀、新前缀）。",
     )
     migrations_parser.set_defaults(handler=cmd_path_migrations)
+
+    checksum_parser = subparsers.add_parser(
+        "tracked-artifact-checksums",
+        help="只读列出 version 中仍带 SHA256 的 Git 跟踪 Dataset/Study artifact，供项目清理。",
+    )
+    checksum_parser.set_defaults(handler=cmd_tracked_artifact_checksums)
 
     render_parser = subparsers.add_parser(
         "render-research-tree-view",

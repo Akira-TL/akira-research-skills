@@ -15,6 +15,7 @@ from git_fixtures import GitResearchProject  # noqa: E402
 
 from research_db_core import ResearchDbError, apply_migrations, validate  # noqa: E402
 from research_db_ops.downstream import list_datasets, record_dataset  # noqa: E402
+from research_db_ops.project import list_tracked_artifact_checksums  # noqa: E402
 from research_db_support.schema import list_migrations  # noqa: E402
 
 
@@ -65,6 +66,18 @@ class UntrackedArtifactSha256Tests(unittest.TestCase):
         artifact = list_datasets(self.root)["datasets"][0]["artifacts"][0]
         self.assertEqual(artifact["sha256"], self.digest)
         self.assertTrue(validate(self.root)["ok"], validate(self.root)["errors"])
+
+    def test_report_lists_tracked_artifacts_with_checksum_in_version(self) -> None:
+        record_dataset(
+            self.root,
+            _dataset_bundle(
+                {"role": "raw", "location": "data/weights/model.bin", "version": f"sha256:{self.digest}"}
+            ),
+        )
+        report = list_tracked_artifact_checksums(self.root)
+        self.assertEqual(report["count"], 1)
+        self.assertEqual(report["artifacts"][0]["path"], "data/weights/model.bin")
+        self.assertEqual(report["artifacts"][0]["owner"], "weights")
 
     def test_external_artifact_records_checksum_without_local_file(self) -> None:
         external = {

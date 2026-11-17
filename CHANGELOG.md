@@ -12,6 +12,7 @@
 
 ### Changed
 
+- 新增只读命令 `tracked-artifact-checksums`，列出 `version` 中仍带 SHA256 的 Git 跟踪 Dataset / Study artifact，便于项目清理冗余校验值。
 - 已冻结 Hypothesis Set 与 frozen / execution-ready Research Design 的正文纳入冻结后修改检查：冻结后的提交须登记为路径迁移或去掉冗余校验值，否则阻塞完成门禁。
 - 冻结后修订收紧：只有 `path_migration` 与 `redundant_checksum_removal` 两类修订放行，`substantive` 修订仍阻塞并提示建立新的 Analysis / Design；legacy 兼容身份只能经这两类修订保留。
 - 新增整体目录迁移：schema v32 `path_migrations` 记录迁移提交与新旧前缀，冻结核验按迁移记录把当前路径映射回冻结提交中的旧路径，纯移动不算修改；`record-path-migration` 一次性改写数据库全部路径字段（支持 `dry_run`，科研根随迁移进入子目录时留在原处的代码改写为 `../` 路径），`path-migrations` 列出已登记迁移。

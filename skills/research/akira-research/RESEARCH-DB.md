@@ -255,7 +255,7 @@ Target workspace 的 `source_commit` 是“本次目标格式 build 实际消费
 
 - **Git 跟踪的对象**（`git_tracking=required` 的 Dataset / Study / Analysis artifact、Hypothesis / Design 正文、Analysis 计划与代码等）以“冻结提交号 + 路径”冻结：数据库记录冻结提交（如 `freeze_commit`、`source_commit`），门禁从该提交读取内容（`git show <commit>:<path>`）。这类对象不记录、也不要求文件校验值；`dataset_artifacts` / `study_artifacts` / `analysis_artifacts` 中对 Git 跟踪对象登记 `sha256` 会被拒绝。
 - **未被 Git 跟踪的对象**（外部存储数据、模型权重、检查点、被忽略的运行输出等，即 `git_tracking=not_required` 或 `storage_kind=external`）可在上述三张表的 `sha256` 字段记录一个 SHA256（64 位十六进制，接受 `sha256:` 前缀并规范为小写）。本地文件登记时会与当前内容核对；同一 artifact 已有校验值后不可静默改写。门禁不在每次 completion 中重算大文件。
-- schema v30 只把旧项目中未跟踪 artifact 写在自由文本 `version` 里的 `sha256:<hex>` / 裸 64 位值复制到 `sha256`；Git 跟踪 artifact 的旧 `version` 文本保持原样，仅作为历史说明，不参与冻结判定。
+- schema v30 只把旧项目中未跟踪 artifact 写在自由文本 `version` 里的 `sha256:<hex>` / 裸 64 位值复制到 `sha256`；Git 跟踪 artifact 的旧 `version` 文本保持原样，仅作为历史说明，不参与冻结判定。`research-db tracked-artifact-checksums` 只读列出 `version` 中仍带 SHA256 的 Git 跟踪 Dataset / Study artifact，供项目自行清理。
 
 冻结之后的修改不再一律判为失败。门禁按 Git blob 比较冻结对象在冻结提交之后的每个非合并提交（只碰路径而内容不变的提交不算修改），对每个改变内容的提交查 `freeze_revisions`（schema v31）：
 
@@ -635,6 +635,7 @@ research-db record-freeze-revisions [bundle]
 research-db freeze-revisions [--pending]
 research-db record-path-migration [bundle]
 research-db path-migrations
+research-db tracked-artifact-checksums
 research-db record-hypothesis-proposal [bundle]
 research-db hypothesis-proposals
 research-db record-user-hypothesis-decision [bundle]

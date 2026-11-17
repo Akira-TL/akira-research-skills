@@ -1,4 +1,4 @@
-from .freeze_revisions import list_freeze_revisions, record_freeze_revisions
+from .freeze_revisions import list_freeze_revisions, list_tracked_artifact_checksums, record_freeze_revisions
 from .human_artifact_migration import migrate_human_artifact_path
 from .path_migration import list_path_migrations, record_path_migration
 from .research_git import list_research_branches, record_research_branch
@@ -17,6 +17,7 @@ __all__ = [
     "list_path_migrations",
     "list_research_branches",
     "list_studies",
+    "list_tracked_artifact_checksums",
     "migrate_human_artifact_path",
     "record_freeze_revisions",
     "record_path_migration",
