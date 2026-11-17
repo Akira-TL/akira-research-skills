@@ -8,6 +8,33 @@ from ... import common
 from ..git import freeze_history, run_git
 from ..language import canonical_paths
 
+def _append_post_freeze_change_blocker(
+    project_root: Path,
+    blockers: list[dict[str, Any]],
+    *,
+    reason: str,
+    owner: tuple[str, str],
+    freeze_commit: str,
+    path: str,
+) -> None:
+    kind, slug = owner
+    history = freeze_history(project_root)
+    if not history.is_ancestor(freeze_commit, "HEAD"):
+        return
+    change = history.blocking_changes(freeze_commit, path, anchor=f"{kind}:{slug}")
+    if change is None:
+        return
+    blockers.append(
+        {
+            "reason": reason,
+            kind: slug,
+            "freeze_commit": freeze_commit,
+            "paths": [path],
+            "changes": [change.blocker_entry()],
+        }
+    )
+
+
 def planning_completion_readiness(project_root: Path) -> dict[str, Any]:
     blockers: list[dict[str, Any]] = []
     db_path = database_path(project_root)
@@ -161,6 +188,15 @@ def planning_completion_readiness(project_root: Path) -> dict[str, Any]:
                         "path": hypothesis["artifact_path"],
                     }
                 )
+            else:
+                _append_post_freeze_change_blocker(
+                    project_root,
+                    blockers,
+                    reason="hypothesis_artifact_changed_after_freeze",
+                    owner=("hypothesis_set", str(hypothesis["slug"])),
+                    freeze_commit=freeze_commit,
+                    path=str(hypothesis["artifact_path"]),
+                )
 
         for design in connection.execute(
             """
@@ -211,6 +247,15 @@ def planning_completion_readiness(project_root: Path) -> dict[str, Any]:
                         "freeze_commit": freeze_commit,
                         "paths": missing_at_freeze,
                     }
+                )
+            if str(design["artifact_path"]) not in missing_at_freeze:
+                _append_post_freeze_change_blocker(
+                    project_root,
+                    blockers,
+                    reason="design_artifact_changed_after_freeze",
+                    owner=("design", str(design["slug"])),
+                    freeze_commit=freeze_commit,
+                    path=str(design["artifact_path"]),
                 )
             if design["hypothesis_set_id"] is not None:
                 hypothesis_freeze = str(design["hypothesis_freeze_commit"] or "").strip()

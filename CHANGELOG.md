@@ -12,6 +12,7 @@
 
 ### Changed
 
+- 已冻结 Hypothesis Set 与 frozen / execution-ready Research Design 的正文纳入冻结后修改检查：冻结后的提交须登记为路径迁移或去掉冗余校验值，否则阻塞完成门禁。
 - 冻结后修订收紧：只有 `path_migration` 与 `redundant_checksum_removal` 两类修订放行，`substantive` 修订仍阻塞并提示建立新的 Analysis / Design；legacy 兼容身份只能经这两类修订保留。
 - 新增整体目录迁移：schema v32 `path_migrations` 记录迁移提交与新旧前缀，冻结核验按迁移记录把当前路径映射回冻结提交中的旧路径，纯移动不算修改；`record-path-migration` 一次性改写数据库全部路径字段（支持 `dry_run`，科研根随迁移进入子目录时留在原处的代码改写为 `../` 路径），`path-migrations` 列出已登记迁移。
 - 冻结后修改改为“有修订说明即放行”：schema v31 新增 `freeze_revisions`（路径、修订提交、类别、原因），确认性 Analysis 冻结范围、Communication 科学来源与 legacy 兼容 artifact 的冻结后内容变化逐提交核对，未登记的变化作为阻塞项列出提交号；新增 `record-freeze-revisions`（可批量）与 `freeze-revisions --pending`。结果 artifact 的首次提交必须是冻结提交的后代。

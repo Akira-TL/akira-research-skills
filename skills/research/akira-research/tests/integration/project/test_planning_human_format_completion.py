@@ -11,6 +11,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 
 from research_db_core import init_database  # noqa: E402
 from research_db_ops.completion import planning_completion_readiness, validate_completion  # noqa: E402
+from research_db_ops.project import record_freeze_revisions  # noqa: E402
 from research_db_ops.planning import (  # noqa: E402
     record_design,
     record_hypothesis_proposal,
@@ -283,6 +284,54 @@ Statement: 主要效应由目标因素之外的路径解释。
         self.assertFalse(dirty["ok"])
         self.assertTrue(any("designs/causal-design.md" in error for error in dirty["errors"]))
 
+        # Committed post-freeze edits of a frozen Design pass only with a non-substantive revision note.
+        subprocess.run(["git", "-C", str(self.root), "checkout", "--", "designs/causal-design.md"], check=True)
+        text = design_path.read_text(encoding="utf-8")
+        design_path.write_text(text.replace("](../RESEARCH.md)", "](./../RESEARCH.md)", 1), encoding="utf-8")
+        moved = self._commit_all("DESIGN: update moved link")
+        changed = self._design_change_blockers()
+        self.assertEqual(changed[0]["changes"][0]["commits"], [moved])
+        self._record_design_revision(moved, "path_migration")
+        self.assertEqual(self._design_change_blockers(), [])
+
+        design_path.write_text(
+            design_path.read_text(encoding="utf-8").replace("独立随机化集群。", "独立受试者。", 1), encoding="utf-8"
+        )
+        substantive = self._commit_all("DESIGN: change experimental unit")
+        self._record_design_revision(substantive, "substantive")
+        changed = self._design_change_blockers()
+        self.assertEqual(changed[0]["changes"][0]["commits"], [])
+        self.assertEqual(changed[0]["changes"][0]["substantive_commits"], [substantive])
+        result = validate_completion(self.root)
+        self.assertEqual(
+            [item["path"] for item in result["git"]["substantive_frozen_changes"]], ["designs/causal-design.md"]
+        )
+        self.assertEqual(result["git"]["unrecorded_frozen_changes"], [])
+
+    def _record_design_revision(self, commit: str, category: str) -> None:
+        record_freeze_revisions(
+            self.root,
+            {
+                "revision_commit": commit,
+                "category": category,
+                "reason": "冻结后修订。",
+                "revisions": ["designs/causal-design.md"],
+            },
+        )
+
+    def _commit_all(self, message: str) -> str:
+        subprocess.run(["git", "-C", str(self.root), "add", "-A"], check=True)
+        subprocess.run(["git", "-C", str(self.root), "commit", "-m", message], check=True, capture_output=True)
+        return subprocess.run(
+            ["git", "-C", str(self.root), "rev-parse", "HEAD"], check=True, capture_output=True, text=True
+        ).stdout.strip()
+
+    def _design_change_blockers(self) -> list[dict]:
+        return [
+            item
+            for item in planning_completion_readiness(self.root)["blockers"]
+            if item["reason"] == "design_artifact_changed_after_freeze"
+        ]
 
 
 if __name__ == "__main__":

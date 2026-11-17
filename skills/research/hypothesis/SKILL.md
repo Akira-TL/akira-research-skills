@@ -21,7 +21,7 @@ description: 把当前 Research Question 中真正竞争的解释转成有范围
 
 ## 3. 保存来源与冻结边界
 
-区分用户提出、Agent 提议以及用户对 Agent proposal 的接受决定；接受探索不等于科学支持，也不改变原始来源。需要作为后续确认性 Design / Analysis 判别依据的 Hypothesis Set，按项目现有 `research-db` 契约登记并在结果前冻结；首次进入 frozen 前，`research-db` 先机械核验 `HUMAN-FORMAT.md` 的固定路径、H1/H2 与已知上游 Navigation，再执行学术语言检查。任一检查未通过都不得写入 frozen 状态，需要修正的人类科研正文必须在冻结前完成。
+区分用户提出、Agent 提议以及用户对 Agent proposal 的接受决定；接受探索不等于科学支持，也不改变原始来源。需要作为后续确认性 Design / Analysis 判别依据的 Hypothesis Set，按项目现有 `research-db` 契约登记并在结果前冻结；首次进入 frozen 前，`research-db` 先机械核验 `HUMAN-FORMAT.md` 的固定路径、H1/H2 与已知上游 Navigation，再执行学术语言检查。任一检查未通过都不得写入 frozen 状态，需要修正的人类科研正文必须在冻结前完成。冻结后对正文的提交只允许路径迁移或去掉冗余校验值，并须登记修订说明；实质修改建立新的 Hypothesis Set（规则见 [`RESEARCH-DB.md`](../akira-research/RESEARCH-DB.md)）。
 
 ## 4. 返回总 Router
 

@@ -349,6 +349,20 @@ def append_planning_errors(errors: list[str], blockers: list[dict[str, Any]]) ->
                 f"Hypothesis Set {blocker.get('hypothesis_set')} 的 canonical artifact 在所声明 freeze commit 中不存在："
                 f"{blocker.get('path')}"
             )
+        elif reason == "hypothesis_artifact_changed_after_freeze":
+            errors.append(
+                f"Hypothesis Set {blocker.get('hypothesis_set')} 的冻结正文在 freeze 后有未放行的内容变化："
+                + format_frozen_changes(blocker)
+                + "；"
+                + FROZEN_CHANGE_GUIDANCE
+            )
+        elif reason == "design_artifact_changed_after_freeze":
+            errors.append(
+                f"Research Design {blocker.get('design')} 的冻结正文在 freeze 后有未放行的内容变化："
+                + format_frozen_changes(blocker)
+                + "；"
+                + FROZEN_CHANGE_GUIDANCE
+            )
         elif reason == "hypothesis_set_missing_proposal_provenance":
             errors.append(
                 f"Hypothesis Set {blocker.get('hypothesis_set')} 是 schema v18 provenance 启用后新建的集合，"
