@@ -68,6 +68,7 @@ class FreezeHistory:
         self._blobs: dict[tuple[str, str], str | None] = {}
         self._changes: dict[tuple[str, str], list[str]] = {}
         self.blocked: dict[tuple[str, str, str], FrozenChange] = {}
+        self.reverted: dict[tuple[str, str, str], FrozenChange] = {}
         self.applied: dict[tuple[str, str], dict[str, Any]] = {}
         self._revision_rows: dict[tuple[str, str], dict[str, Any]] = {}
         self.migrations: list[PathMigration] = []
@@ -255,27 +256,31 @@ class FreezeHistory:
         project_path: str,
         *,
         anchor: str,
-        net_only: bool = False,
         report: bool = True,
     ) -> FrozenChange | None:
         """Return ``None`` when the frozen object passes, else the commits that block it.
 
-        A content change passes only with a recorded non-substantive revision
+        An object whose current content is byte-identical to the frozen version
+        passes; intermediate commits that changed and restored it are only
+        listed in the run summary (``reverted_frozen_changes``). Otherwise every
+        content-changing commit needs a recorded passing revision
         (``PASSING_REVISION_CATEGORIES``). Unrecorded commits are listed in
         ``commits``; commits recorded as ``substantive`` stay blocking and are
         listed in ``substantive_commits`` because they need a new Analysis or
-        Design rather than a revision note. ``net_only`` ignores changes that
-        were reverted before HEAD. With ``report=False`` the check stops at the
-        first blocking commit and nothing is added to the run summary (used for
-        legacy compatibility, where living documents are expected to change).
+        Design rather than a revision note. With ``report=False`` the check
+        stops at the first blocking commit and nothing is added to the run
+        summary (used for legacy compatibility, where living documents are
+        expected to change).
         """
 
-        if net_only and not self.net_changed(since, project_path):
-            return None
         change = FrozenChange(path=project_path, anchor=anchor, since=since)
-        found_change = False
+        if not self.net_changed(since, project_path):
+            if report:
+                change.commits = self.content_changes(since, project_path)
+                if change.commits:
+                    self.reverted[(project_path, anchor, since)] = change
+            return None
         for commit in self.iter_content_changes(since, project_path):
-            found_change = True
             revision = self._revision_for(project_path, commit)
             if revision is not None and revision["category"] in PASSING_REVISION_CATEGORIES:
                 if report:
@@ -284,8 +289,10 @@ class FreezeHistory:
             (change.commits if revision is None else change.substantive_commits).append(commit)
             if not report:
                 return change
-        if not change.commits and not change.substantive_commits and (found_change or not net_only):
-            return None
+        if not change.commits and not change.substantive_commits:
+            # Net content differs, yet every change commit is a recorded passing revision.
+            if self.content_changes(since, project_path):
+                return None
         if report:
             self.blocked[(project_path, anchor, since)] = change
         return change
@@ -307,6 +314,7 @@ class FreezeHistory:
             "substantive_frozen_changes": [
                 entry(change, change.substantive_commits) for change in blocked if change.substantive_commits
             ],
+            "reverted_frozen_changes": [entry(change, change.commits) for change in self.reverted.values()],
             "applied_freeze_revisions": list(self.applied.values()),
         }
 

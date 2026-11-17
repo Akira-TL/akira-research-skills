@@ -12,6 +12,7 @@
 
 ### Changed
 
+- 冻结对象当前内容与冻结版本逐字节相同时直接放行，中间“改了又改回”的提交不再阻塞、不要求登记，只在 `validate --completion` 的 `git.reverted_frozen_changes` 中列出。
 - 新增只读命令 `tracked-artifact-checksums`，列出 `version` 中仍带 SHA256 的 Git 跟踪 Dataset / Study artifact，便于项目清理冗余校验值。
 - 已冻结 Hypothesis Set 与 frozen / execution-ready Research Design 的正文纳入冻结后修改检查：冻结后的提交须登记为路径迁移或去掉冗余校验值，否则阻塞完成门禁。
 - 冻结后修订收紧：只有 `path_migration` 与 `redundant_checksum_removal` 两类修订放行，`substantive` 修订仍阻塞并提示建立新的 Analysis / Design；legacy 兼容身份只能经这两类修订保留。

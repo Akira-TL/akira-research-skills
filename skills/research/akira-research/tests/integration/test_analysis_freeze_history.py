@@ -185,7 +185,7 @@ class AnalysisFreezeHistoryTests(unittest.TestCase):
         self.assertEqual(len(blockers), 1)
         self.assertEqual(blockers[0]["paths"], ["data/sleep/premature-context.md"])
 
-    def test_completion_rejects_reverted_history_changes_to_frozen_input(self) -> None:
+    def test_reverted_history_changes_to_frozen_input_are_informational(self) -> None:
         self._write_plan_assets()
         self._record_dataset()
         self._record_planned_analysis()
@@ -231,14 +231,15 @@ class AnalysisFreezeHistoryTests(unittest.TestCase):
         self._commit("ANALYSIS: record result after reverted input history")
 
         result = validate_completion(self.root)
-        self.assertFalse(result["ok"])
         blockers = [
             item
             for item in result["downstream"]["blockers"]
             if item["reason"] == "analysis_frozen_artifact_changed_after_freeze"
         ]
-        self.assertEqual(len(blockers), 1)
-        self.assertEqual(blockers[0]["paths"], ["data/sleep/raw.csv"])
+        self.assertEqual(blockers, [])
+        reverted = result["git"]["reverted_frozen_changes"]
+        self.assertEqual([item["path"] for item in reverted], ["data/sleep/raw.csv"])
+        self.assertEqual(len(reverted[0]["commits"]), 2)
 
     def test_completed_analysis_preserves_completed_at_when_appending_provenance(self) -> None:
         self._write_plan_assets()
