@@ -186,7 +186,7 @@ def register_project_commands(
 
     migrations_parser = subparsers.add_parser(
         "path-migrations",
-        help="列出已登记的整体目录迁移（迁移提交、旧前缀、新前缀）。",
+        help="列出已登记的目录迁移与单文件改名（迁移提交、旧前缀、新前缀、kind）。",
     )
     migrations_parser.set_defaults(handler=cmd_path_migrations)
 
@@ -257,7 +257,7 @@ def register_project_commands(
         ),
         (
             "record-path-migration",
-            "登记整体目录迁移，并一次性把数据库全部路径字段改写到迁移后的位置。",
+            "登记目录迁移或单文件改名（kind=file），并一次性把数据库全部路径字段改写到迁移后的位置。",
             "Path migration JSON bundle；默认 .research/bundles/path-migration.json；传 '-' 从 stdin 读取。",
             cmd_record_path_migration,
         ),

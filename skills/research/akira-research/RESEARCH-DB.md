@@ -271,11 +271,11 @@ Target workspace 的 `source_commit` 是“本次目标格式 build 实际消费
 - 门禁读取冻结内容一律从冻结提交取（`git show <commit>:<path>`）；“设计先于结果”由冻结提交是结果 artifact 首次提交的祖先来判定，结果 artifact 也不得已存在于冻结提交。
 - 登记：`research-db record-freeze-revisions [bundle]`，bundle 顶层可给出 `revision_commit` / `category` / `reason` 默认值，`revisions` 中每项是路径字符串或含同名字段的对象；每个提交必须位于当前 HEAD 历史中且确实改变了该对象内容，否则整批不写入。`research-db freeze-revisions --pending` 列出已登记修订与尚未登记的冻结后变化。
 
-整体目录迁移（schema v32 `path_migrations`）：
+目录迁移与单文件改名（schema v32 `path_migrations`）：
 
-- 一条记录 = 迁移提交 + 旧前缀 + 新前缀，前缀相对 Git 顶层（`""` 表示顶层本身，其余为 `dir/`）；同一迁移提交可有多条。科研根目录本身也可以随之移动，例如把整个科研项目从仓库根移入 `research/` 登记为 `"" → "research/"`。
-- 核验旧冻结对象时，门禁把对象当前路径按“晚于该冻结提交”的迁移从新到旧逐条映射回旧路径，再到冻结提交中查找和读取；迁移提交中内容未变的纯移动按 Git blob 相同判定，不算修改；移动同时改了内容的，按上一条规则逐提交登记修订说明（通常为 `path_migration`）。
-- `research-db record-path-migration [bundle]`：bundle 含 `migration_commit`（默认 `HEAD`）、`moves`（`old_prefix` / `new_prefix` 数组）、`reason` 与可选 `dry_run`。命令在一个事务中写入迁移记录，并把数据库全部路径字段（Paper artifact 与侧记、Dataset / Study / Analysis / Attempt / Hypothesis / Design / Research Node / Communication 路径、`freeze_revisions.path`）改写为迁移后相对当前科研根的路径：真实移动的文件改到新位置，留在原处的文件（如仓库顶层的 `scripts/`、`src/`）改写为 `../` 形式；外部存储位置不改。文件已不存在时按最近仍存在的上级目录判断，仍无法判断的保留原位置并在 `unresolved` 中列出供人工核对。同一迁移不可重复登记；命令同时确保科研根目录有托管 `.gitignore` 区块。`research-db path-migrations` 列出已登记迁移。JSON 字段内嵌的路径文本与 `change_log` 历史说明不改写。
+- 一条记录 = 迁移提交 + 旧前缀 + 新前缀，前缀相对 Git 顶层；同一迁移提交可有多条。目录迁移的前缀为 `""`（顶层本身）或以 `/` 结尾的 `dir/`，匹配其下全部路径；单文件改名的前缀是不以 `/` 结尾的完整文件路径（如 `data/run/manifest.sha256` → `data/run/manifest.paths`），只匹配完全相同的路径，不会波及同名前缀的其他文件或目录。`research-db path-migrations` 按此规则在每条记录上给出 `kind`（`directory` / `file`）。科研根目录本身也可以随之移动，例如把整个科研项目从仓库根移入 `research/` 登记为 `"" → "research/"`。
+- 核验旧冻结对象时，门禁把对象当前路径按“晚于该冻结提交”的迁移（目录按前缀、文件按整路径）从新到旧逐条映射回旧路径，再到冻结提交中查找和读取；迁移提交中内容未变的纯移动按 Git blob 相同判定，不算修改；移动同时改了内容的，按上一条规则逐提交登记修订说明（通常为 `path_migration`）。
+- `research-db record-path-migration [bundle]`：bundle 含 `migration_commit`（默认 `HEAD`）、`moves`（`old_prefix` / `new_prefix` 数组；单文件改名的条目另写 `"kind": "file"`，缺省为 `directory`，按目录前缀规范化并补 `/`）、`reason` 与可选 `dry_run`。命令在一个事务中写入迁移记录，并把数据库全部路径字段（Paper artifact 与侧记、Dataset / Study / Analysis / Attempt / Hypothesis / Design / Research Node / Communication 路径、`freeze_revisions.path`）改写为迁移后相对当前科研根的路径：真实移动的文件改到新位置，留在原处的文件（如仓库顶层的 `scripts/`、`src/`）改写为 `../` 形式；外部存储位置不改。`kind=file` 的条目要求新路径在迁移提交中是文件、旧路径在迁移提交中已不存在，否则整批不写入；改名时优先于目录迁移匹配。目录迁移下文件已不存在时按最近仍存在的上级目录判断，仍无法判断的保留原位置并在 `unresolved` 中列出供人工核对。同一迁移不可重复登记；命令同时确保科研根目录有托管 `.gitignore` 区块。`research-db path-migrations` 列出已登记迁移。JSON 字段内嵌的路径文本与 `change_log` 历史说明不改写。
 
 ### `acquisition_attempts`
 

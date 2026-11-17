@@ -46,6 +46,23 @@ def normalize_prefix(value: str) -> str:
     return normalized + "/"
 
 
+def normalize_file_path(value: str) -> str:
+    """Return a top-level relative path for an exact-file migration (no trailing ``/``)."""
+
+    if value.strip().replace("\\", "/").endswith("/"):
+        raise ValueError(f"文件迁移路径不能以 / 结尾：{value}")
+    prefix = normalize_prefix(value)
+    if not prefix:
+        raise ValueError(f"文件迁移路径不能为空：{value}")
+    return prefix[:-1]
+
+
+def is_file_migration_prefix(prefix: str) -> bool:
+    """Stored migration prefixes are directories when empty or ending in ``/``; others are exact files."""
+
+    return bool(prefix) and not prefix.endswith("/")
+
+
 @dataclass(frozen=True)
 class GitLayout:
     project_root: Path

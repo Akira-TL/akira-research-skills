@@ -1,7 +1,10 @@
-"""Record a whole-directory move and rewrite every database path field once.
+"""Record a directory move or exact-file rename and rewrite every database path field once.
 
 A move is given as Git top-level relative prefixes (``old_prefix`` ->
-``new_prefix``; ``""`` is the top-level). The research root itself may move
+``new_prefix``; ``""`` is the top-level). A move with ``"kind": "file"`` renames
+exactly one file: only paths equal to ``old_prefix`` are rewritten and the
+stored prefixes keep no trailing ``/``, which is how later freeze checks tell
+file renames from directory moves. The research root itself may move
 with it (for example ``"" -> "research/"`` turns the repository root into a
 ``research/`` subdirectory root). Each stored project-relative path is first
 expanded with the research root's old location, mapped through the move when
@@ -19,7 +22,12 @@ from typing import Any
 import research_db_ops.common as common
 from research_db_core import ensure_research_gitignore, managed_gitignore_warning
 from research_db_ops.completion.git import FreezeHistory
-from research_db_support.git_layout import normalize_prefix
+from research_db_support.git_layout import (
+    is_file_migration_prefix,
+    normalize_file_path,
+    normalize_prefix,
+    run_git,
+)
 from research_db_support.storage import ResearchDbError, connect
 
 
@@ -49,10 +57,27 @@ PATH_FIELDS: tuple[tuple[str, str, str], ...] = (
 )
 
 
+MOVE_KINDS = ("directory", "file")
+
+
 @dataclass(frozen=True)
 class Move:
     old_prefix: str
     new_prefix: str
+
+    @property
+    def is_file(self) -> bool:
+        return is_file_migration_prefix(self.old_prefix)
+
+    @property
+    def kind(self) -> str:
+        return "file" if self.is_file else "directory"
+
+    def matches(self, repo_path: str) -> bool:
+        return repo_path == self.old_prefix if self.is_file else repo_path.startswith(self.old_prefix)
+
+    def as_dict(self) -> dict[str, str]:
+        return {"old_prefix": self.old_prefix, "new_prefix": self.new_prefix, "kind": self.kind}
 
 
 class _PathMapper:
@@ -62,11 +87,13 @@ class _PathMapper:
         self.toplevel = self.layout.toplevel
         self.history = history
         self.commit = commit
-        self.moves = sorted(moves, key=lambda move: len(move.old_prefix), reverse=True)
+        # Exact-file renames win over directory moves; longer directory prefixes win over shorter ones.
+        self.moves = sorted(moves, key=lambda move: (not move.is_file, -len(move.old_prefix)))
         self.old_project_prefix = self._backward(self.layout.prefix)
 
     def _backward(self, repo_prefix: str) -> str:
-        for move in sorted(self.moves, key=lambda item: len(item.new_prefix), reverse=True):
+        directory_moves = [move for move in self.moves if not move.is_file]
+        for move in sorted(directory_moves, key=lambda item: len(item.new_prefix), reverse=True):
             if repo_prefix.startswith(move.new_prefix):
                 return move.old_prefix + repo_prefix[len(move.new_prefix):]
         return repo_prefix
@@ -77,7 +104,7 @@ class _PathMapper:
         return self.history.repo_blob(self.commit, repo_path) is not None
 
     def _forward(self, old_repo: str) -> tuple[str, str]:
-        move = next((item for item in self.moves if old_repo.startswith(item.old_prefix)), None)
+        move = next((item for item in self.moves if item.matches(old_repo)), None)
         if move is None:
             return old_repo, "unchanged"
         candidate = move.new_prefix + old_repo[len(move.old_prefix):]
@@ -85,6 +112,8 @@ class _PathMapper:
             return old_repo, "stayed"
         if self._exists(candidate):
             return candidate, "moved"
+        if move.is_file:
+            return old_repo, "unresolved"
         # Deleted or never-committed file: decide by its nearest existing parent directory.
         parent = posixpath.dirname(old_repo)
         floor = move.old_prefix.rstrip("/")
@@ -118,16 +147,37 @@ def _parse_moves(bundle: dict[str, Any]) -> list[Move]:
     for index, item in enumerate(items, start=1):
         if not isinstance(item, dict) or "old_prefix" not in item or "new_prefix" not in item:
             raise ResearchDbError(f"move {index} 必须包含 old_prefix 与 new_prefix。")
+        kind = str(item.get("kind") or "directory")
+        if kind not in MOVE_KINDS:
+            raise ResearchDbError(f"move {index} 的 kind 只能是 directory 或 file。")
+        normalize = normalize_file_path if kind == "file" else normalize_prefix
         try:
-            move = Move(normalize_prefix(str(item["old_prefix"])), normalize_prefix(str(item["new_prefix"])))
+            move = Move(normalize(str(item["old_prefix"])), normalize(str(item["new_prefix"])))
         except ValueError as exc:
             raise ResearchDbError(f"move {index}：{exc}") from exc
         if move.old_prefix == move.new_prefix:
             raise ResearchDbError(f"move {index} 的 old_prefix 与 new_prefix 相同。")
         moves.append(move)
     if len({move.old_prefix for move in moves}) != len(moves):
-        raise ResearchDbError("同一次目录迁移中 old_prefix 不能重复。")
+        raise ResearchDbError("同一次路径迁移中 old_prefix 不能重复。")
     return moves
+
+
+def _is_blob(project_root: Path, commit: str, repo_path: str) -> bool:
+    result = run_git(project_root, "cat-file", "-t", f"{commit}:{repo_path}")
+    return result.returncode == 0 and result.stdout.strip() == "blob"
+
+
+def _check_file_moves(project_root: Path, commit: str, moves: list[Move]) -> None:
+    """A file rename must be visible in the migration commit: new file present, old file gone."""
+
+    for move in moves:
+        if not move.is_file:
+            continue
+        if not _is_blob(project_root, commit, move.new_prefix):
+            raise ResearchDbError(f"文件迁移的新路径在 migration_commit 中不是文件：{move.new_prefix}")
+        if _is_blob(project_root, commit, move.old_prefix):
+            raise ResearchDbError(f"文件迁移的旧路径在 migration_commit 中仍然存在：{move.old_prefix}")
 
 
 def record_path_migration(project_root: Path, bundle: dict[str, Any]) -> dict[str, Any]:
@@ -136,11 +186,12 @@ def record_path_migration(project_root: Path, bundle: dict[str, Any]) -> dict[st
     dry_run = bool(bundle.get("dry_run", False))
     history = FreezeHistory(project_root)
     if history.layout.toplevel is None:
-        raise ResearchDbError("目录迁移需要科研项目位于 Git 仓库中。")
+        raise ResearchDbError("路径迁移需要科研项目位于 Git 仓库中。")
     commit = history.resolve(common.text(bundle.get("migration_commit")) or "HEAD")
     head = history.resolve("HEAD")
     if commit is None or head is None or not history.is_ancestor(commit, head):
         raise ResearchDbError("migration_commit 必须是当前 HEAD 历史中可解析的提交。")
+    _check_file_moves(project_root, commit, moves)
     mapper = _PathMapper(history, commit, moves)
 
     rewrites: list[dict[str, Any]] = []
@@ -159,7 +210,7 @@ def record_path_migration(project_root: Path, bundle: dict[str, Any]) -> dict[st
                 (commit, move.old_prefix),
             ).fetchone():
                 raise ResearchDbError(
-                    f"目录迁移 '{move.old_prefix}' -> '{move.new_prefix}' @ {commit[:12]} 已登记，路径不会重复改写。"
+                    f"路径迁移 '{move.old_prefix}' -> '{move.new_prefix}' @ {commit[:12]} 已登记，路径不会重复改写。"
                 )
         connection.execute("BEGIN IMMEDIATE")
         try:
@@ -217,7 +268,7 @@ def record_path_migration(project_root: Path, bundle: dict[str, Any]) -> dict[st
         "ok": True,
         "dry_run": dry_run,
         "migration_commit": commit,
-        "moves": [{"old_prefix": move.old_prefix, "new_prefix": move.new_prefix} for move in moves],
+        "moves": [move.as_dict() for move in moves],
         "old_project_prefix": mapper.old_project_prefix,
         "project_prefix": history.layout.prefix,
         "rewritten_count": len(rewrites),
@@ -231,4 +282,6 @@ def record_path_migration(project_root: Path, bundle: dict[str, Any]) -> dict[st
 def list_path_migrations(project_root: Path) -> dict[str, Any]:
     with connect(common.db_path(project_root)) as connection:
         rows = [dict(row) for row in connection.execute("SELECT * FROM path_migrations ORDER BY id")]
+    for row in rows:
+        row["kind"] = "file" if is_file_migration_prefix(str(row["old_prefix"])) else "directory"
     return {"ok": True, "path_migrations": rows}

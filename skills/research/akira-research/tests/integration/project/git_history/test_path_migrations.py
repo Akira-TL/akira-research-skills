@@ -130,6 +130,102 @@ class PathMigrationTests(unittest.TestCase):
         self.assertEqual(blockers_with_reason(result, "downstream", MISSING), [])
         self.assertEqual(blockers_with_reason(result, "downstream", CHANGED), [])
 
+    def _rename_raw_file(self) -> str:
+        shutil.move(str(self.top / "data/sleep/raw.csv"), str(self.top / "data/sleep/raw.tsv"))
+        return self.project.commit("MAINTENANCE: rename raw file")
+
+    def _record_file_move(self, commit: str, **extra) -> dict:
+        return record_path_migration(
+            self.top,
+            {
+                "migration_commit": commit,
+                "moves": [{"kind": "file", "old_prefix": "data/sleep/raw.csv", "new_prefix": "data/sleep/raw.tsv"}],
+                "reason": "原始数据文件改名。",
+                **extra,
+            },
+        )
+
+    def test_file_rename_rewrites_exact_path_and_keeps_frozen_input_valid(self) -> None:
+        self.project.write("data/sleep/raw.csv.bak", "copy\n")
+        commit = self._rename_raw_file()
+        self.assertFalse(validate_completion(self.top)["ok"])
+
+        preview = self._record_file_move(commit, dry_run=True)
+        self.assertEqual(preview["moves"][0]["kind"], "file")
+        self.assertEqual(
+            [(item["old"], item["new"], item["status"]) for item in preview["rewrites"]],
+            [("data/sleep/raw.csv", "data/sleep/raw.tsv", "moved")],
+        )
+        self.assertEqual(preview["unresolved"], [])
+
+        self._record_file_move(commit)
+        self.project.commit("PROVENANCE: record file rename")
+        migrations = list_path_migrations(self.top)["path_migrations"]
+        self.assertEqual(
+            [(row["old_prefix"], row["new_prefix"], row["kind"]) for row in migrations],
+            [("data/sleep/raw.csv", "data/sleep/raw.tsv", "file")],
+        )
+        history = FreezeHistory(self.top)
+        self.assertEqual(history.path_at(self.freeze_commit, "data/sleep/raw.tsv"), "data/sleep/raw.csv")
+        self.assertEqual(history.path_at(self.freeze_commit, "data/sleep/raw.tsv.bak"), "data/sleep/raw.tsv.bak")
+        result = validate_completion(self.top)
+        self.assertEqual(blockers_with_reason(result, "downstream", MISSING), [])
+        self.assertEqual(blockers_with_reason(result, "downstream", CHANGED), [])
+
+    def test_file_rename_must_match_the_migration_commit(self) -> None:
+        commit = self._rename_raw_file()
+        with self.assertRaisesRegex(ResearchDbError, "不能以 / 结尾"):
+            record_path_migration(
+                self.top,
+                {
+                    "migration_commit": commit,
+                    "moves": [{"kind": "file", "old_prefix": "data/sleep/", "new_prefix": "data/s/"}],
+                    "reason": "错误的文件迁移。",
+                },
+            )
+        with self.assertRaisesRegex(ResearchDbError, "不是文件"):
+            record_path_migration(
+                self.top,
+                {
+                    "migration_commit": commit,
+                    "moves": [{"kind": "file", "old_prefix": "data/sleep/raw.csv", "new_prefix": "data/sleep"}],
+                    "reason": "错误的文件迁移。",
+                },
+            )
+        with self.assertRaisesRegex(ResearchDbError, "kind"):
+            record_path_migration(
+                self.top,
+                {
+                    "migration_commit": commit,
+                    "moves": [{"kind": "glob", "old_prefix": "a", "new_prefix": "b"}],
+                    "reason": "未知类型。",
+                },
+            )
+        self.assertEqual(list_path_migrations(self.top)["path_migrations"], [])
+
+    def test_directory_move_without_kind_still_uses_prefixes(self) -> None:
+        shutil.move(str(self.top / "data/sleep"), str(self.top / "data/sleep-v2"))
+        commit = self.project.commit("MAINTENANCE: rename dataset directory")
+        result = record_path_migration(
+            self.top,
+            {
+                "migration_commit": commit,
+                "moves": [{"old_prefix": "data/sleep", "new_prefix": "data/sleep-v2"}],
+                "reason": "数据目录改名。",
+            },
+        )
+        self.assertEqual(
+            result["moves"][0], {"old_prefix": "data/sleep/", "new_prefix": "data/sleep-v2/", "kind": "directory"}
+        )
+        self.assertEqual(
+            sorted(item["new"] for item in result["rewrites"]),
+            ["data/sleep-v2/README.md", "data/sleep-v2/raw.csv"],
+        )
+        self.project.commit("PROVENANCE: record directory rename")
+        result = validate_completion(self.top)
+        self.assertEqual(blockers_with_reason(result, "downstream", MISSING), [])
+        self.assertEqual(blockers_with_reason(result, "downstream", CHANGED), [])
+
 
 if __name__ == "__main__":
     unittest.main()

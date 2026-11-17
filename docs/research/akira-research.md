@@ -29,7 +29,7 @@ Analysis 完成门禁按分析模式区分结果要求。确认性分析进入 `
 
 冻结对象由“冻结提交号 + 路径”识别，Git 跟踪的文件不再需要校验值。冻结对象当前内容与冻结版本逐字节相同时直接放行；改了又改回的提交（即使之后还有已登记的修订）只作为信息列出；其余冻结后的修改按提交逐个核对：路径迁移、去掉冗余校验值和执行状态更新（只改执行层状态、实现提交号与评审记录）这三类非实质修改用 `research-db record-freeze-revisions` 登记原因后放行；实质修改即使登记也仍然阻塞，须恢复冻结版本并建立新的 Analysis 或 Design；未登记的修改会作为阻塞项列出对应提交。这一规则同样适用于已冻结的 Hypothesis Set 与 Research Design 正文；`research-db freeze-revisions --pending` 可一次列出待登记的变化。数据库说明、理由与摘要类文本中残留的 64 位校验值可用 `research-db redact-text-checksums --dry-run` 预览、去掉 `--dry-run` 执行，统一替换为 `［已移除冗余校验值］` 并逐条写入变更记录；Git 提交号、身份、路径、版本字段和专用 `sha256` 字段不受影响。
 
-整体移动目录（包括把整个科研项目移入代码仓库的 `research/` 子目录）时，提交移动后运行 `research-db record-path-migration` 登记“迁移提交 + 旧前缀 + 新前缀”；命令会一次性改写数据库中的路径，之后核验旧冻结对象时按迁移记录回到旧路径查冻结提交，纯移动不算修改。
+整体移动目录（包括把整个科研项目移入代码仓库的 `research/` 子目录）时，提交移动后运行 `research-db record-path-migration` 登记“迁移提交 + 旧前缀 + 新前缀”；单个文件改名在对应条目写 `"kind": "file"`，按完整路径精确匹配。命令会一次性改写数据库中的路径，之后核验旧冻结对象时按迁移记录回到旧路径查冻结提交，纯移动不算修改。
 
 Communication Product 可以从 `completed` 终止为 `superseded`，用于保留已被新稿替代的历史产品；该 transition 不允许同时改写产品定义或科学 `source_commit`，且 superseded 后不能重新激活。历史传播 artifact 继续保留 provenance，但不再参与当前 completed-product 的科学源漂移检查或当前传播文本的学术语言门禁。中文科研项目仍可合法维护纯英文期刊稿；只有包含中文叙述的传播段落继续执行中文成熟术语检查。
 

@@ -17,7 +17,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterator
 
-from research_db_support.git_layout import GitLayout, commit_has_path, git_layout, run_git
+from research_db_support.git_layout import (
+    GitLayout,
+    commit_has_path,
+    git_layout,
+    is_file_migration_prefix,
+    run_git,
+)
 from research_db_support.storage import connect, database_path
 
 
@@ -35,6 +41,8 @@ class PathMigration:
     new_prefix: str
 
     def to_old(self, repo_path: str) -> str | None:
+        if is_file_migration_prefix(self.new_prefix):
+            return self.old_prefix if repo_path == self.new_prefix else None
         if not repo_path.startswith(self.new_prefix):
             return None
         return self.old_prefix + repo_path[len(self.new_prefix):]
