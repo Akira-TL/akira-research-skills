@@ -12,6 +12,7 @@
 
 ### Changed
 
+- 新增 `clear-tracked-artifact-checksums`（支持 `--dry-run`）清空 Git 跟踪 artifact `version` 中的纯 SHA256 并逐条写 `change_log`；`tracked-artifact-checksums` 增加 `kind`，区分纯校验值与内嵌散列的版本标签（后者不清理）。
 - 新增第三类非实质修订 `execution_status_update`（执行状态更新，schema v33）：只改执行层状态、实现提交号与评审记录，登记后放行并保留 legacy 兼容身份；Design / Hypothesis 正文登记时机器核对只有允许的章节发生变化。
 - 冻结对象当前内容与冻结版本逐字节相同时直接放行，中间“改了又改回”的提交不再阻塞、不要求登记，只在 `validate --completion` 的 `git.reverted_frozen_changes` 中列出。
 - 新增只读命令 `tracked-artifact-checksums`，列出 `version` 中仍带 SHA256 的 Git 跟踪 Dataset / Study artifact，便于项目清理冗余校验值。

@@ -4,6 +4,7 @@ from typing import Any, Callable
 
 from research_db_core import discover_project_root
 from research_db_ops.project import (
+    clear_tracked_artifact_checksums,
     get_research_tree,
     list_freeze_revisions,
     list_path_migrations,
@@ -140,6 +141,11 @@ def register_project_commands(
         emit(list_tracked_artifact_checksums(project_root))
         return 0
 
+    def cmd_clear_tracked_artifact_checksums(args: Any) -> int:
+        project_root = discover_project_root(args.project)
+        emit(clear_tracked_artifact_checksums(project_root, reason=args.reason, dry_run=args.dry_run))
+        return 0
+
     def cmd_record_study(args: Any) -> int:
         project_root = discover_project_root(args.project)
         emit(
@@ -183,6 +189,14 @@ def register_project_commands(
         help="只读列出 version 中仍带 SHA256 的 Git 跟踪 Dataset/Study artifact，供项目清理。",
     )
     checksum_parser.set_defaults(handler=cmd_tracked_artifact_checksums)
+
+    clear_parser = subparsers.add_parser(
+        "clear-tracked-artifact-checksums",
+        help="清空 Git 跟踪 Dataset/Study artifact 的 version 中纯 SHA256 值，逐条写 change_log。",
+    )
+    clear_parser.add_argument("--dry-run", action="store_true")
+    clear_parser.add_argument("--reason")
+    clear_parser.set_defaults(handler=cmd_clear_tracked_artifact_checksums)
 
     render_parser = subparsers.add_parser(
         "render-research-tree-view",

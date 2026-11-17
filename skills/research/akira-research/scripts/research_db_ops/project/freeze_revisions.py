@@ -185,6 +185,7 @@ def list_freeze_revisions(project_root: Path, *, pending: bool = False, limit: i
 
 
 _CHECKSUM_TEXT_RE = re.compile(r"[0-9a-fA-F]{64}")
+_PURE_CHECKSUM_RE = re.compile(r"(?:sha256:)?[0-9a-fA-F]{64}", re.IGNORECASE)
 _TRACKED_ARTIFACT_QUERIES = (
     (
         "dataset_artifacts",
@@ -201,17 +202,76 @@ _TRACKED_ARTIFACT_QUERIES = (
 )
 
 
+def _checksum_kind(version: str) -> str | None:
+    """``checksum``: the whole version is a SHA256 (with or without ``sha256:``);
+    ``embedded``: a longer label that merely contains a 64-hex string."""
+
+    text = version.strip()
+    if _PURE_CHECKSUM_RE.fullmatch(text):
+        return "checksum"
+    return "embedded" if _CHECKSUM_TEXT_RE.search(text) else None
+
+
+def _tracked_checksum_rows(connection) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for table, query in _TRACKED_ARTIFACT_QUERIES:
+        for row in connection.execute(query):
+            kind = _checksum_kind(str(row["version"]))
+            if kind is not None:
+                rows.append({"table": table, **dict(row), "kind": kind})
+    return rows
+
+
 def list_tracked_artifact_checksums(project_root: Path) -> dict[str, Any]:
     """Read-only report: Git-tracked artifacts whose free-text version still carries a SHA256.
 
-    Git-tracked artifacts are frozen by commit + path, so such checksums are
-    redundant historical text the project may clean up; nothing is changed here.
+    ``kind=checksum`` rows are pure checksums that ``clear-tracked-artifact-checksums``
+    removes; ``kind=embedded`` rows are labels containing a hash and are left alone.
     """
 
-    rows: list[dict[str, Any]] = []
     with connect(common.db_path(project_root)) as connection:
-        for table, query in _TRACKED_ARTIFACT_QUERIES:
-            for row in connection.execute(query):
-                if _CHECKSUM_TEXT_RE.search(str(row["version"])):
-                    rows.append({"table": table, **dict(row)})
-    return {"ok": True, "count": len(rows), "artifacts": rows}
+        rows = _tracked_checksum_rows(connection)
+    counts = {kind: sum(1 for row in rows if row["kind"] == kind) for kind in ("checksum", "embedded")}
+    return {"ok": True, "count": len(rows), "counts": counts, "artifacts": rows}
+
+
+def clear_tracked_artifact_checksums(
+    project_root: Path, *, reason: str | None = None, dry_run: bool = False
+) -> dict[str, Any]:
+    """Clear pure SHA256 values from the version field of Git-tracked artifacts.
+
+    Git-tracked artifacts are frozen by commit + path, so the checksum is
+    redundant. Each cleared row writes a change_log entry with the old value;
+    labels that only embed a hash are reported and kept.
+    """
+
+    note = common.text(reason) or "Git 跟踪 artifact 由提交号 + 路径冻结，version 中的 SHA256 冗余。"
+    now = common.now()
+    with connect(common.db_path(project_root)) as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        try:
+            rows = _tracked_checksum_rows(connection)
+            cleared = [row for row in rows if row["kind"] == "checksum"]
+            if not dry_run:
+                for row in cleared:
+                    connection.execute(f"UPDATE {row['table']} SET version = NULL WHERE id = ?", (row["id"],))
+                    connection.execute(
+                        """
+                        INSERT INTO change_log(timestamp, action, entity_type, entity_id, reason, summary)
+                        VALUES (?, 'tracked_artifact_checksum_cleared', ?, ?, ?, ?)
+                        """,
+                        (now, row["table"], str(row["id"]), note, f"path={row['path']}; old_version={row['version']}"),
+                    )
+                connection.commit()
+            else:
+                connection.rollback()
+        except Exception:
+            connection.rollback()
+            raise
+    return {
+        "ok": True,
+        "dry_run": dry_run,
+        "cleared_count": len(cleared),
+        "cleared": cleared,
+        "kept_embedded": [row for row in rows if row["kind"] == "embedded"],
+    }

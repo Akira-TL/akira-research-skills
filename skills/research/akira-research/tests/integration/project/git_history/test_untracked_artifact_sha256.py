@@ -15,7 +15,10 @@ from git_fixtures import GitResearchProject  # noqa: E402
 
 from research_db_core import ResearchDbError, apply_migrations, validate  # noqa: E402
 from research_db_ops.downstream import list_datasets, record_dataset  # noqa: E402
-from research_db_ops.project import list_tracked_artifact_checksums  # noqa: E402
+from research_db_ops.project import (  # noqa: E402
+    clear_tracked_artifact_checksums,
+    list_tracked_artifact_checksums,
+)
 from research_db_support.schema import list_migrations  # noqa: E402
 
 
@@ -67,17 +70,41 @@ class UntrackedArtifactSha256Tests(unittest.TestCase):
         self.assertEqual(artifact["sha256"], self.digest)
         self.assertTrue(validate(self.root)["ok"], validate(self.root)["errors"])
 
-    def test_report_lists_tracked_artifacts_with_checksum_in_version(self) -> None:
-        record_dataset(
-            self.root,
-            _dataset_bundle(
-                {"role": "raw", "location": "data/weights/model.bin", "version": f"sha256:{self.digest}"}
-            ),
+    def test_report_and_clear_tracked_artifact_checksums(self) -> None:
+        self.project.write("data/weights/config.json", "{}\n")
+        self.project.write("data/weights/journal.json", "[]\n")
+        bundle = _dataset_bundle(
+            {"role": "raw", "location": "data/weights/model.bin", "version": f"sha256:{self.digest}"}
         )
+        bundle["artifacts"] += [
+            {"role": "metadata", "location": "data/weights/config.json", "version": self.digest},
+            {
+                "role": "metadata",
+                "location": "data/weights/journal.json",
+                "version": f"session-00-journal-{self.digest}",
+            },
+        ]
+        record_dataset(self.root, bundle)
         report = list_tracked_artifact_checksums(self.root)
-        self.assertEqual(report["count"], 1)
-        self.assertEqual(report["artifacts"][0]["path"], "data/weights/model.bin")
+        self.assertEqual(report["counts"], {"checksum": 2, "embedded": 1})
         self.assertEqual(report["artifacts"][0]["owner"], "weights")
+
+        preview = clear_tracked_artifact_checksums(self.root, dry_run=True)
+        self.assertEqual(preview["cleared_count"], 2)
+        self.assertEqual(list_tracked_artifact_checksums(self.root)["count"], 3)
+
+        result = clear_tracked_artifact_checksums(self.root, reason="清理冗余校验值。")
+        self.assertEqual([row["path"] for row in result["kept_embedded"]], ["data/weights/journal.json"])
+        artifacts = list_datasets(self.root)["datasets"][0]["artifacts"]
+        versions = {item["location"]: item["version"] for item in artifacts}
+        self.assertIsNone(versions["data/weights/model.bin"])
+        self.assertIsNone(versions["data/weights/config.json"])
+        self.assertTrue(versions["data/weights/journal.json"].startswith("session-00-journal-"))
+        with closing(sqlite3.connect(self.root / ".research" / "research.sqlite")) as connection:
+            logged = connection.execute(
+                "SELECT COUNT(*) FROM change_log WHERE action = 'tracked_artifact_checksum_cleared'"
+            ).fetchone()[0]
+        self.assertEqual(logged, 2)
 
     def test_external_artifact_records_checksum_without_local_file(self) -> None:
         external = {
